@@ -1,17 +1,75 @@
-\documentclass{article}
+\documentclass[12pt]{article}
+\usepackage{natbib}
+\usepackage{color}
+\usepackage[dvipsnames,svgnames*]{xcolor}
+\usepackage{array}
+\usepackage[colorlinks=TRUE, linkcolor=blue]{hyperref}
+\usepackage{wrapfig,float}
+\usepackage[font=small,skip=5pt]{caption}
+\usepackage{subcaption}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{dsfont}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{url}
+\usepackage{ulem}
+\usepackage[section]{placeins}
+\usepackage{afterpage}
+
+\graphicspath{{figure/}}
+\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
+
+\newcommand{\blue}[1]{{\color{blue} #1}}
+\newcommand{\hh}[1]{{\color{magenta} #1}}
+\newcommand{\dc}[1]{{\color{orange} #1}}
+\newcommand{\green}[1]{{\color{cyan} #1}}
+
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{dfn}{Definition}[section]
+\newtheorem{cor}{Corollary}[thm]
+\newtheorem{con}{Conjecture}[thm]
+
+% NOTE: To produce blinded version, replace "0" with "1" below.
+\newcommand{\blind}{0}
+
+\addtolength{\oddsidemargin}{-.5in}%
+\addtolength{\evensidemargin}{-.5in}%
+\addtolength{\textwidth}{1in}%
+\addtolength{\textheight}{1.3in}%
+\addtolength{\topmargin}{-.8in}%
+
 
 \begin{document}
+
+\def\spacingset#1{\renewcommand{\baselinestretch}%
+{#1}\small\normalsize} \spacingset{1}
+
 \SweaveOpts{concordance=TRUE}
 
 \title{\bf Comparing the Power of Plot Designs to Reveal Correlation}
 
+\if0\blind
+{
 \author{Dianne Cook\\
 Department of Econometrics and Business Statistics, Monash University\\
 and\\
 Nathaniel Tomasetti\\
-Department of Econometrics and Business Statistics, Monash University\\
+Department of Econometrics and Business Statistics, Monash University\\}
   \maketitle
-}
+} \fi
+\if1\blind
+{
+  \bigskip
+  \bigskip
+  \bigskip
+  \begin{center}
+    {\LARGE\bf Comparing the Power of Plot Designs to Reveal Correlation}
+\end{center}
+  \medskip
+} \fi
+
+\bigskip
 
 \begin{abstract}
 Visual inference in EDA is prone to type 1 errors from the over-interpretation of randomness [4, 6]. Two competing plot designs, the scatter plot and overlaid line graph are both popular in the analysis of time series data. Lineups [2, 10, 11, 16, 27] allow the visual inference power of a graphic display to be evaluated, and were used to compare the plot designs. We collected data on the detection rate of correlated pairs of AR(1) simulations, the time required and the confidence of the decision for 2088 lineup evaluations. The results show that the scatter plot is both the faster and more powerful plot design, despite its inability to display the time dimension. 
@@ -21,10 +79,10 @@ Visual inference in EDA is prone to type 1 errors from the over-interpretation o
 {\it Keywords:}  Lineups, visual inference, power comparison, scatter plot, line graph, data visualisation, visual analytics, time series, temporal data
 \vfill
 
-\begin{multicols}{2}
-\twocolumn
-
-<<setup, echo=FALSE, results='hide', message=FALSE, error=FALSE, warning=FALSE>>=
+\newpage
+\spacingset{1.45} % DON'T change the spacing!
+\newpage
+<<setup, echo=FALSE, results=hide, message=FALSE, error=FALSE, warning=FALSE>>=
 library(lme4)
 library(ggplot2)
 library(mnormt)
@@ -77,54 +135,51 @@ gen_null <- function(n, m=20, dep=TRUE, smoothed = FALSE){
 
 \section{Introduction}
 
-In order to work with data, it first must be understood. Statistical inference requires hypotheses to be established prior to data collection, but often data is collected first. This is especially so today, for vast databases that have been assembled in the big data era, that now need the data scientist to unravel the meaning of the numbers. Without preset hypotheses to test, the power of statistical inference is impotent, and without hypotheses the data analyst can stumble blindly trying to build up models of structure in the data.  To understand data requires good visualisation. This idea was formed as early as the 18th century, when William Playfair institutionalized the then revolutionary idea of graphing government and economic data. Far easier than reading tables of numbers, these ideas were powerful, and by providing the basic building blocks for plotting statistical data, his graphic designs became a conduit for the communication of otherwise complex information [20]. Since then, advances in computing power have allowed statistical graphics to flourish, spearheaded by Tukey in 1965 into the new domain of exploratory data analysis (EDA) [7, 23]. EDA can be thought of as a well understood [3, 25] set of tools and techniques required to visualise information, to physically see what the data contains. In particular, it incorporates a free roaming approach, where the analyst is able to explore structure to find whatever relationships and structure exists within. Critically, the analyst does not have to have any pre-conceived ideas or hypotheses -- they are not specifically looking for any one particular thing. EDA emphasises letting the data inform us and can lead to the discovery of otherwise unexpected relationships, many of which may seem to become completely obvious after discovery. With the knowledge provided by EDA, ideas are generated about what relationships between variables may potentially exist. This then enables the analyst to use these new hypotheses upon which to apply classical inference and rigorously conduct tests with new data. EDA is also related to the field of model diagnostics (MD), where a model can be continuously refined through the visualisation of its fit, its residuals, and the interactions with its variables. Both EDA and MD follow the same framework: Visualise the data, look for patterns that suggest an underlying relationship, and if one is found implement it into the model then continue the exploration of the data. It has long been thought that EDA and statistical inference were worlds apart, but recent work [2, 16] bridges this chasm. Framing a data plot as a test statistic, which when compared to plots of null data, places EDA into the statistical inference recipe. 
-The null hypothesis underlying a particular plot, is generically that there is no pattern, and particular types of plots implicitly regulate what “no  pattern” means. For example, a scatter plot of two variables is used to explore for some sort of association, so the implicit hypothesis is that there is no association between the two variables.  The alternative hypothesis is that there is some association, although it is not required to specify precisely the type of association. The plot of the data is placed in a lineup of plots of null data, data generated assuming that the null hypothesis is true. If an impartial observer asked to pick the plot that is different from the rest, picks the data plot this suggests there exists a pattern that is not the result of chance, and the null hypothesis is rejected. For a scatter plot, this departure from the null, might be a single outlier, or few outliers, a non-linear pattern, or clusters, which the human eye detects as more different in this data plot than in any of the nulls. This is the reason why visualisation remains important today, human eyes can detect patterns which would not be detected mathematically.  But eyes need calibration, which the lineup protocol provides.
+In order to work with data, it first must be understood. Statistical inference requires hypotheses to be established prior to data collection, but often data is collected first.
+This is especially so today, for vast databases that have been assembled in the big data era, that now need the data scientist to unravel the meaning of the numbers. 
+Without preset hypotheses to test, the power of statistical inference is impotent, and without hypotheses the data analyst can stumble blindly trying to build up models of structure in the data. 
+To understand data requires good visualisation. This idea was formed as early as the 18th century, when William Playfair institutionalized the then revolutionary idea of graphing government and economic data. 
+Far easier than reading tables of numbers, these ideas were powerful, and by providing the basic building blocks for plotting statistical data, his graphic designs became a conduit for the communication of otherwise complex information [20]. Since then, advances in computing power have allowed statistical graphics to flourish, spearheaded by Tukey in 1965 into the new domain of exploratory data analysis (EDA) [7, 23]. 
+EDA can be thought of as a well understood [3, 25] set of tools and techniques required to visualise information, to physically see what the data contains. In particular, it incorporates a free roaming approach, where the analyst is able to explore structure to find whatever relationships and structure exists within. 
+Critically, the analyst does not have to have any pre-conceived ideas or hypotheses -- they are not specifically looking for any one particular thing. EDA emphasises letting the data inform us and can lead to the discovery of otherwise unexpected relationships, many of which may seem to become completely obvious after discovery. 
+With the knowledge provided by EDA, ideas are generated about what relationships between variables may potentially exist. This then enables the analyst to use these new hypotheses upon which to apply classical inference and rigorously conduct tests with new data.
+EDA is also related to the field of model diagnostics (MD), where a model can be continuously refined through the visualisation of its fit, its residuals, and the interactions with its variables. Both EDA and MD follow the same framework: Visualise the data, look for patterns that suggest an underlying relationship, and if one is found implement it into the model then continue the exploration of the data. 
+It has long been thought that EDA and statistical inference were worlds apart, but recent work [2, 16] bridges this chasm. Framing a data plot as a test statistic, which when compared to plots of null data, places EDA into the statistical inference recipe. 
+The null hypothesis underlying a particular plot, is generically that there is no pattern, and particular types of plots implicitly regulate what “no  pattern” means. For example, a scatter plot of two variables is used to explore for some sort of association, so the implicit hypothesis is that there is no association between the two variables.
+The alternative hypothesis is that there is some association, although it is not required to specify precisely the type of association. 
+The plot of the data is placed in a lineup of plots of null data, data generated assuming that the null hypothesis is true. If an impartial observer asked to pick the plot that is different from the rest, picks the data plot this suggests there exists a pattern that is not the result of chance, and the null hypothesis is rejected. 
+For a scatter plot, this departure from the null, might be a single outlier, or few outliers, a non-linear pattern, or clusters, which the human eye detects as more different in this data plot than in any of the nulls. This is the reason why visualisation remains important today, human eyes can detect patterns which would not be detected mathematically.  But eyes need calibration, which the lineup protocol provides.
 On its own, with a single plot, because of random sampling in collecting data, it is easy for the analyst to imagine a pattern when no real structure exists in the population. Visual skills of an observer in EDA is prone to Type I error, where the null hypothesis is rejected when it is actually true, caused by the inherently random formation of patterns when visualised which are attributed to structure rather than chance. Daniel [4] warns against this, by providing 40 pages of plots from the null distribution, he encourages data analysts to understand the patterns that can be created from data without inherent structure. (This is what Buja et al [2] call the Rorschach protocol.) By being aware of what can appear in this type of data, the analyst should be more wary of claiming any visual feature they find is a true relationship. But this is not enough, even seasoned data analysts can be misled.  Diaconis [6] introduced the notion of 'magical thinking' which argues that people commonly suffer from the over-interpretation of randomness, particularly if it matches a pre-conception. If it suits their particular bias, an analyst may make false discoveries of structure and false rejections of the null hypothesis. Whilst using both can complement each other, the treatment of Type I error has led EDA and inferential statistics to be considered as very disparate pursuits. The mathematical rigor that governs classical inference relies on a framework that acknowledges and controls for the rate of Type I error.  Section 2 describes the visual inference protocols which put EDA more firmly into the rigorous framework of statistical inference. 
 
-\begin{figure}[hbtp]
-\centering
-\includegraphics{cny_line.png}
-\caption{Figure 1: Exchange rates for Australian dollars and Chinese yuan against the United States dollar from Mar 30-May 2, 2015, shown as an overlaid line graph. (Both sets of values were standardized to bring them to the same scale for plotting.) Do you think a relationship exists between the two?}
-\end{figure}
+Insert Figure 1
 
 In this research we utilise the methods in visual inference to study plot design to investigate the relationship between two temporal variables. There is a substantial literature suggesting that scatter plots are the appropriate display to read association [3, 8, 14], however, when the two variables are temporal it is common to display them as time series, drawn on the same plot. Temporal dependence is present in many macroeconomic variables [16, 17] and there is a strong argument for its presence in financial data [21, 24]. It is a common, but untested, belief that the inclusion of time in the graphics will increase the detail of information displayed and allow relationships to be examined more comprehensively, so many analysts utilise the overlaid line graph to examine their data.
 
-\begin{figure}[hbtp]
-\centering
-\begin{subfigure}[t]{0.49\textwidth}
-\includegraphics{nzd_scatter.png}
-\end{subfigure}
-\begin{subfigure}[t]{0.49\textwidth}
-\includegraphics{nzd_line.png}
-\end{subfigure}
-\caption{Figure 2: Exchange rates for Australian and NZ dollars against US dollar, from Mar 30-May 2, 2015, shown using a scatter plot (left) and overlaid line graph (right). Which one can you read the correlation from more accurately? Point-wise linear correlation between the two series, ignoring autodependence, is 0.64.}
-\end{figure}
+Insert Figure 2
 
 To decide on an appropriate display requires awareness of cognitive principles in psychology such as the Gestalt law of common fate described by Wertheimer in 1923 [22, 26]. This law describes a tendency in human perception to 'see' a positive relationship between two objects that briefly move together over time, leading people to believe that they stay linked and share a 'common fate' (Figure 1), even if no relationship exists. Lee and Blake's [13] work finds that humans are able to perceive a relationship between objects that move with temporal synchrony in accordance with the Gestalt Law, implying that a graphic than can utilise a dimension for time may be able to use the information provided by temporal dependence and potentially outperform the graph types that do not, such as the scatter plot [18]. However, keep in mind magical thinking [6], the desire to find any pattern may lead to a false discovery of positive correlation. The law then has two effects, if positive correlation exists in temporal data, the observer may be drawn to it easier. If positive correlation does not exist, the observer may be fooled into thinking it does anyway. Either effect would lead to a more confident rejection of the null than if the same data was displayed as a scatter plot. Figure 1 highlights the dangerous interaction between 'magical thinking' and the Gestalt Law, the observer is drawn to the period from April 8 to April 22, and may falsely believe that the two currencies may continue to move together. However, over the entire series the linear correlation between the two currencies is -0.12, indicating there is no actual relationship. Incorrectly relying on two currencies, or many other sets of economic variables, being dependent on each other can be extremely dangerous for a firm. Work by Robbins [19] is similarly critical of the time-based line graph, where it is argued that information from overlaid line graphs can easily be misleading (Figure 3). When both lines dive after 1993, it is natural to compare the horizontal distance and say that the difference between the lines in 1994 is small. However, this is incorrect, as looking at the small horizontal distance is comparing the lines at different dates. It is not obvious that the difference in 1994 is the second greatest difference across the entire range, only slightly smaller than in 1993. Vanderplas [25] examines this effect in more detail. It is dubbed the 'Sine Illusion', where the human eye is poor at interpreting lines with such a sharp slope. As these problems are unique to the line graph, they argue that the scatter plot, which does not have any ability to display time, is the superior choice. However, in practice many data analysts are split between the two major alternatives for temporal data. The overlaid line graph is justified by its ability to present more information to the analyst; but many argue that it is this extra information that is misleading, and revert to the scatter plot for its strong non-temporal performance.
 
-\begin{figure}[hbtp]
-\centering
-\includegraphics{murders.jpg}
-\caption{Figure 3 [19]: Murders in New York State (Orange) and New York City (Blue). The difference between the two represents murders outside of the city. What size would you judge the difference to be in 1994?}
-\end{figure}
+Insert Figure 3
 
 There has been other research on the perception of  temporal displays, e.g. Javed et al. [12], but they do not examine perception of association. Javed et al.  examined optimal ways to visualise local features, such as, which variable had the highest value at a given point in time, and global features, such as, comparing the size of the overall slope of many different variables. The finding was that a different graphical layout is optimal for each type of task. However, they did not test for the perception of correlation, which can be treated as both a local and a global feature within the graph. The slope of each variable must be compared at a point in time, and they must have a persistent relationship across at least the majority of the series. However there is a quandary, the visual features that improve local tasks are unsuited to global tasks and vice versa; so we must now find a form that is well suited to assess both types of tasks simultaneously. This paper addresses this deficiency. Section 2 describes the lineup method utilised to rigorously compare plot designs. Section 3 explains the experimental design.  Section 4 contains the results of the experiment and Section 5 discusses the implications of the findings.
 
 \section{The Lineup Protocol}
 
-With the general lack of inference present in exploratory data analysis, how do we attempt to control error in hypothesis testing? In order to use visualisation effectively, we will get the most benefit if the type of graphic display chosen is best suited to the task at hand, be it EDA, MD, or even the presentation of results. We then need to find the statistical power of graphics, the ability of a graphical display to convey information on the structure of the data within. This can be found by using the lineup protocol developed in 2009 by Buja et al. [2], which is easily implemented with the nullabor R package. They created a statistically rigorous framework with properties explored primarily in Majumder et. al [16] and further in Hofmann et. al [11] that allows us to conduct these hypothesis tests with visual inference, thus to some degree allowing the conjoining of EDA with classical inferential statistics.
-The lineup protocol is inspired in part by the police lineup [27]. We place the plot of the 'true' data generated with some underlying structure (The criminal) in amongst plots of data that were generated from a null distribution (The innocent people). If the real data plot is selected by an uninvolved observer as being most different from the other plots there is evidence that the structure of that data has led to a significant difference in the plot (That the criminal is sufficiently different from the innocents). This constitutes a rejection of the null hypothesis. If one of the null plots is chosen instead then either the plot design did not have the sufficient power to display the true relationship (A Type 2 error in EDA), or the null plot exhibited a strong relationship that was generated randomly and an analyst that saw this plot and decided that the data had some structure would’ve committed a Type 1 error. p_i, the probability that plot i is chosen in the lineup depends not only on the plot design d, but also the signal strength, q_i, of that plot and of every other competing plot in the lineup. It can be defined as some unknown function f_(i,d) (q_1,…,q_20) [11]. If the true plot is detected, it indicates that the plot design could convey the desired information about the underlying structure and that the true plot has a greater signal strength than those generated under the null distribution. The plot design that has a human observer selecting the true plot the most often will thus minimise both Type 1 error and Type 2 error in EDA hypothesis testing.
-However, there is the possibility that the true plot was picked by chance, that we have committed a Type 1 error in the lineup test. For a lineup of m plots, the probability of selecting any plot when they are all generated by the null distribution is 1/m, setting the Type 1 error rate, α, of a lineup hypothesis test to equal 1/m. To control our error rate, it is initially obvious that we can simply change m, with an increase in null lineups having an inverse reduction in m. We recruit human observers to judge the lineups, but this can quickly lead to a large cognitive burden to sort through more and more null plots. A much more powerful option is to have multiple different viewers of each lineup, with K observers; the probability that at a particular plot was picked at least x times under the null hypothesis is binomially distributed [2, 11] with:
+With the general lack of inference present in exploratory data analysis, how do we attempt to control error in hypothesis testing? In order to use visualisation effectively, we will get the most benefit if the type of graphic display chosen is best suited to the task at hand, be it EDA, MD, or even the presentation of results.
+We then need to find the statistical power of graphics, the ability of a graphical display to convey information on the structure of the data within. This can be found by using the lineup protocol developed in 2009 by Buja et al. [2], which is easily implemented with the nullabor R package.
+They created a statistically rigorous framework with properties explored primarily in Majumder et. al [16] and further in Hofmann et. al [11] that allows us to conduct these hypothesis tests with visual inference, thus to some degree allowing the conjoining of EDA with classical inferential statistics.
+The lineup protocol is inspired in part by the police lineup [27]. We place the plot of the 'true' data generated with some underlying structure (The criminal) in amongst plots of data that were generated from a null distribution (The innocent people). If the real data plot is selected by an uninvolved observer as being most different from the other plots there is evidence that the structure of that data has led to a significant difference in the plot (That the criminal is sufficiently different from the innocents). 
+This constitutes a rejection of the null hypothesis. If one of the null plots is chosen instead then either the plot design did not have the sufficient power to display the true relationship (A Type 2 error in EDA), or the null plot exhibited a strong relationship that was generated randomly and an analyst that saw this plot and decided that the data had some structure would’ve committed a Type 1 error. 
+$p_{i}$, the probability that plot $i$ is chosen in the lineup depends not only on the plot design $d$, but also the signal strength, $q_{i}$, of that plot and of every other competing plot in the lineup. It can be defined as some unknown function $f_{i,d} (q_{1},\dots,q_{20})$ [11]. 
+If the true plot is detected, it indicates that the plot design could convey the desired information about the underlying structure and that the true plot has a greater signal strength than those generated under the null distribution. The plot design that has a human observer selecting the true plot the most often will thus minimise both Type 1 error and Type 2 error in EDA hypothesis testing.
+However, there is the possibility that the true plot was picked by chance, that we have committed a Type 1 error in the lineup test. For a lineup of $m$ plots, the probability of selecting any plot when they are all generated by the null distribution is $1/m$, setting the Type 1 error rate, $\alpha$, of a lineup hypothesis test to equal $1/m$. 
+To control our error rate, it is initially obvious that we can simply change $m$, with an increase in null lineups having an inverse reduction in $\alpha$. We recruit human observers to judge the lineups, but this can quickly lead to a large cognitive burden to sort through more and more null plots. A much more powerful option is to have multiple different viewers of each lineup, with $K$ observers; the probability that at a particular plot was picked at least $x$ times under the null hypothesis is binomially distributed [2, 11] with:
 
 $$p-value = P(X \geq x | H_{0}) = 1 - B_{n, 1/m}(x-1)$$
-
 If all $K$ observers pick the same plot out of a lineup of twenty, we result in a p-value as small as $1/m^K$ . This research used $m= 20$, giving us a significance level (and Type 1 error rate) of $α = 0.05$. The plot of 'true' data is placed randomly amongst 19 null plots to form the lineup.
-
-
-
 \begin{figure}[hbtp]
-\centering
-<<lineup.example, dependson='setup', fig.width=6, fig.height=6, outwidth='0.7//textwidth', echo=FALSE>>=
+  \centering
+<<lineup.example, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE>>=
 set.seed(1234)
 a <- gen_true_data(24, 0.95)
 td <- melt(a, id="t")
@@ -142,22 +197,25 @@ nd_l2 <- data.frame(.n=nd_l$.n[!lg], t=nd_l$t[!lg], variable=nd_l$variable[!lg],
 nd_l2$.n <- nd_l2$.n + 1
 d <- rbind(nd_l1, td, nd_l2)
 
-ggplot(data=d, aes(x=t, y=value, colour=variable)) + geom_line() + facet_wrap(~.n, ncol=4, scales="free_y")  +
+plot <- ggplot(data=d, aes(x=t, y=value, colour=variable)) + geom_line() + facet_wrap(~.n, ncol=4, scales="free_y")  +
     theme_bw() + theme(axis.title.x = element_blank(),
                        axis.title.y = element_blank(),
                        axis.text.x = element_blank(),
                        axis.text.y = element_blank(),
                        axis.ticks = element_blank(),
                        legend.position="none")
+print(plot)
 @
-\caption{Figure 4: A lineup ($m = 20$) of line graphs. Which plot shows the series with the strongest correlation?}
+  \caption{A lineup ($m = 20$) of line graphs. Which plot shows the series with the strongest correlation?}
+  \label{lineup:example}
 \end{figure}
 
 Essentially, the more time our subjects pick the correct plot out of the lineup, the more confident we are that the real plot was visually significantly different to the nulls; and that the type of graphic involved has the power to display association. The lineup effectively allows us to conduct a hypothesis test on visual features, with the competing hypotheses:
-\begin{indent}
-H_0 : There is no association between the two series (evidence for H0: the associated data is indistinguishable from the nulls).
-H_1: There is an association between the two series (evidence against H0: the associated data can be distinguished from the nulls).
-\end{indent}
+
+\begin{itemize}
+  \item $H_{0}$ : There is no association between the two series (evidence for $H_{0}$: the associated data is indistinguishable from the nulls).
+  \item $H_{1}$: There is an association between the two series (evidence against $H_{0}$: the associated data can be distinguished from the nulls).
+\end{itemize}
 
 As the power of a statistical test is defined as the probability of rejecting $H_{0}$ when it is false, the power of a lineup test is viewed as the probability of detecting the true plot. We approximate the power as $\hat\pi = x/K$, where $x$ observers out of $K$ correctly detected the true plot out of the lineup.
 We can them estimate the power difference of competing lineups, $\hat\pi_{1} - \hat\pi_{2}$. An $\alpha \times 100\%$ confidence interval is calculated as [10]:
@@ -169,6 +227,133 @@ Where $\hat\pi_{i} = (x_{i}+1)/(n_{i}+1)$, where $x$ is the number of times a tr
 Some individuals may have a better natural ability at detecting the correct correlation pattern in the graphics, but by having each participant viewing multiple lineups and each lineup being viewed by multiple different participants, this can be controlled via a random effect variable in the model. We recruited participants through Amazon's Mechanical Turk, where the lineup protocol has been applied to a number of problems in prior papers [9, 16, 27]. Amazon’s Mechanical Turk [1] (MTurk) is a labour crowd-sourcing platform developed to give easy access to workers with basic tasks paid in line with the United States minimum wage. MTurk can be used to recruit subjects to read a variety of graphics and report on particular visual tasks. The time taken to decide, confidence in the decision and the reason for that decision can also be recorded. Heer and Bostock [9] use MTurk to replicate previous findings in graphical perception [3] and find that it is a valid method of data collection, once controls to eliminate anyone 'gaming' the system by randomly selecting answers to minimise time spent working are implemented. Further details of our use of Amazons’ Mechanical Turk is included in Section 3. The protocol has successfully been used to measure statistical power as a means to determine plot type superiority in Hofmann et al [10], and this work follows that approach.
 
 \section{Experimental Design}
+
+To allow for a greater control of distributions of the data in the lineups, we use simulated data. The data must contain autocorrelation for there to be meaningful information in the time dimension. To fulfil this requirement, each plot has a standardised pair of AR(1) models defined by:
+
+$$Y_{1,t} = \beta \times Y_{1,t-1} + e_{1,t}$$
+
+$$Y_{2,t} = \beta \times Y_{2,t-1} + e_{2,t}$$
+
+With $t \in \left\{12, 24, 48, 96\right\}$ and $e_{t}$ being generated with from a bivariate normal distribution: 
+
+$$~N(\mu= \left| \begin{array}{c}0 \\0 \end{array} \right|,\hspace{4mm}\Sigma = \left| \begin{array}{cc}1 & \rho \\ \rho & 1\end{array} \right|)$$
+
+The variation in the covariance parameter  allows for control in the correlation in the pairs of data. The null data has no structure, so uncorrelated pairs are produced by setting $\rho = 0$. True data pairs are generated with $\rho = \pm 0.3, 0.5, 0.7, 0.9$. Pilot testing found that the rate of picking the true data plot fell to approximately $5\%$, the $1/m$ rate of randomly picking the true plot, for pairs with correlation below $\rho = 0.3$. Further to this, relationships weaker than this point are often of little interest to analysts. Hence we found it unnecessary to test a more full range of correlations. Simulating data does not produce correlations exactly equal to $\rho$, so imulated data pairs were accepted as real data if pairwise correlation between the two series is within 0.015 of the desired value of $\rho$. The null pairs often had correlation generated spuriously through the simulation process. This was particularly problematic for generating small sample data, but setting, to a maximum of 0.5, for both true and null data reduced spurious correlation to manageable levels.
+For particularly large time series, the AR(1) model can create particularly 'jagged' lines that may be unrealistic for many actual applications. To counter this, additional sets of data were created with a Hodrick-Prescott filter to capture the trend of the model and remove the noise in the cycle component. This filter creates a trend by penalising both errors in smoothness and in fit. The trend of the series, $\tau_{t}$ is defined by the equation:
+
+$$\min_{\tau}(\sum_{t=1}^{T}(y_{t}-\tau_{t})^2 + \lambda \sum_{t=2}^{T-1}[(\tau_{t+1}-\tau_{t})-(\tau_{t}-\tau_{t-1})]^2)$$
+
+
+Setting $\lambda = 1$ produced a smoothing that is more consistent with real world time series applications and did not introduce excessive spurious null correlation. However, for $t = 12, 24$, any form of smoothing was unfeasible without introducing extreme null correlation, hence smoothing was only used for $t = 48, 96$. Each generated lineup was produced as both a scatter plot and an overlaid line graph.
+
+\begin{figure}[hbtp]
+  \centering
+<<smoothing, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE>>=
+set.seed(123)
+uns <- gen_true_data(96, 0.8)
+uns_l <- melt(uns, id="t")
+p1a <- ggplot(data=uns_l, aes(x=t, y=value, colour=variable)) + geom_line() +labs(title="Unsmoothed Overlaid Lines") +
+    theme(axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks = element_blank(),
+          legend.position="none")
+p3a <- ggplot(data=uns, aes(x=X1, y=X2)) + geom_point()+ labs(title="Unsmoothed Scatterplot)") +
+    theme(axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks = element_blank(),
+          legend.position="none")
+
+set.seed(123)
+sm <- gen_true_data(96, 0.8, smoothed = TRUE)
+sm_l <- melt(sm, id="t")
+p2a <- ggplot(data=sm_l, aes(x=t, y=value, colour=variable)) + geom_line() + labs(title="Smoothed Overlaid Lines") +
+      theme(axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks = element_blank(),
+          legend.position="none")
+p4a <- ggplot(data=sm, aes(x=X1, y=X2)) + geom_point() + labs(title="Smoothed Scatterplot") +
+    theme(axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks = element_blank(),
+          legend.position="none")
+
+
+grid.arrange(p1a, p2a, p3a, p4a, ncol=2)
+@
+  \caption{The same AR(1) data both smoothed and unsmoothed. t = 96, correlation = 0.86}
+  \label{smoothing}
+\end{figure}
+
+In this research, we had three basic factors:
+
+\begin{itemize}
+  \item Factor 1: Plot design, levels = scatter plot, overlaid time series
+  \item Factor 2: Sample size, levels = 12, 24, 48, 96
+  \item Factor 3: True plot correlation, levels 
+\end{itemize}
+
+Additionally, there was a fourth factor for  = 48, 96:
+
+\begin{itemize}
+  \item Factor 4: Smoothed, levels = yes, no
+\end{itemize}
+
+Each combination of factors was replicated in three different lineups, giving a total of 288 lineups (2 plots x 8 correlations x 6 sample sizes & smoothness combinations). 
+The position of the actual data plot in the lineup was randomized. The order that the factors are presented to a subject were also randomized, and each subject saw 5 scatter plots and 5 overlaid lines at a range of all absolute correlation levels. Each subject did not see the same data more than once. Subjects were asked to pick the plot in the lineup that has the strongest association, with basic examples of negatively and positively correlated plots. They also answered with reasons for choosing the plot, and the confidence that they have that this really is the plot showing the strongest correlation. Each subject evaluated 10 lineups, plus a further two trials to eliminate people attempted to game the system. If a trial was not answered correctly, the subject could not evaluate the remaining lineups. If it was answered correctly, the trial data was discarded and the subject moved onto the rest of the lineups. Earlier work [15] has found that repeated evaluations from a subject does not increase their ability to detect the true plot from a lineup, justifying our treatment of the results as independent evaluations. We recruited subjects from Amazon's Mechanical Turk service and ensured that each lineup was viewed by multiple subjects. In total there were 2088 lineup evaluations, however to better control each subject’s individual visual ability we removed data from subjects with less than ten individual evaluations leaving us with 1684 evaluated lineups for the analysis.  
+
+\begin{figure}[hbtp]
+  \centering
+<<designs, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE>>=
+set.seed(101)
+a <- gen_true_data(24, 0.95)
+b <- gen_true_data(24, -0.95)
+ca <- cor(a$X1, a$X2)
+cb <- cor(b$X1, b$X2)
+a_l <- melt(a, id="t")
+b_l <- melt(b, id="t")
+p1 <- ggplot(data=a_l, aes(x=t, y=value, colour=variable)) + geom_line() + labs(title="Overlaid line graph") +
+      theme(axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks = element_blank(),
+          legend.position="none")
+p2 <- ggplot(data=b_l, aes(x=t, y=value, colour=variable)) + geom_line() + labs(title="Overlaid line graph") +
+      theme(axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks = element_blank(),
+          legend.position="none")
+p3 <- ggplot(data=a, aes(x=X1, y=X2)) + geom_point() + labs(title="Scatterplot") +
+      theme(axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks = element_blank(),
+          legend.position="none")
+p4 <- ggplot(data=b, aes(x=X1, y=X2)) + geom_point() + labs(title="Scatterplot") +
+      theme(axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks = element_blank(),
+          legend.position="none")
+grid.arrange(p1, p2, p3, p4, ncol=2)
+@
+  \label{designs}
+  \caption{The same two data sets in both plot designs. t=24, correlation (left) = 0.946, correlation (right) = -0.943}
+\end{figure}
+
+The web site that the Turk workers accessed to complete the task can be seen at http://104.236.245.153:8080/mahbub/turk18/index.html.  You can also try out the tasks, but your results will not be recorded. (The experiment cost $210 to run.)
 
 \section{Results}
 

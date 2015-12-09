@@ -507,7 +507,7 @@ pin$r <- factor(pin$r)
 head(pin)
 colnames(pin) <- c("lineup", "plot", "count", "smoothed", "true_pos", "n", "design", "r")
 pin$base <- 0
-pin <- read.csv("pin.csv") #Do this part through R, not excel
+pin$Correlation <- diag(as.matrix(correl[pin$lineup, (pin$plot+2)]))
 pin <- mutate(pin, true = ifelse(plot==true_pos, "True plot", "Null plot"))
 pin <- merge(pin, Turk[,c(2, 16)], by.x = "lineup", by.y = "pic_id")
 pin <- mutate(pin, percent = count/attempt)

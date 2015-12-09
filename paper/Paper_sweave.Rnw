@@ -51,11 +51,9 @@
 
 \if0\blind
 {
-\author{Dianne Cook\\
+\author{Nathaniel Tomasetti and Dianne Cook\\
 Department of Econometrics and Business Statistics, Monash University\\
-and\\
-Nathaniel Tomasetti\\
-Department of Econometrics and Business Statistics, Monash University\\}
+}
   \maketitle
 } \fi
 \if1\blind

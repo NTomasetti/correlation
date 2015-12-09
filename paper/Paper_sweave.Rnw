@@ -499,11 +499,11 @@ counts <- data.frame(table(pin$pic_id, pin$response_0))
 counts$Var1 <- as.integer(counts$Var1)
 counts$Var2 <- as.integer(counts$Var2)
 colnames(counts) <- c("lineup", "plot", "count")
-Turka <- Turk[c(2, 10, 11, 13, 17, 20)]
-pin <- merge(counts, Turka, by.x="lineup", by.y="pic_id")
+pin <- merge(counts, Turk, by.x="lineup", by.y="pic_id")
+pin <- pin[,c(1, 2, 3, 12, 13, 15, 11, 20)]
 pin$r <- factor(pin$r)
-head(pin)
 colnames(pin) <- c("lineup", "plot", "count", "smoothed", "true_pos", "n", "design", "r")
+pin <- mutate(pin, design=ifelse(design=="scatter", "Scatterplot", "Overlaid Lines"), smoothed=ifelse(smoothed=="no", 0, 1))
 pin$base <- 0
 pin$Correlation <- diag(as.matrix(correl[pin$lineup, (pin$plot+2)]))
 pin <- mutate(pin, true = ifelse(plot==true_pos, "True plot", "Null plot"))

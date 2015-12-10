@@ -20,11 +20,6 @@
 \graphicspath{{images/}}
 \DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
 
-\newcommand{\blue}[1]{{\color{blue} #1}}
-\newcommand{\hh}[1]{{\color{magenta} #1}}
-\newcommand{\dc}[1]{{\color{orange} #1}}
-\newcommand{\green}[1]{{\color{cyan} #1}}
-
 \newtheorem{thm}{Theorem}[section]
 \newtheorem{dfn}{Definition}[section]
 \newtheorem{cor}{Corollary}[thm]
@@ -95,9 +90,9 @@ library(gridExtra)
 #library(readr)
 #library(lubridate)
 # Convert these to read_csv at some point
-correl <- read.csv("correlations.csv")
-full <- read.csv("full.csv", row.names=1) 
-Turk <- read.csv("turk.csv") 
+correl <- read.csv("correlations.csv", stringsAsFactors = FALSE)
+full <- read.csv("full.csv", row.names=1, stringsAsFactors = FALSE) 
+Turk <- read.csv("turk.csv", stringsAsFactors = FALSE) 
 
 gen_true_data <- function(n, r, dep=TRUE, smoothed = FALSE) {
   d <- data.frame(rmnorm(n, c(0, 0), matrix(c(1, r, r, 1), 2, 2))) ##True plot, 0.5 for sigma off-diagonals requires ~300 iterations for all lineups.
@@ -205,7 +200,7 @@ To control our error rate, it is initially obvious that we can simply change $m$
 If all $K$ observers pick the same plot out of a lineup of twenty, we result in a p-value as small as $1/m^K$ . This research used $m= 20$, giving us a significance level (and Type 1 error rate) of $α = 0.05$. The plot of 'true' data is placed randomly amongst 19 null plots to form the lineup.
 \begin{figure}[htbp]
   \centering
-<<lineup.example, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE>>=
+<<lineup.example, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE>>=
 set.seed(1234)
 a <- gen_true_data(24, 0.95)
 td <- gather(a, variable, value, c(X1, X2))
@@ -277,7 +272,7 @@ Setting $\lambda = 1$ produced a smoothing that is more consistent with real wor
 
 \begin{figure}[htbp]
   \centering
-<<smoothing, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE>>=
+<<smoothing, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE>>=
 set.seed(123)
 uns <- gen_true_data(96, 0.8)
 uns_l <- gather(uns, variable, value, -t)
@@ -340,7 +335,7 @@ The position of the actual data plot in the lineup was randomized. The order tha
 
 \begin{figure}[htbp]
   \centering
-<<designs, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE>>=
+<<designs, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE>>=
 set.seed(101)
 a <- gen_true_data(24, 0.95)
 b <- gen_true_data(24, -0.95)
@@ -514,41 +509,44 @@ There are two major reasons why a subject may fail to detect the true plot out o
 
 \begin{figure}[htbp]
   \centering
-%<<pins, dependson='samplesize', fig.width=6, fig.height=10, out.width='0.7\\textwidth', echo=FALSE>>=
-\iffalse
+<<pins, dependson='samplesize', fig.width=6, fig.height=10, out.width='0.7\\textwidth', echo=FALSE>>=
+#\iffalse
 # correl <- read.csv("correlations.csv") # You have already read this
 pin <- select(full, pic_id, response_0, actual_location, 
               test_param, smoothed, n) #full[,c(5, 6, 10, 15, 16, 17)]
 # Need to use the tidyr commands instead of cSplit
 # Here's where we will need to make some changes to incorporate the multiple picks
-pin <- pin %>% transform(response_0= strsplit(as.character(response_0), ",")) %>% unnest(response_0)
-pin$response_0 <- as.integer(pin$response_0)
-counts <- data.frame(table(pin$pic_id, pin$response_0))
+#pin <- pin %>% transform(response_0= strsplit(as.character(response_0), ",")) %>% unnest(response_0)
+#pin$response_0 <- separate(pin, response_0, "response_0", sep=",", extra="drop")
+pin$choice <- separate(pin, response_0, c("choice", "l1", "l2"), ",", extra="drop")$choice
+pin$choice[str_detect(pin$actual_location, pin$response_0)] <- 
+  pin$actual_location[str_detect(pin$actual_location, pin$response_0)]
+                         #as.integer(pin$response_0)
+counts <- data.frame(table(pin$pic_id, pin$choice))
 counts$Var1 <- as.integer(counts$Var1)
 counts$Var2 <- as.integer(counts$Var2)
 colnames(counts) <- c("lineup", "plot", "count")
 pin <- merge(counts, Turk, by.x="lineup", by.y="pic_id")
-pin <- select(pin, lineup, plot, count, smoothed, true_pos, n, test_param, r)#pin[,c(1, 2, 3, 12, 13, 15, 11, 20)]
+pin <- select(pin, lineup, plot.x, count, smoothed, true_pos, n, test_param, r)#pin[,c(1, 2, 3, 12, 13, 15, 11, 20)]
 pin$r <- factor(pin$r)
 colnames(pin) <- c("lineup", "plot", "count", "smoothed", "true_pos", "n", "design", "r")
-pin <- mutate(pin, design=ifelse(design=="scatter", "Scatterplot", "Overlaid Lines"))#, smoothed=ifelse(smoothed=="no", 0, 1))
+pin <- mutate(pin, design=ifelse(design=="scatter", "Scatterplot", "Overlaid Lines")) #, smoothed=ifelse(smoothed=="no", 0, 1))
 pin$base <- 0
 pin$Correlation <- diag(as.matrix(correl[pin$lineup, (pin$plot+2)]))
 pin <- mutate(pin, true = ifelse(plot==true_pos, "True plot", "Null plot"))
 pin <- merge(pin, Turk[,c(2, 16)], by.x = "lineup", by.y = "pic_id")
 pin <- mutate(pin, percent = count/attempt)
-ggplot(data=subset(pin, smoothed=="no" & design == "Scatterplot")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
+ggplot(data=filter(pin, smoothed==0 & design == "Scatterplot")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
        geom_point(aes(x=Correlation, y=percent, colour=true)) + coord_fixed() + facet_grid(n~r) + labs(title="Unsmoothed Scatterplot", y="Percent Chosen") + theme(legend.position="none")
-ggplot(data=subset(pin, smoothed=="yes" & design == "Scatterplot")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
+ggplot(data=subset(pin, smoothed==1 & design == "Scatterplot")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
   geom_point(aes(x=Correlation, y=percent, colour=true)) + coord_fixed()  + facet_grid(n~r) + labs(title="Smoothed Scatterplot", y="Percent Chosen") + theme(legend.position="none")
-ggplot(data=subset(pin, smoothed=="no" & design == "Overlaid Lines")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
+ggplot(data=subset(pin, smoothed==0 & design == "Overlaid Lines")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
   geom_point(aes(x=Correlation, y=percent, colour=true)) + coord_fixed()  + facet_grid(n~r) + labs(title="Unsmoothed Overlaid Lines", y="Percent Chosen") + theme(legend.position="none")
-ggplot(data=subset(pin, smoothed=="yes" & design == "Overlaid Lines")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
+ggplot(data=subset(pin, smoothed==1 & design == "Overlaid Lines")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
   geom_point(aes(x=Correlation, y=percent, colour=true)) + coord_fixed()  + facet_grid(n~r) + labs(title="Smoothed Overlaid Lines", y="Percent Chosen") + theme(legend.position="none")
-
 #Code to be fixed
-\fi
-%@
+#\fi
+@
 
   \label{pins}
   \caption{Pin plots of the subject selections of each lineup. On the x-axis is the correlation of the plot (there is potentially spurious correlation in the null plots), and on the y-axis is the proportion a plot was chosen. Red pins indicate null plots and blue indicates the true plot, occasionally the true plot does not appear as it has a frequency of zero and is visually blocked by the red pins. The pin plots are split with true plot correlation on the columns and sample size on the rows. Each plot contains information from all three lineups with that unique combination of factors: plot design, smoothness, sample size and true correlation.}

@@ -82,8 +82,8 @@ Visual inference in EDA is prone to type 1 errors from the over-interpretation o
 library(lme4)
 library(ggplot2)
 library(mnormt)
-library(reshape2)
-# Convert reshape2 to tidyr, melt to gather
+library(tidyr)
+# Convert reshape2 to tidyr, melt to gather - done
 library(nullabor)
 library(dplyr)
 library(mFilter)
@@ -210,10 +210,10 @@ If all $K$ observers pick the same plot out of a lineup of twenty, we result in 
 <<lineup.example, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE>>=
 set.seed(1234)
 a <- gen_true_data(24, 0.95)
-td <- melt(a, id="t") 
+td <- gather(a, variable, value, c(X1, X2))
 b <- gen_null(24)
 b$.n <- NULL
-nd_l <- melt(b, id="t")
+nd_l <- gather(b, variable, value, c(X1, X2))
 nd_l$.n <- rep(1:19, rep(24, 19))
 pos <- 7
 td <- data.frame(.n=rep(pos, nrow(td)), td)
@@ -282,7 +282,7 @@ Setting $\lambda = 1$ produced a smoothing that is more consistent with real wor
 <<smoothing, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE>>=
 set.seed(123)
 uns <- gen_true_data(96, 0.8)
-uns_l <- melt(uns, id="t")
+uns_l <- gather(uns, variable, value, -t)
 p1a <- ggplot(data=uns_l, aes(x=t, y=value, colour=variable)) + geom_line() +labs(title="Unsmoothed Overlaid Lines") +
     theme(axis.title.x = element_blank(),
           axis.title.y = element_blank(),
@@ -300,7 +300,7 @@ p3a <- ggplot(data=uns, aes(x=X1, y=X2)) + geom_point()+ labs(title="Unsmoothed 
 
 set.seed(123)
 sm <- gen_true_data(96, 0.8, smoothed = TRUE)
-sm_l <- melt(sm, id="t")
+sm_l <- gather(sm, variable, value, -t)
 p2a <- ggplot(data=sm_l, aes(x=t, y=value, colour=variable)) + geom_line() + labs(title="Smoothed Overlaid Lines") +
       theme(axis.title.x = element_blank(),
           axis.title.y = element_blank(),
@@ -348,8 +348,8 @@ a <- gen_true_data(24, 0.95)
 b <- gen_true_data(24, -0.95)
 ca <- cor(a$X1, a$X2)
 cb <- cor(b$X1, b$X2)
-a_l <- melt(a, id="t")
-b_l <- melt(b, id="t")
+a_l <- gather(a, variable, value, -t)
+b_l <- gather(b, variable, value, -t)
 p1 <- ggplot(data=a_l, aes(x=t, y=value, colour=variable)) + geom_line() + labs(title="Overlaid line graph") +
       theme(axis.title.x = element_blank(),
           axis.title.y = element_blank(),

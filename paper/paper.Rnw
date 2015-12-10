@@ -84,12 +84,13 @@ library(ggplot2)
 library(mnormt)
 library(tidyr)
 # Convert reshape2 to tidyr, melt to gather - done
+#library(reshape2)
 library(nullabor)
 library(dplyr)
 library(mFilter)
 library(grid)
 library(gridExtra)
-library(splitstackshape)
+#library(splitstackshape) - changed cSplit to unnest
 library(readr)
 library(lubridate)
 # Convert these to read_csv at some point
@@ -522,7 +523,7 @@ pin <- select(full, pic_id, response_0, actual_location,
               test_param, smoothed, n) #full[,c(5, 6, 10, 15, 16, 17)]
 # Need to use the tidyr commands instead of cSplit
 # Here's where we will need to make some changes to incorporate the multiple picks
-pin <- cSplit(pin, "response_0", direction="long")
+pin <- pin %>% transform(response_0= strsplit(as.character(response_0), ",")) %>% unnest(response_0)
 counts <- data.frame(table(pin$pic_id, pin$response_0))
 counts$Var1 <- as.integer(counts$Var1)
 counts$Var2 <- as.integer(counts$Var2)

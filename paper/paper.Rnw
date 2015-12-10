@@ -41,6 +41,7 @@
 
 
 \begin{document}
+\SweaveOpts{concordance=TRUE}
 
 \def\spacingset#1{\renewcommand{\baselinestretch}%
 {#1}\small\normalsize} \spacingset{1}
@@ -78,7 +79,7 @@ Visual inference in EDA is prone to type 1 errors from the over-interpretation o
 \newpage
 \spacingset{1.45} % DON'T change the spacing!
 \newpage
-<<setup, echo=FALSE, results='hide', message=FALSE, error=FALSE, warning=FALSE>>=
+<<setup, echo=FALSE, results=hide, message=FALSE, error=FALSE, warning=FALSE>>=
 library(lme4)
 library(ggplot2)
 library(mnormt)
@@ -91,8 +92,8 @@ library(mFilter)
 library(grid)
 library(gridExtra)
 #library(splitstackshape) - changed cSplit to unnest
-library(readr)
-library(lubridate)
+#library(readr)
+#library(lubridate)
 # Convert these to read_csv at some point
 correl <- read.csv("correlations.csv")
 full <- read.csv("full.csv", row.names=1) 
@@ -524,12 +525,13 @@ pin <- select(full, pic_id, response_0, actual_location,
 # Need to use the tidyr commands instead of cSplit
 # Here's where we will need to make some changes to incorporate the multiple picks
 pin <- pin %>% transform(response_0= strsplit(as.character(response_0), ",")) %>% unnest(response_0)
+pin$response_0 <- as.integer(pin$response_0)
 counts <- data.frame(table(pin$pic_id, pin$response_0))
 counts$Var1 <- as.integer(counts$Var1)
 counts$Var2 <- as.integer(counts$Var2)
 colnames(counts) <- c("lineup", "plot", "count")
 pin <- merge(counts, Turk, by.x="lineup", by.y="pic_id")
-pin <- select(pin, lineup, plot.x, count, smoothed, true_pos, n, test_param, r)#pin[,c(1, 2, 3, 12, 13, 15, 11, 20)]
+pin <- select(pin, lineup, plot, count, smoothed, true_pos, n, test_param, r)#pin[,c(1, 2, 3, 12, 13, 15, 11, 20)]
 pin$r <- factor(pin$r)
 #colnames(pin) <- c("lineup", "plot", "count", "smoothed", "true_pos", "n", "design", "r")
 pin <- mutate(pin, design=ifelse(test_param=="scatter", "Scatterplot", "Overlaid Lines"))#, smoothed=ifelse(smoothed=="no", 0, 1))
@@ -538,13 +540,13 @@ pin$Correlation <- diag(as.matrix(correl[pin$lineup, (pin$plot+2)]))
 pin <- mutate(pin, true = ifelse(plot==true_pos, "True plot", "Null plot"))
 pin <- merge(pin, Turk[,c(2, 16)], by.x = "lineup", by.y = "pic_id")
 pin <- mutate(pin, percent = count/attempt)
-ggplot(data=subset(pin, smoothed==0 & design == "Scatterplot")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
+ggplot(data=subset(pin, smoothed=="no" & design == "Scatterplot")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
        geom_point(aes(x=Correlation, y=percent, colour=true)) + coord_fixed() + facet_grid(n~r) + labs(title="Unsmoothed Scatterplot", y="Percent Chosen") + theme(legend.position="none")
-ggplot(data=subset(pin, smoothed==1 & design == "Scatterplot")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
+ggplot(data=subset(pin, smoothed=="yes" & design == "Scatterplot")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
   geom_point(aes(x=Correlation, y=percent, colour=true)) + coord_fixed()  + facet_grid(n~r) + labs(title="Smoothed Scatterplot", y="Percent Chosen") + theme(legend.position="none")
-ggplot(data=subset(pin, smoothed==0 & design == "Overlaid Lines")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
+ggplot(data=subset(pin, smoothed=="no" & design == "Overlaid Lines")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
   geom_point(aes(x=Correlation, y=percent, colour=true)) + coord_fixed()  + facet_grid(n~r) + labs(title="Unsmoothed Overlaid Lines", y="Percent Chosen") + theme(legend.position="none")
-ggplot(data=subset(pin, smoothed==1 & design == "Overlaid Lines")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
+ggplot(data=subset(pin, smoothed=="yes" & design == "Overlaid Lines")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
   geom_point(aes(x=Correlation, y=percent, colour=true)) + coord_fixed()  + facet_grid(n~r) + labs(title="Smoothed Overlaid Lines", y="Percent Chosen") + theme(legend.position="none")
 
 #Code to be fixed
@@ -581,7 +583,7 @@ Where $\psi$ is the logit link function, $\psi(x) = \frac{e^{x}}{1+e^{x}}$, $r$ 
 
 Table 1: Mixed Effects Logit Model for the predicted power of plot design. Sign = 1 if correlation > 0, 0 otherwise. Each plot design is estimated separately. Results must be transformed via the logit link function to generate a power prediction. Subjects with less than ten lineup evaluations were removed from the sample. Sample size for scatter plot model: 841, overlaid lines model: 843. The model is fitted using the lme4 package in 
 
-<<powerfit, dependson='setup', echo=FALSE, results='hide', message=FALSE, error=FALSE, warning=FALSE>>=
+<<powerfit, dependson='setup', echo=FALSE, results=hide, message=FALSE, error=FALSE, warning=FALSE>>=
 full$subj_id <- factor(full$ip_address, labels=1:207)
 
 # Need to keep only evaluations done by subject who completed at least 10
@@ -685,7 +687,7 @@ A similar setup rejects the symmetric performance of the overlaid line graphs wi
 
 Table 2: Mixed Effects Linear Model with the dependent variable log(time). Sign = 1 if correlation > 0, 0 otherwise. Both plot designs estimated together with Overlaid Lines as the base design. Sample size: 1684. The model is fitted using the lme4 package in R.
 
-<<timefit, dependson='powerfit', echo=FALSE, results='hide', message=FALSE, error=FALSE, warning=FALSE>>=
+<<timefit, dependson='powerfit', echo=FALSE, results=hide, message=FALSE, error=FALSE, warning=FALSE>>=
 timelmer <-  lmer(log_time ~ smoothed + r + n + rsgn*r + test_param + test_param*smoothed 
                   + test_param*r + test_param*n + test_param*rsgn*r + test_param*correct + (1|subj_id), data=full.sub)
 @

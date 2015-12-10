@@ -9,12 +9,12 @@
 \usepackage{subcaption}
 \usepackage{graphicx}
 \usepackage{amsmath}
-\usepackage{dsfont}
+%\usepackage{dsfont}
 \usepackage{amsthm}
 \usepackage{amsfonts}
 \usepackage{url}
 \usepackage{ulem}
-\usepackage[section]{placeins}
+%\usepackage[section]{placeins}
 \usepackage{afterpage}
 
 \graphicspath{{figure/}}
@@ -78,7 +78,10 @@ Visual inference in EDA is prone to type 1 errors from the over-interpretation o
 \newpage
 \spacingset{1.45} % DON'T change the spacing!
 \newpage
+
+
 <<setup, echo=FALSE, results='hide', message=FALSE, error=FALSE, warning=FALSE>>=
+opts_chunk$set(cache=FALSE)
 library(lme4)
 library(ggplot2)
 library(mnormt)
@@ -510,8 +513,8 @@ colnames(counts) <- c("lineup", "plot", "count")
 pin <- merge(counts, Turk, by.x="lineup", by.y="pic_id")
 pin <- select(pin, lineup, plot.x, count, smoothed, true_pos, n, test_param, r)#pin[,c(1, 2, 3, 12, 13, 15, 11, 20)]
 pin$r <- factor(pin$r)
-#colnames(pin) <- c("lineup", "plot", "count", "smoothed", "true_pos", "n", "design", "r")
-pin <- mutate(pin, design=ifelse(test_param=="scatter", "Scatterplot", "Overlaid Lines"))#, smoothed=ifelse(smoothed=="no", 0, 1))
+colnames(pin) <- c("lineup", "plot", "count", "smoothed", "true_pos", "n", "design", "r")
+pin <- mutate(pin, design=ifelse(design=="scatter", "Scatterplot", "Overlaid Lines"))#, smoothed=ifelse(smoothed=="no", 0, 1))
 pin$base <- 0
 pin$Correlation <- diag(as.matrix(correl[pin$lineup, (pin$plot+2)]))
 pin <- mutate(pin, true = ifelse(plot==true_pos, "True plot", "Null plot"))
@@ -572,9 +575,9 @@ full.sub$rsgn <- ifelse(full.sub$r >= 0, 1, 0)
 full.sub$rabs <- abs(full.sub$r)
 full.sub$rabs <- factor(full.sub$rabs)
 full.sub$plot <- ifelse(full.sub$test_param == 0, "S", "L")
-full.sub <- full.sub[,c(1,7, 15,16,17,20:26)]
-full.sub$rpos <- ifelse(full.sub$r > 0, full.sub$r, 0)
-full.sub$rneg <- ifelse(full.sub$r < 0, full.sub$r, 0)
+full.sub <- select(full.sub, subj_id, correct, r, rsgn, smoothed, n, plot, log_time)#[,c(1,7, 15,16,17,20:26)]
+#full.sub$rpos <- ifelse(full.sub$r > 0, full.sub$r, 0)
+#full.sub$rneg <- ifelse(full.sub$r < 0, full.sub$r, 0)
 full.sub$alpha <- log(.05/0.95)
 
 m8l <- glmer(correct~offset(alpha) + r + rsgn + r*rsgn + smoothed + n + (1|subj_id), data=filter(full.sub, plot == "L"), family="binomial")
@@ -665,8 +668,8 @@ A similar setup rejects the symmetric performance of the overlaid line graphs wi
 Table 2: Mixed Effects Linear Model with the dependent variable log(time). Sign = 1 if correlation > 0, 0 otherwise. Both plot designs estimated together with Overlaid Lines as the base design. Sample size: 1684. The model is fitted using the lme4 package in R.
 
 <<timefit, dependson='powerfit', echo=FALSE, results='hide', message=FALSE, error=FALSE, warning=FALSE>>=
-timelmer <-  lmer(log_time ~ smoothed + r + n + rsgn*r + test_param + test_param*smoothed 
-                  + test_param*r + test_param*n + test_param*rsgn*r + test_param*correct + (1|subj_id), data=full.sub)
+timelmer <-  lmer(log_time ~ smoothed + r + n + rsgn*r + plot + plot*smoothed 
+                  + plot*r + plot*n + plot*rsgn*r + plot*correct + (1|subj_id), data=full.sub)
 @
 %get table code
 

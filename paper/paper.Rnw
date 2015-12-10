@@ -9,12 +9,12 @@
 \usepackage{subcaption}
 \usepackage{graphicx}
 \usepackage{amsmath}
-%\usepackage{dsfont}
+\usepackage{dsfont}
 \usepackage{amsthm}
 \usepackage{amsfonts}
 \usepackage{url}
 \usepackage{ulem}
-%\usepackage[section]{placeins}
+\usepackage[section]{placeins}
 \usepackage{afterpage}
 
 \graphicspath{{images/}}
@@ -159,7 +159,7 @@ On its own, with a single plot, because of random sampling in collecting data, i
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics{cnyline}
+  \includegraphics[width=0.5\textwidth]{cnyline}
   \caption{Exchange rates for Australian dollars and Chinese yuan against the United States dollar from Mar 30-May 2, 2015, shown as overlaid time series. (Both sets of values were standardized to bring them to the same scale for plotting.) What would you report the correlation between the two series to be?}
   \label{cny}
 \end{figure}
@@ -168,12 +168,8 @@ In this research we utilise the methods in visual inference to study plot design
 
 \begin{figure}[htbp]
   \centering
-  \begin{subfigure}
-    \includegraphics{nzdscatter}
-  \end{subfigure}
-  \begin{subfigure}
-    \includegraphics{nzdline}
-  \end{subfigure}
+    \centerline{\includegraphics[width=0.45\textwidth]{nzdscatter}
+    \includegraphics[width=0.45\textwidth]{nzdline}}
   \caption{Exchange rates for Australian and NZ dollars against US dollar, from Mar 30-May 2, 2015, shown using a scatterplot (left) and overlaid line graph (right). Which one can you read the correlation from more accurately? Point-wise correlation between the two series, ignoring autodependence, is 0.64.}
   \label{nzd}
 \end{figure}
@@ -182,7 +178,7 @@ To decide on an appropriate display requires awareness of cognitive principles i
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics{murders}
+  \includegraphics[width=0.5\textwidth]{murders}
   \caption{[19] Murders in New York State (Orange) and New York City (Blue). The difference between the two represents murders outside of the city. What size would you judge the difference to be in 1994?}
   \label{murder}
 \end{figure}
@@ -562,14 +558,14 @@ Occasionally there was an anomaly where a single null plot was selected with a h
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics{anom1}
+  \includegraphics[width=0.5\textwidth]{anom1}
   \label{anom1}
   \caption{A lineup of unsmoothed overlaid lines with a sample size of 12 and true correlation of -0.707. The true plot in position 8 was not detected in five evaluations. However, plot 13 was selected four times, (p –value < 0.001) despite having a correlation of only 0.225. When asked for a reason of their selections, subjects answered that the lines were closest together.}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics{anom2}
+  \includegraphics[width=0.5\textwidth]{anom2}
   \label{anom2}
   \caption{A lineup of unsmoothed scatter plots with a sample size of 24. The true plot is located in position 4 with a correlation of -0.491, and was selected by one out of eleven observers (p = 0.33, see formula \ref{eq:1}). The plot in position 6 was selected by nine of these eleven observers (p < 0.001) despite having a correlation of -0.037. This null plot shows a unique clustering effect that draws in the observer despite not having any linear relationship in the data, an example of the over-interpretation of randomness. Subjects most often cited the clustering pattern formed as the reason for their selection. The final selection was position 8, with a correlation of -0.226 (p = 0.33).}
 \end{figure}

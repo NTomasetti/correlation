@@ -45,8 +45,6 @@
 \def\spacingset#1{\renewcommand{\baselinestretch}%
 {#1}\small\normalsize} \spacingset{1}
 
-\SweaveOpts{concordance=TRUE}
-
 \title{\bf Comparing the Power of Plot Designs to Reveal Correlation}
 
 \if0\blind
@@ -80,19 +78,23 @@ Visual inference in EDA is prone to type 1 errors from the over-interpretation o
 \newpage
 \spacingset{1.45} % DON'T change the spacing!
 \newpage
-<<setup, echo=FALSE, results=hide, message=FALSE, error=FALSE, warning=FALSE>>=
+<<setup, echo=FALSE, results='hide', message=FALSE, error=FALSE, warning=FALSE>>=
 library(lme4)
 library(ggplot2)
 library(mnormt)
 library(reshape2)
+# Convert reshape2 to tidyr, melt to gather
 library(nullabor)
 library(dplyr)
 library(mFilter)
 library(grid)
 library(gridExtra)
 library(splitstackshape)
+library(readr)
+library(lubridate)
+# Convert these to read_csv at some point
 correl <- read.csv("correlations.csv")
-full <- read.csv("full.csv") 
+full <- read.csv("full.csv", row.names=1) 
 Turk <- read.csv("turk.csv") 
 
 gen_true_data <- function(n, r, dep=TRUE, smoothed = FALSE) {
@@ -188,7 +190,7 @@ If all $K$ observers pick the same plot out of a lineup of twenty, we result in 
 <<lineup.example, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE>>=
 set.seed(1234)
 a <- gen_true_data(24, 0.95)
-td <- melt(a, id="t")
+td <- melt(a, id="t") 
 b <- gen_null(24)
 b$.n <- NULL
 nd_l <- melt(b, id="t")
@@ -269,7 +271,7 @@ p1a <- ggplot(data=uns_l, aes(x=t, y=value, colour=variable)) + geom_line() +lab
           axis.ticks = element_blank(),
           legend.position="none")
 p3a <- ggplot(data=uns, aes(x=X1, y=X2)) + geom_point()+ labs(title="Unsmoothed Scatterplot)") +
-    theme(axis.title.x = element_blank(),
+    theme(aspect.ratio=1, axis.title.x = element_blank(),
           axis.title.y = element_blank(),
           axis.text.x = element_blank(),
           axis.text.y = element_blank(),
@@ -287,7 +289,7 @@ p2a <- ggplot(data=sm_l, aes(x=t, y=value, colour=variable)) + geom_line() + lab
           axis.ticks = element_blank(),
           legend.position="none")
 p4a <- ggplot(data=sm, aes(x=X1, y=X2)) + geom_point() + labs(title="Smoothed Scatterplot") +
-    theme(axis.title.x = element_blank(),
+    theme(aspect.ratio=1, axis.title.x = element_blank(),
           axis.title.y = element_blank(),
           axis.text.x = element_blank(),
           axis.text.y = element_blank(),
@@ -343,14 +345,14 @@ p2 <- ggplot(data=b_l, aes(x=t, y=value, colour=variable)) + geom_line() + labs(
           axis.ticks = element_blank(),
           legend.position="none")
 p3 <- ggplot(data=a, aes(x=X1, y=X2)) + geom_point() + labs(title="Scatterplot") +
-      theme(axis.title.x = element_blank(),
+      theme(aspect.ratio=1, axis.title.x = element_blank(),
           axis.title.y = element_blank(),
           axis.text.x = element_blank(),
           axis.text.y = element_blank(),
           axis.ticks = element_blank(),
           legend.position="none")
 p4 <- ggplot(data=b, aes(x=X1, y=X2)) + geom_point() + labs(title="Scatterplot") +
-      theme(axis.title.x = element_blank(),
+      theme(aspect.ratio=1, axis.title.x = element_blank(),
           axis.title.y = element_blank(),
           axis.text.x = element_blank(),
           axis.text.y = element_blank(),
@@ -411,7 +413,7 @@ ggplot(data=prop) + geom_line(aes(x=r, y=difference), colour="#99CC99", size=2) 
 \begin{figure}[htbp]
   \centering
 <<samplesize, dependson='powerdiff', fig.width=6, fig.height=8, out.width='0.7\\textwidth', echo=FALSE>>=
-ggplot(data=subset(Turk, smoothed==0), aes(x=correlation, y=percent, colour=factor(n))) + geom_smooth(se=F) + geom_point() + facet_grid(plot~.) + scale_colour_discrete(name = "Sample size") +  labs(title="Effect of sample size, with unsmoothed data", y="Percent Correct", x="Correlation") + theme(legend.position="bottom")}
+ggplot(data=subset(Turk, smoothed==0), aes(x=correlation, y=percent, colour=factor(n))) + geom_smooth(se=F) + geom_point() + facet_grid(plot~.) + scale_colour_discrete(name = "Sample size") +  labs(title="Effect of sample size, with unsmoothed data", y="Percent Correct", x="Correlation") + theme(legend.position="bottom")
 @
  \label{samplesize}
  \caption{Effects of increasing sample size for unsmoothed data. Both plot designs appear to benefit from increased sample sizes}
@@ -477,11 +479,14 @@ full$subj_id <- factor(full$ip_address, labels=1:207)
 y <- data.frame(table(full$subj_id))
 keep2 <- y$Var1[y$Freq>9]
 sub <- filter(full, subj_id %in% keep2)
-sub <- sub[c(7, 15, 16, 17, 20, 27)]
-sub <- summarise(group_by(sub, subj_id), correct = sum(correct), conf=mean(conf_level))
-sub <- merge(sub, y, by.x="subj_id", by.y="Var1")
-sub <- mutate(sub, prop = correct/Freq)
-ggplot(data=sub, aes(x=conf, y= prop)) + geom_point() + labs(title="Accuracy versus Confidence", y = "Accuracy", x = "Average Confidence")
+sub <- select(sub, conf_level, correlation, test_param, smoothed, n, correct, sign, plot, subj_id) #c(7, 15, 16, 17, 20, 27)]
+#sub <- summarise(group_by(sub, subj_id), correct = sum(correct), conf=mean(conf_level))
+#sub <- merge(sub, y, by.x="subj_id", by.y="Var1")
+#sub <- mutate(sub, prop = correct/Freq)
+qplot(correlation, 6-conf_level, data=sub, alpha=I(0.1)) + 
+  geom_smooth(method="loess") + 
+  facet_grid(n~plot+smoothed) +
+  labs(x = "Correlation", y = "Confidence (5=High, 1=Low)")
 @
   \label{confidence2}
   \caption{Individual subject accuracy versus confidence. There does not appear to be any relationship between the two.}
@@ -492,18 +497,21 @@ There are two major reasons why a subject may fail to detect the true plot out o
 \begin{figure}[htbp]
   \centering
 <<pins, dependson='samplesize', fig.width=6, fig.height=10, out.width='0.7\\textwidth', echo=FALSE>>=
-correl <- read.csv("correlations.csv")
-pin <- full[c(5, 6, 10, 15, 16, 17)]
+# correl <- read.csv("correlations.csv") # You have already read this
+pin <- select(full, pic_id, response_0, actual_location, 
+              test_param, smoothed, n) #full[,c(5, 6, 10, 15, 16, 17)]
+# Need to use the tidyr commands instead of cSplit
+# Here's where we will need to make some changes to incorporate the multiple picks
 pin <- cSplit(pin, "response_0", direction="long")
 counts <- data.frame(table(pin$pic_id, pin$response_0))
 counts$Var1 <- as.integer(counts$Var1)
 counts$Var2 <- as.integer(counts$Var2)
 colnames(counts) <- c("lineup", "plot", "count")
 pin <- merge(counts, Turk, by.x="lineup", by.y="pic_id")
-pin <- pin[,c(1, 2, 3, 12, 13, 15, 11, 20)]
+pin <- select(pin, lineup, plot.x, count, smoothed, true_pos, n, test_param, r)#pin[,c(1, 2, 3, 12, 13, 15, 11, 20)]
 pin$r <- factor(pin$r)
-colnames(pin) <- c("lineup", "plot", "count", "smoothed", "true_pos", "n", "design", "r")
-pin <- mutate(pin, design=ifelse(design=="scatter", "Scatterplot", "Overlaid Lines"), smoothed=ifelse(smoothed=="no", 0, 1))
+#colnames(pin) <- c("lineup", "plot", "count", "smoothed", "true_pos", "n", "design", "r")
+pin <- mutate(pin, design=ifelse(test_param=="scatter", "Scatterplot", "Overlaid Lines"))#, smoothed=ifelse(smoothed=="no", 0, 1))
 pin$base <- 0
 pin$Correlation <- diag(as.matrix(correl[pin$lineup, (pin$plot+2)]))
 pin <- mutate(pin, true = ifelse(plot==true_pos, "True plot", "Null plot"))
@@ -551,7 +559,8 @@ $$Power_{i} = \psi\left\{ \beta_{i,0} + \beta_{i,1} \cdot Correlation + \beta_{i
 Where $\psi$ is the logit link function, $\psi(x) = \frac{e^{x}}{1+e^{x}}$, $r$ is the true plot correlation, Sign is the direction of the true plot correlation, $i$  is the plot design and $j$ is an observer specific random effect.
 
 Table 1: Mixed Effects Logit Model for the predicted power of plot design. Sign = 1 if correlation > 0, 0 otherwise. Each plot design is estimated separately. Results must be transformed via the logit link function to generate a power prediction. Subjects with less than ten lineup evaluations were removed from the sample. Sample size for scatter plot model: 841, overlaid lines model: 843. The model is fitted using the lme4 package in 
-<<powerfit, dependson='setup', echo=FALSE, results=hide, message=FALSE, error=FALSE, warning=FALSE>>=
+
+<<powerfit, dependson='setup', echo=FALSE, results='hide', message=FALSE, error=FALSE, warning=FALSE>>=
 full$subj_id <- factor(full$ip_address, labels=1:207)
 
 # Need to keep only evaluations done by subject who completed at least 10
@@ -568,8 +577,8 @@ full.sub$rpos <- ifelse(full.sub$r > 0, full.sub$r, 0)
 full.sub$rneg <- ifelse(full.sub$r < 0, full.sub$r, 0)
 full.sub$alpha <- log(.05/0.95)
 
-m8l <- glmer(correct~offset(alpha) + r + rsgn + r*rsgn + smoothed + n + (1|subj_id), data=subset(full.sub, plot == "L"), family="binomial")
-m8s <- glmer(correct~offset(alpha) + r + rsgn + r*rsgn + smoothed + n + (1|subj_id), data=subset(full.sub, plot == "S"), family="binomial")
+m8l <- glmer(correct~offset(alpha) + r + rsgn + r*rsgn + smoothed + n + (1|subj_id), data=filter(full.sub, plot == "L"), family="binomial")
+m8s <- glmer(correct~offset(alpha) + r + rsgn + r*rsgn + smoothed + n + (1|subj_id), data=filter(full.sub, plot == "S"), family="binomial")
 @
 %Code to make a table to be added
 
@@ -654,7 +663,8 @@ The unrestricted model has a log-likelihood value of -346.9, where the restricte
 A similar setup rejects the symmetric performance of the overlaid line graphs with a log likelihood ratio test statistic of 105.30 (p-value < 0.001). Such an extreme result is due to a systematic difference in the overlaid line graph and cannot be attributed simply to bias.
 
 Table 2: Mixed Effects Linear Model with the dependent variable log(time). Sign = 1 if correlation > 0, 0 otherwise. Both plot designs estimated together with Overlaid Lines as the base design. Sample size: 1684. The model is fitted using the lme4 package in R.
-<<timefit, dependson='powerfit', echo=FALSE, results=hide, message=FALSE, error=FALSE, warning=FALSE>>=
+
+<<timefit, dependson='powerfit', echo=FALSE, results='hide', message=FALSE, error=FALSE, warning=FALSE>>=
 timelmer <-  lmer(log_time ~ smoothed + r + n + rsgn*r + test_param + test_param*smoothed 
                   + test_param*r + test_param*n + test_param*rsgn*r + test_param*correct + (1|subj_id), data=full.sub)
 @

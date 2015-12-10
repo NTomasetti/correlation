@@ -86,6 +86,7 @@ library(dplyr)
 library(mFilter)
 library(grid)
 library(gridExtra)
+library(stringr)
 #library(splitstackshape) - changed cSplit to unnest
 #library(readr)
 #library(lubridate)
@@ -393,6 +394,7 @@ ggplot(data=Turk, aes(x=correlation, y=percent, colour=plot)) + geom_smooth(se=F
 @
   \label{results}
   \caption{Response accuracy for unsmoothed data, broken by unsmoothed (left), smoothed (right) and sample size. The dots are data points, the lines represent a naive model average fit. Scatter plots generally showed superior performance, with the overlaid line graphs being particularly weak at revealing negative correlation}
+\end{figure}
 
 Figure~\ref{results} shows the raw results of the survey and Figure~\ref{powerdiff} shows the difference in power with a $95\%$ confidence interval calculated according to the formula in \ref{eq:2}. Values above zero indicate that the scatter plot had more power to detect the true plot than the overlaid lines.
 Performance between the two plot designs appears to be similar for positive correlation, with the scatter plot power gradually improving relative to the overlaid lines as sample size increases. The scatter plot appears to be the superior choice as it retains its power with negative correlation, where the overlaid lines performance suffered. This is not surprising, as positive and negative correlation appear as symmetric graphs in the scatter plot but the two characteristics appear very differently in the overlaid line graph (Figure~\ref{designs}). The right side shows the performance benefits of smoothing overlaid line time series data. Much of the 'noise' in the time series is removed and studying the overall trend shows a greatly improved ability to successfully detect the true data plot when it is negatively correlated. The scatter plot still appears to be the superior plot, but much of the gap between the two is reduced for positive correlation. 
@@ -421,7 +423,7 @@ ggplot(data=prop) + geom_line(aes(x=r, y=difference), colour="#99CC99", size=2) 
 @
  \label{powerdiff}
  \caption{Difference in estimated power to reveal the true plot by smoothness and sample size with a 95\% confidence interval. Values above zero indicate the scatter plot is more powerful than the overlaid line graph.}
-\end{figure
+\end{figure}
 
 \begin{figure}[htbp]
   \centering
@@ -698,5 +700,10 @@ While it appears that the overlaid lines are on the verge of statistical signifi
 This research showed that the scatterplot is better than the overlaid lines for displaying two time series when the purpose is to examine the association between the two series. This is especially true if correlation between the series is negative.  This comparison was made possible by the use of the lineup protocol for comparing plot designs.  The power of two plot designs for reading correlation between variables was modelled using a logistic regression incorporating subject’s individual visual ability as a random effect.  We found that  the scatterplot, in most situations is both more powerful and quicker to process than  the overlaid line graph. The overlaid line graph appeared to have stronger performance at extremely low correlations, but this research did not test absolute values of correlation below 0.3. Other non-linear associations may exist in data that are not measured by correlation, and it may be of interest to compare plot power with a broader range of true plot features.
 Investigation of the individual selections of the lineup evaluations finds some results in-line with Wertheimer’s Gestalt Law of common fate, as demonstrated in Figure 15. The law suggested that people would find relationships between two lines that briefly move together, regardless of whether the relationship actually existed. Whilst this is shown, the overlaid line graph did not have a corresponding increase in confidence compared to the scatter plot; so research into similar confidence-boosting visual anomalies that can occur in scatter plots would be necessary to further investigate the law. Diaconis's Magical Thinking was supported by the finding on the relationships between time, confidence and correctness. A more difficult true plot may be picked rarely and require a longer to make a decision; resulting in decreased subject confidence. However, we found that time increases confidence but reduces correctness. Highly confident, but incorrect decisions, suggests subjects may have been distracted by strong, spurious patterns in the null plots.
 If a data analyst is required to use overlaid line graphs in their work, substantial improvements to power and hence readability can be made by smoothing time series data if the sample size is long enough for these techniques to become feasible.
+
+Here's how to do references \citet{hadley:2009} and \citep{hadley:2009}.
+
+\bibliographystyle{asa}
+\bibliography{references}
 
 \end{document}

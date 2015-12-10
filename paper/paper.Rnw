@@ -159,7 +159,7 @@ On its own, with a single plot, because of random sampling in collecting data, i
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics{cny line}
+  \includegraphics{cnyline}
   \caption{Exchange rates for Australian dollars and Chinese yuan against the United States dollar from Mar 30-May 2, 2015, shown as overlaid time series. (Both sets of values were standardized to bring them to the same scale for plotting.) What would you report the correlation between the two series to be?}
   \label{cny}
 \end{figure}
@@ -169,12 +169,12 @@ In this research we utilise the methods in visual inference to study plot design
 \begin{figure}[htbp]
   \centering
   \begin{subfigure}
-    \includegraphics{nzd scatter}
+    \includegraphics{nzdscatter}
   \end{subfigure}
   \begin{subfigure}
-    \includegraphics{nzd line}
+    \includegraphics{nzdline}
   \end{subfigure}
-  \caption{ Exchange rates for Australian and NZ dollars against US dollar, from Mar 30-May 2, 2015, shown using a scatterplot (left) and overlaid line graph (right). Which one can you read the correlation from more accurately? Point-wise correlation between the two series, ignoring autodependence, is 0.64.}
+  \caption{Exchange rates for Australian and NZ dollars against US dollar, from Mar 30-May 2, 2015, shown using a scatterplot (left) and overlaid line graph (right). Which one can you read the correlation from more accurately? Point-wise correlation between the two series, ignoring autodependence, is 0.64.}
   \label{nzd}
 \end{figure}
 
@@ -518,7 +518,8 @@ There are two major reasons why a subject may fail to detect the true plot out o
 
 \begin{figure}[htbp]
   \centering
-<<pins, dependson='samplesize', fig.width=6, fig.height=10, out.width='0.7\\textwidth', echo=FALSE>>=
+%<<pins, dependson='samplesize', fig.width=6, fig.height=10, out.width='0.7\\textwidth', echo=FALSE>>=
+\iffalse
 # correl <- read.csv("correlations.csv") # You have already read this
 pin <- select(full, pic_id, response_0, actual_location, 
               test_param, smoothed, n) #full[,c(5, 6, 10, 15, 16, 17)]
@@ -550,7 +551,9 @@ ggplot(data=subset(pin, smoothed=="yes" & design == "Overlaid Lines")) + geom_er
   geom_point(aes(x=Correlation, y=percent, colour=true)) + coord_fixed()  + facet_grid(n~r) + labs(title="Smoothed Overlaid Lines", y="Percent Chosen") + theme(legend.position="none")
 
 #Code to be fixed
-@
+\fi
+%@
+
   \label{pins}
   \caption{Pin plots of the subject selections of each lineup. On the x-axis is the correlation of the plot (there is potentially spurious correlation in the null plots), and on the y-axis is the proportion a plot was chosen. Red pins indicate null plots and blue indicates the true plot, occasionally the true plot does not appear as it has a frequency of zero and is visually blocked by the red pins. The pin plots are split with true plot correlation on the columns and sample size on the rows. Each plot contains information from all three lineups with that unique combination of factors: plot design, smoothness, sample size and true correlation.}
 \end{figure}
@@ -595,9 +598,7 @@ full.sub$rsgn <- ifelse(full.sub$r >= 0, 1, 0)
 full.sub$rabs <- abs(full.sub$r)
 full.sub$rabs <- factor(full.sub$rabs)
 full.sub$plot <- ifelse(full.sub$test_param == 0, "S", "L")
-full.sub <- full.sub[,c(1,7, 15,16,17,20:26)]
-full.sub$rpos <- ifelse(full.sub$r > 0, full.sub$r, 0)
-full.sub$rneg <- ifelse(full.sub$r < 0, full.sub$r, 0)
+full.sub <- select(full.sub, correct, r, rsgn, smoothed, n, subj_id, plot, log_time)
 full.sub$alpha <- log(.05/0.95)
 
 m8l <- glmer(correct~offset(alpha) + r + rsgn + r*rsgn + smoothed + n + (1|subj_id), data=filter(full.sub, plot == "L"), family="binomial")
@@ -688,8 +689,7 @@ A similar setup rejects the symmetric performance of the overlaid line graphs wi
 Table 2: Mixed Effects Linear Model with the dependent variable log(time). Sign = 1 if correlation > 0, 0 otherwise. Both plot designs estimated together with Overlaid Lines as the base design. Sample size: 1684. The model is fitted using the lme4 package in R.
 
 <<timefit, dependson='powerfit', echo=FALSE, results=hide, message=FALSE, error=FALSE, warning=FALSE>>=
-timelmer <-  lmer(log_time ~ smoothed + r + n + rsgn*r + test_param + test_param*smoothed 
-                  + test_param*r + test_param*n + test_param*rsgn*r + test_param*correct + (1|subj_id), data=full.sub)
+timelmer <-  lmer(log_time ~ plot*smoothed + plot*n + plot*rsgn*r + plot*correct + (1|subj_id), data=full.sub)
 @
 %get table code
 

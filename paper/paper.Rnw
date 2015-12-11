@@ -525,14 +525,14 @@ pin$choice[str_detect(pin$actual_location, pin$response_0)] <-
   pin$actual_location[str_detect(pin$actual_location, pin$response_0)]
                          #as.integer(pin$response_0)
 counts <- data.frame(table(pin$pic_id, pin$choice))
-counts$Var1 <- as.integer(counts$Var1)
-counts$Var2 <- as.integer(counts$Var2)
+counts$Var1 <- as.numeric(as.character(counts$Var1))
+counts$Var2 <- as.numeric(as.character(counts$Var2))
 colnames(counts) <- c("lineup", "plot", "count")
 pin <- merge(counts, Turk, by.x="lineup", by.y="pic_id")
-pin <- select(pin, lineup, plot.x, count, smoothed, true_pos, n, test_param, r)#pin[,c(1, 2, 3, 12, 13, 15, 11, 20)]
+pin <- select(pin, lineup, plot, count, smoothed, true_pos, n, test_param, r)#pin[,c(1, 2, 3, 12, 13, 15, 11, 20)]
 pin$r <- factor(pin$r)
 colnames(pin) <- c("lineup", "plot", "count", "smoothed", "true_pos", "n", "design", "r")
-pin <- mutate(pin, design=ifelse(design=="scatter", "Scatterplot", "Overlaid Lines")) #, smoothed=ifelse(smoothed=="no", 0, 1))
+pin <- mutate(pin, design=ifelse(design=="scatter", "Scatterplot", "Overlaid Lines"), smoothed=ifelse(smoothed=="no", 0, 1))
 pin$base <- 0
 pin$Correlation <- diag(as.matrix(correl[pin$lineup, (pin$plot+2)]))
 pin <- mutate(pin, true = ifelse(plot==true_pos, "True plot", "Null plot"))

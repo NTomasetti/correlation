@@ -1,0 +1,723 @@
+\documentclass[12pt]{article}
+\usepackage{natbib}
+\usepackage{color}
+\usepackage[dvipsnames,svgnames*]{xcolor}
+\usepackage{array}
+\usepackage[colorlinks=TRUE, linkcolor=blue]{hyperref}
+\usepackage{wrapfig,float}
+\usepackage[font=small,skip=5pt]{caption}
+\usepackage{subcaption}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{dsfont}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{url}
+\usepackage{ulem}
+\usepackage[section]{placeins}
+\usepackage{afterpage}
+
+\graphicspath{{images/}}
+\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
+
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{dfn}{Definition}[section]
+\newtheorem{cor}{Corollary}[thm]
+\newtheorem{con}{Conjecture}[thm]
+
+% NOTE: To produce blinded version, replace "0" with "1" below.
+\newcommand{\blind}{0}
+
+\addtolength{\oddsidemargin}{-.5in}%
+\addtolength{\evensidemargin}{-.5in}%
+\addtolength{\textwidth}{1in}%
+\addtolength{\textheight}{1.3in}%
+\addtolength{\topmargin}{-.8in}%
+
+
+\begin{document}
+
+\def\spacingset#1{\renewcommand{\baselinestretch}%
+{#1}\small\normalsize} \spacingset{1}
+
+\title{\bf Comparing the Power of Plot Designs to Reveal Correlation}
+
+\if0\blind
+{
+\author{Nathaniel Tomasetti and Dianne Cook\\
+Department of Econometrics and Business Statistics, Monash University\\
+}
+  \maketitle
+} \fi
+\if1\blind
+{
+  \bigskip
+  \bigskip
+  \bigskip
+  \begin{center}
+    {\LARGE\bf Comparing the Power of Plot Designs to Reveal Correlation}
+\end{center}
+  \medskip
+} \fi
+
+\bigskip
+
+\begin{abstract}
+Visual inference in EDA is prone to type 1 errors from the over-interpretation of randomness \citep{Daniel, Diaconis}. Two competing plot designs, the scatter plot and overlaid line graph are both popular in the analysis of time series data. Lineups \citep{Majumder:2013, Wickham} allow the visual inference power of a graphic display to be evaluated, and were used to compare the plot designs. We collected data on the detection rate of correlated pairs of AR(1) simulations, the time required and the confidence of the decision for 2089 lineup evaluations. The results show that the scatter plot is both the faster and more powerful plot design, despite its inability to display the time dimension. 
+\end{abstract}
+
+\noindent
+{\it Keywords:}  Lineups, visual inference, power comparison, scatter plot, line graph, data visualisation, visual analytics, time series, temporal data
+\vfill
+
+\newpage
+\spacingset{1.45} % DON'T change the spacing!
+\newpage
+
+\tableofcontents
+
+<<setup, echo=FALSE, results='hide', message=FALSE, error=FALSE, warning=FALSE>>=
+library(lme4)
+library(ggplot2)
+library(mnormt)
+library(tidyr)
+# Convert reshape2 to tidyr, melt to gather - done
+#library(reshape2)
+library(nullabor)
+library(dplyr)
+library(mFilter)
+library(grid)
+library(gridExtra)
+library(stringr)
+#library(pander)
+#library(splitstackshape) - changed cSplit to unnest
+#library(readr)
+#library(lubridate)
+# Convert these to read_csv at some point
+correl <- read.csv("correlations.csv", stringsAsFactors = FALSE)
+full <- read.csv("full.csv", row.names=1, stringsAsFactors = FALSE) 
+Turk <- read.csv("turk.csv", stringsAsFactors = FALSE) 
+
+gen_true_data <- function(n, r, dep=TRUE, smoothed = FALSE) {
+  d <- data.frame(rmnorm(n, c(0, 0), matrix(c(1, r, r, 1), 2, 2))) ##True plot, 0.5 for sigma off-diagonals requires ~300 iterations for all lineups.
+  if (dep) {
+    d$X1 <- as.vector(arima.sim(list(ar=n/100), n, innov=d$X1))
+    d$X2 <- as.vector(arima.sim(list(ar=n/100), n, innov=d$X2))
+  }
+  if (smoothed) {
+    d$X1 <- as.vector(hpfilter(d$X1, freq=1, type="lambda", drift = FALSE)[[2]])
+    d$X2 <- as.vector(hpfilter(d$X2, freq=1, type="lambda", drift = FALSE)[[2]])
+    d <- as.data.frame(d)
+  }
+  d$X1 <- scale(d$X1)
+  d$X2 <- scale(d$X2)
+  d$t <- 1:n
+  return(d)
+}
+
+gen_null <- function(n, m=20, dep=TRUE, smoothed = FALSE){
+  nd <- NULL
+  for(i in 1:(m-1)) { 
+    d <- data.frame(rmnorm(n, c(0, 0), matrix(c(1, 0, 0, 1), 2, 2)))
+    if (dep) {
+      d$X1 <- as.vector(arima.sim(list(ar=n/100), n))
+      d$X2 <- as.vector(arima.sim(list(ar=n/100), n))
+    }
+    if (smoothed) {
+      d$X1 <- as.vector(hpfilter(d$X1, freq=1, type="lambda", drift = FALSE)[[2]])
+      d$X2 <- as.vector(hpfilter(d$X2, freq=1, type="lambda", drift = FALSE)[[2]])
+      d <- as.data.frame(d)
+    }
+    d$X1 <- scale(d$X1)
+    d$X2 <- scale(d$X2)
+    nd <- rbind(nd, d)
+  } 
+  nd$.n <- rep(1:(m-1), each = n) 
+  nd$t <- 1:n
+  return(nd)
+}
+@
+
+\section{Introduction}
+
+In order to work with data, it first must be understood. Statistical inference requires hypotheses to be established prior to data collection, but often data is collected first.
+This is especially so today, for vast databases that have been assembled in the big data era, that now need the data scientist to unravel the meaning of the numbers. 
+Without preset hypotheses to test, the power of statistical inference is impotent, and without hypotheses the data analyst can stumble blindly trying to build up models of structure in the data. 
+To understand data requires good visualisation. This idea was formed as early as the 18th century, when William Playfair institutionalized the then revolutionary idea of graphing government and economic data. 
+Far easier than reading tables of numbers, these ideas were powerful, and by providing the basic building blocks for plotting statistical data, his graphic designs became a conduit for the communication of otherwise complex information \citep{Sachs}. Since then, advances in computing power have allowed statistical graphics to flourish, spearheaded by \citet{Tukey} in 1965 into the new domain of exploratory data analysis (EDA) \citep{Friendly}. 
+EDA can be thought of as a well understood \citep{Cleveland, Vanderplas} set of tools and techniques required to visualise information, to physically see what the data contains. In particular, it incorporates a free roaming approach, where the analyst is able to explore structure to find whatever relationships and structure exists within. 
+Critically, the analyst does not have to have any pre-conceived ideas or hypotheses -- they are not specifically looking for any one particular thing. EDA emphasises letting the data inform us and can lead to the discovery of otherwise unexpected relationships, many of which may seem to become completely obvious after discovery. 
+With the knowledge provided by EDA, ideas are generated about what relationships between variables may potentially exist. This then enables the analyst to use these new hypotheses upon which to apply classical inference and rigorously conduct tests with new data.
+EDA is also related to the field of model diagnostics (MD), where a model can be continuously refined through the visualisation of its fit, its residuals, and the interactions with its variables. Both EDA and MD follow the same framework: Visualise the data, look for patterns that suggest an underlying relationship, and if one is found implement it into the model then continue the exploration of the data. 
+It has long been thought that EDA and statistical inference were worlds apart, but recent work in \citet{Buja} and \citet{Majumder:2013} bridges this chasm. Framing a data plot as a test statistic, which when compared to plots of null data, places EDA into the statistical inference recipe. 
+The null hypothesis underlying a particular plot, is generically that there is no pattern, and particular types of plots implicitly regulate what “no  pattern” means. For example, a scatter plot of two variables is used to explore for some sort of association, so the implicit hypothesis is that there is no association between the two variables.
+The alternative hypothesis is that there is some association, although it is not required to specify precisely the type of association. 
+The plot of the data is placed in a lineup of plots of null data, data generated assuming that the null hypothesis is true. If an impartial observer asked to pick the plot that is different from the rest, picks the data plot this suggests there exists a pattern that is not the result of chance, and the null hypothesis is rejected. 
+For a scatter plot, this departure from the null, might be a single outlier, or few outliers, a non-linear pattern, or clusters, which the human eye detects as more different in this data plot than in any of the nulls. This is the reason why visualisation remains important today, human eyes can detect patterns which would not be detected mathematically.  But eyes need calibration, which the lineup protocol provides.
+On its own, with a single plot, because of random sampling in collecting data, it is easy for the analyst to imagine a pattern when no real structure exists in the population. Visual skills of an observer in EDA is prone to Type I error, where the null hypothesis is rejected when it is actually true, caused by the inherently random formation of patterns when visualised which are attributed to structure rather than chance. \citet{Daniel} warns against this, by providing 40 pages of plots from the null distribution, he encourages data analysts to understand the patterns that can be created from data without inherent structure. (This is what \citet{Buja} call the Rorschach protocol.) By being aware of what can appear in this type of data, the analyst should be more wary of claiming any visual feature they find is a true relationship. But this is not enough, even seasoned data analysts can be misled.  \citet{Diaconis} introduced the notion of 'magical thinking' which argues that people commonly suffer from the over-interpretation of randomness, particularly if it matches a pre-conception. If it suits their particular bias, an analyst may make false discoveries of structure and false rejections of the null hypothesis. Whilst using both can complement each other, the treatment of Type I error has led EDA and inferential statistics to be considered as very disparate pursuits. The mathematical rigor that governs classical inference relies on a framework that acknowledges and controls for the rate of Type I error.  Section 2 describes the visual inference protocols which put EDA more firmly into the rigorous framework of statistical inference. 
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.5\textwidth]{cnyline}
+  \caption{Exchange rates for Australian dollars and Chinese yuan against the United States dollar from Mar 30-May 2, 2015, shown as overlaid time series. (Both sets of values were standardized to bring them to the same scale for plotting.) What would you report the correlation between the two series to be?}
+  \label{cny}
+\end{figure}
+
+In this research we utilise the methods in visual inference to study plot design to investigate the relationship between two temporal variables. There is a substantial literature suggesting that scatter plots are the appropriate display to read association \citep{Cleveland, Harrison, Li}, however, when the two variables are temporal it is common to display them as time series, drawn on the same plot. Temporal dependence is present in many macroeconomic variables \citep{Nelson, Perron} and there is a strong argument for its presence in financial data \citep{Sher, Turtle}. It is a common, but untested, belief that the inclusion of time in the graphics will increase the detail of information displayed and allow relationships to be examined more comprehensively, so many analysts utilise the overlaid line graph to examine their data.
+
+\begin{figure}[htbp]
+  \centering
+    \centerline{\includegraphics[width=0.45\textwidth]{nzdscatter}
+    \includegraphics[width=0.45\textwidth]{nzdline}}
+  \caption{Exchange rates for Australian and NZ dollars against US dollar, from Mar 30-May 2, 2015, shown using a scatterplot (left) and overlaid line graph (right). Which one can you read the correlation from more accurately? Point-wise correlation between the two series, ignoring autodependence, is 0.64.}
+  \label{nzd}
+\end{figure}
+
+To decide on an appropriate display requires awareness of cognitive principles in psychology such as the Gestalt law of common fate described by \citet{Wertheimer}. This law describes a tendency in human perception to 'see' a positive relationship between two objects that briefly move together over time, leading people to believe that they stay linked and share a 'common fate' (Figure~\ref{cny}), even if no relationship exists. \citet{Lee} work finds that humans are able to perceive a relationship between objects that move with temporal synchrony in accordance with the Gestalt Law, implying that a graphic than can utilise a dimension for time may be able to use the information provided by temporal dependence and potentially outperform the graph types that do not, such as the scatter plot. However, keep in mind magical thinking \citep{Diaconis},   the desire to find any pattern may lead to a false discovery of positive correlation. The law then has two effects, if positive correlation exists in temporal data, the observer may be drawn to it easier. If positive correlation does not exist, the observer may be fooled into thinking it does anyway. Either effect would lead to a more confident rejection of the null than if the same data was displayed as a scatter plot. Figure~\ref{cny} highlights the dangerous interaction between 'magical thinking' and the Gestalt Law, the observer is drawn to the period from April 8 to April 22, and may falsely believe that the two currencies may continue to move together. However, over the entire series the linear correlation between the two currencies is -0.12, indicating there is no actual relationship. Incorrectly relying on two currencies, or many other sets of economic variables, being dependent on each other can be extremely dangerous for a firm. \citet{Robbins} is similarly critical of the time-based line graph, where it is argued that information from overlaid line graphs can easily be misleading (Figure~\ref{murder}). When both lines dive after 1993, it is natural to compare the horizontal distance and say that the difference between the lines in 1994 is small. However, this is incorrect, as looking at the small horizontal distance is comparing the lines at different dates. It is not obvious that the difference in 1994 is the second greatest difference across the entire range, only slightly smaller than in 1993. \citet[Vanderplas] examines this effect in more detail. It is dubbed the 'Sine Illusion', where the human eye is poor at interpreting lines with such a sharp slope. As these problems are unique to the line graph, they argue that the scatter plot, which does not have any ability to display time, is the superior choice. However, in practice many data analysts are split between the two major alternatives for temporal data. The overlaid line graph is justified by its ability to present more information to the analyst; but many argue that it is this extra information that is misleading, and revert to the scatter plot for its strong non-temporal performance.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.5\textwidth]{murders}
+  \caption{\citep{Robbins} Murders in New York State (Orange) and New York City (Blue). The difference between the two represents murders outside of the city. What size would you judge the difference to be in 1994?}
+  \label{murder}
+\end{figure}
+
+There has been other research on the perception of  temporal displays, such as in \citet{Javed}, but they do not examine perception of association. Javed et al.  examined optimal ways to visualise local features, such as, which variable had the highest value at a given point in time, and global features, such as, comparing the size of the overall slope of many different variables. The finding was that a different graphical layout is optimal for each type of task. However, they did not test for the perception of correlation, which can be treated as both a local and a global feature within the graph. The slope of each variable must be compared at a point in time, and they must have a persistent relationship across at least the majority of the series. However there is a quandary, the visual features that improve local tasks are unsuited to global tasks and vice versa; so we must now find a form that is well suited to assess both types of tasks simultaneously. This paper addresses this deficiency. Section 2 describes the lineup method utilised to rigorously compare plot designs. Section 3 explains the experimental design.  Section 4 contains the results of the experiment and Section 5 discusses the implications of the findings.
+
+\section{The Lineup Protocol}
+
+With the general lack of inference present in exploratory data analysis, how do we attempt to control error in hypothesis testing? In order to use visualisation effectively, we will get the most benefit if the type of graphic display chosen is best suited to the task at hand, be it EDA, MD, or even the presentation of results.
+We then need to find the statistical power of graphics, the ability of a graphical display to convey information on the structure of the data within. This can be found by using the lineup protocol developed in 2009 by \citet{Buja}, which is easily implemented with the nullabor R package.
+They created a statistically rigorous framework with properties explored primarily in \citet{Majumder:2014} and further in \citet{Hoffman:2014} that allows us to conduct these hypothesis tests with visual inference, thus to some degree allowing the conjoining of EDA with classical inferential statistics.
+The lineup protocol is inspired in part by the police lineup \citep{Wickham}. We place the plot of the 'true' data generated with some underlying structure (The criminal) in amongst plots of data that were generated from a null distribution (The innocent people). If the real data plot is selected by an uninvolved observer as being most different from the other plots there is evidence that the structure of that data has led to a significant difference in the plot (That the criminal is sufficiently different from the innocents). 
+This constitutes a rejection of the null hypothesis. If one of the null plots is chosen instead then either the plot design did not have the sufficient power to display the true relationship (A Type 2 error in EDA), or the null plot exhibited a strong relationship that was generated randomly and an analyst that saw this plot and decided that the data had some structure would’ve committed a Type 1 error. 
+$p_{i}$, the probability that plot $i$ is chosen in the lineup depends not only on the plot design $d$, but also the signal strength, $q_{i}$, of that plot and of every other competing plot in the lineup. It can be defined as some unknown function $f_{i,d} (q_{1},\dots,q_{20})$ \citep{Hoffman:2014}. 
+If the true plot is detected, it indicates that the plot design could convey the desired information about the underlying structure and that the true plot has a greater signal strength than those generated under the null distribution. The plot design that has a human observer selecting the true plot the most often will thus minimise both Type 1 error and Type 2 error in EDA hypothesis testing.
+However, there is the possibility that the true plot was picked by chance, that we have committed a Type 1 error in the lineup test. For a lineup of $m$ plots, the probability of selecting any plot when they are all generated by the null distribution is $1/m$, setting the Type 1 error rate, $\alpha$, of a lineup hypothesis test to equal $1/m$. 
+To control our error rate, it is initially obvious that we can simply change $m$, with an increase in null lineups having an inverse reduction in $\alpha$. We recruit human observers to judge the lineups, but this can quickly lead to a large cognitive burden to sort through more and more null plots. A much more powerful option is to have multiple different viewers of each lineup, with $K$ observers; the probability that at a particular plot was picked at least $x$ times under the null hypothesis is binomially distributed \citep{Buja, Hoffman:2014} with:
+
+\begin{equation} \label{eq:1}
+  \centering
+  p-value = P(X \geq x | H_{0}) = 1 - B_{n, 1/m}(x-1)
+\end{equation}
+
+If all $K$ observers pick the same plot out of a lineup of twenty, we result in a p-value as small as $1/m^K$ . This research used $m= 20$, giving us a significance level (and Type 1 error rate) of $α = 0.05$. The plot of 'true' data is placed randomly amongst 19 null plots to form the lineup.
+\begin{figure}[htbp]
+  \centering
+<<lineup.example, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE>>=
+set.seed(1234)
+a <- gen_true_data(24, 0.95)
+td <- gather(a, variable, value, c(X1, X2))
+b <- gen_null(24)
+nd_l <- gather(b, variable, value, c(X1, X2))
+pos <- 7
+td <- data.frame(.n=rep(pos, nrow(td)), td)
+lg <- nd_l$.n < pos
+nd_l1 <- data.frame(.n=nd_l$.n[lg], t=nd_l$t[lg], variable=nd_l$variable[lg], 
+                    value=nd_l$value[lg])
+nd_l2 <- data.frame(.n=nd_l$.n[!lg], t=nd_l$t[!lg], variable=nd_l$variable[!lg], 
+                    value=nd_l$value[!lg])
+nd_l2$.n <- nd_l2$.n + 1
+d <- rbind(nd_l1, td, nd_l2)
+
+ggplot(data=d, aes(x=t, y=value, colour=variable)) + geom_line() + facet_wrap(~.n, ncol=4, scales="free_y")  +
+    theme_bw() + theme(axis.title.x = element_blank(),
+                       axis.title.y = element_blank(),
+                       axis.text.x = element_blank(),
+                       axis.text.y = element_blank(),
+                       axis.ticks = element_blank(),
+                       legend.position="none")
+@
+  \caption{A lineup ($m = 20$) of line graphs. Which plot shows the series with the strongest correlation?}
+  \label{lineup:example}
+\end{figure}
+
+Essentially, the more time our subjects pick the correct plot out of the lineup, the more confident we are that the real plot was visually significantly different to the nulls; and that the type of graphic involved has the power to display association. The lineup effectively allows us to conduct a hypothesis test on visual features, with the competing hypotheses:
+
+\begin{itemize}
+  \item $H_{0}$ : There is no association between the two series (evidence for $H_{0}$: the associated data is indistinguishable from the nulls).
+  \item $H_{1}$: There is an association between the two series (evidence against $H_{0}$: the associated data can be distinguished from the nulls).
+\end{itemize}
+
+As the power of a statistical test is defined as the probability of rejecting $H_{0}$ when it is false, the power of a lineup test is viewed as the probability of detecting the true plot. We approximate the power as $\hat\pi = x/K$, where $x$ observers out of $K$ correctly detected the true plot out of the lineup.
+We can them estimate the power difference of competing lineups, $\hat\pi_{1} - \hat\pi_{2}$. An $\alpha \times 100\%$ confidence interval is calculated as \citep{Hoffman:2012}:
+
+\begin{equation} \label{eq:2}
+  \centering
+  \hat\pi_{1} - \hat\pi_{2}\pm t_{1-\alpha,2n-1}\sqrt{\hat\pi_{1} (1-\hat\pi_{1}) /n_{1} + \hat\pi_{2} (1-\hat\pi_{2}) /n_{2} }
+\end{equation}
+
+Where $\hat\pi_{i} = (x_{i}+1)/(n_{i}+1)$, where $x$ is the number of times a true lineup was correctly identified and $n$ is the Welch-Satterwaite estimate for the degrees of freedom.
+
+Some individuals may have a better natural ability at detecting the correct correlation pattern in the graphics, but by having each participant viewing multiple lineups and each lineup being viewed by multiple different participants, this can be controlled via a random effect variable in the model. We recruited participants through Amazon's Mechanical Turk, where the lineup protocol has been applied to a number of problems in prior papers \citep{Heer, Majumder:2013, Wickham}. Amazon’s Mechanical Turk \citep{MTurk} is a labour crowd-sourcing platform developed to give easy access to workers with basic tasks paid in line with the United States minimum wage. MTurk can be used to recruit subjects to read a variety of graphics and report on particular visual tasks. The time taken to decide, confidence in the decision and the reason for that decision can also be recorded. \citet{Heer} use MTurk to replicate previous findings in graphical perception from \citet{Cleveland} and find that it is a valid method of data collection, once controls to eliminate anyone 'gaming' the system by randomly selecting answers to minimise time spent working are implemented. Further details of our use of Amazons’ Mechanical Turk is included in Section 3. The protocol has successfully been used to measure statistical power as a means to determine plot type superiority in \citet{Hoffman:2012}, and this work follows that approach.
+
+\section{Experimental Design}
+
+To allow for a greater control of distributions of the data in the lineups, we use simulated data. The data must contain autocorrelation for there to be meaningful information in the time dimension. To fulfil this requirement, each plot has a standardised pair of AR(1) models defined by:
+
+$$Y_{1,t} = \beta \times Y_{1,t-1} + e_{1,t}$$
+
+$$Y_{2,t} = \beta \times Y_{2,t-1} + e_{2,t}$$
+
+With $t \in \left\{12, 24, 48, 96\right\}$ and $e_{t}$ being generated with from a bivariate normal distribution: 
+
+$$~N(\mu= \left| \begin{array}{c}0 \\0 \end{array} \right|,\hspace{4mm}\Sigma = \left| \begin{array}{cc}1 & \rho \\ \rho & 1\end{array} \right|)$$
+
+The variation in the covariance parameter  allows for control in the correlation in the pairs of data. The null data has no structure, so uncorrelated pairs are produced by setting $\rho = 0$. True data pairs are generated with $\rho = \pm 0.3, 0.5, 0.7, 0.9$. Pilot testing found that the rate of picking the true data plot fell to approximately $5\%$, the $1/m$ rate of randomly picking the true plot, for pairs with correlation below $\rho = 0.3$. Further to this, relationships weaker than this point are often of little interest to analysts. Hence we found it unnecessary to test a more full range of correlations. Simulating data does not produce correlations exactly equal to $\rho$, so imulated data pairs were accepted as real data if pairwise correlation between the two series is within 0.015 of the desired value of $\rho$. The null pairs often had correlation generated spuriously through the simulation process. This was particularly problematic for generating small sample data, but setting, to a maximum of 0.5, for both true and null data reduced spurious correlation to manageable levels.
+For particularly large time series, the AR(1) model can create particularly 'jagged' lines that may be unrealistic for many actual applications. To counter this, additional sets of data were created with a Hodrick-Prescott filter to capture the trend of the model and remove the noise in the cycle component. This filter creates a trend by penalising both errors in smoothness and in fit. The trend of the series, $\tau_{t}$ is defined by the equation:
+
+$$\min_{\tau}(\sum_{t=1}^{T}(y_{t}-\tau_{t})^2 + \lambda \sum_{t=2}^{T-1}[(\tau_{t+1}-\tau_{t})-(\tau_{t}-\tau_{t-1})]^2)$$
+
+
+Setting $\lambda = 1$ produced a smoothing that is more consistent with real world time series applications and did not introduce excessive spurious null correlation. However, for $t = 12, 24$, any form of smoothing was unfeasible without introducing extreme null correlation, hence smoothing was only used for $t = 48, 96$. Each generated lineup was produced as both a scatter plot and an overlaid line graph.
+
+\begin{figure}[htbp]
+  \centering
+<<smoothing, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE>>=
+set.seed(123)
+uns <- gen_true_data(96, 0.8)
+uns_l <- gather(uns, variable, value, -t)
+p1a <- ggplot(data=uns_l, aes(x=t, y=value, colour=variable)) + geom_line() +labs(title="Unsmoothed Overlaid Lines") +
+    theme(axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks = element_blank(),
+          legend.position="none")
+p3a <- ggplot(data=uns, aes(x=X1, y=X2)) + geom_point()+ labs(title="Unsmoothed Scatterplot)") +
+    theme(aspect.ratio=1, axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks = element_blank(),
+          legend.position="none")
+
+set.seed(123)
+sm <- gen_true_data(96, 0.8, smoothed = TRUE)
+sm_l <- gather(sm, variable, value, -t)
+p2a <- ggplot(data=sm_l, aes(x=t, y=value, colour=variable)) + geom_line() + labs(title="Smoothed Overlaid Lines") +
+      theme(axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks = element_blank(),
+          legend.position="none")
+p4a <- ggplot(data=sm, aes(x=X1, y=X2)) + geom_point() + labs(title="Smoothed Scatterplot") +
+    theme(aspect.ratio=1, axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks = element_blank(),
+          legend.position="none")
+
+
+grid.arrange(p1a, p2a, p3a, p4a, ncol=2)
+@
+  \caption{The same AR(1) data both smoothed and unsmoothed. t = 96, correlation = 0.86}
+  \label{smoothing}
+\end{figure}
+
+In this research, we had three basic factors:
+
+\begin{itemize}
+  \item Factor 1: Plot design, levels = scatter plot, overlaid time series
+  \item Factor 2: Sample size, levels = 12, 24, 48, 96
+  \item Factor 3: True plot correlation, levels 
+\end{itemize}
+
+Additionally, there was a fourth factor for  = 48, 96:
+
+\begin{itemize}
+  \item Factor 4: Smoothed, levels = yes, no
+\end{itemize}
+
+Each combination of factors was replicated in three different lineups, giving a total of 288 lineups (2 plots x 8 correlations x 6 sample sizes \& smoothness combinations). 
+The position of the actual data plot in the lineup was randomized. The order that the factors are presented to a subject were also randomized, and each subject saw 5 scatter plots and 5 overlaid lines at a range of all absolute correlation levels. Each subject did not see the same data more than once. Subjects were asked to pick the plot in the lineup that has the strongest association, with basic examples of negatively and positively correlated plots. They also answered with reasons for choosing the plot, and the confidence that they have that this really is the plot showing the strongest correlation. Each subject evaluated 10 lineups, plus a further two trials to eliminate people attempted to game the system. If a trial was not answered correctly, the subject could not evaluate the remaining lineups. If it was answered correctly, the trial data was discarded and the subject moved onto the rest of the lineups. Earlier work by \citet{Majumder:2014} has found that repeated evaluations from a subject does not increase their ability to detect the true plot from a lineup, justifying our treatment of the results as independent evaluations. We recruited subjects from Amazon's Mechanical Turk service and ensured that each lineup was viewed by multiple subjects. In total there were 2088 lineup evaluations, however to better control each subject’s individual visual ability we removed data from subjects with less than ten individual evaluations leaving us with 1684 evaluated lineups for the analysis.  
+
+\begin{figure}[htbp]
+  \centering
+<<designs, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE>>=
+set.seed(101)
+a <- gen_true_data(24, 0.95)
+b <- gen_true_data(24, -0.95)
+a_l <- gather(a, variable, value, -t)
+b_l <- gather(b, variable, value, -t)
+p1b <- ggplot(data=a_l, aes(x=t, y=value, colour=variable)) + geom_line() + labs(title="Overlaid line graph") +
+      theme(axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks = element_blank(),
+          legend.position="none")
+p2b <- ggplot(data=b_l, aes(x=t, y=value, colour=variable)) + geom_line() + labs(title="Overlaid line graph") +
+      theme(axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks = element_blank(),
+          legend.position="none")
+p3b <- ggplot(data=a, aes(x=X1, y=X2)) + geom_point() + labs(title="Scatterplot") +
+      theme(aspect.ratio=1, axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks = element_blank(),
+          legend.position="none")
+p4b <- ggplot(data=b, aes(x=X1, y=X2)) + geom_point() + labs(title="Scatterplot") +
+      theme(aspect.ratio=1, axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks = element_blank(),
+          legend.position="none")
+grid.arrange(p1b, p2b, p3b, p4b, ncol=2)
+@
+  \label{designs}
+  \caption{The same two data sets in both plot designs. t=24, correlation (left) = 0.946, correlation (right) = -0.943}
+\end{figure}
+
+The web site that the Turk workers accessed to complete the task can be seen at http://104.236.245.153:8080/mahbub/turk18/index.html.  You can also try out the tasks, but your results will not be recorded. (The experiment cost \$210 to run.)
+
+\section{Results}
+
+\subsection{Detection, Time and Confidence}
+
+\begin{figure}[htbp]
+ \centering
+<<results, dependson='setup', fig.width=6, fig.height=8, out.width='0.7\\textwidth', echo=FALSE>>=
+Turk <- mutate(Turk, plot = ifelse(test_param =="line", "Overlaid Lines", "Scatterplot"), 
+               sign=ifelse(correlation > 0, 1, 0), smoothed=ifelse(smoothed=="yes", 1, 0))
+#ggplot(data=subset(Turk, smoothed==0), aes(x=correlation, y=percent, colour=plot)) + geom_smooth() + geom_point() + facet_grid(n~.) + scale_colour_discrete(name = "Plot Design") +  labs(title="Unsmoothed Plot Accuracy", y="Percent Correct", x="True Plot Correlation")
+ggplot(data=Turk, aes(x=correlation, y=percent, colour=plot)) + geom_smooth(se=F) + geom_point() + facet_grid(n~smoothed) + 
+  scale_colour_discrete(name = "Plot Design") + labs(title="Observed Data", y="Percent Correct", x="Correlation") +
+  theme(legend.position="bottom")
+@
+  \label{results}
+  \caption{Response accuracy for unsmoothed data, broken by unsmoothed (left), smoothed (right) and sample size. The dots are data points, the lines represent a naive model average fit. Scatter plots generally showed superior performance, with the overlaid line graphs being particularly weak at revealing negative correlation}
+\end{figure}
+
+Figure~\ref{results} shows the raw results of the survey and Figure~\ref{powerdiff} shows the difference in power with a $95\%$ confidence interval calculated according to the formula in \ref{eq:2}. Values above zero indicate that the scatter plot had more power to detect the true plot than the overlaid lines.
+Performance between the two plot designs appears to be similar for positive correlation, with the scatter plot power gradually improving relative to the overlaid lines as sample size increases. The scatter plot appears to be the superior choice as it retains its power with negative correlation, where the overlaid lines performance suffered. This is not surprising, as positive and negative correlation appear as symmetric graphs in the scatter plot but the two characteristics appear very differently in the overlaid line graph (Figure~\ref{designs}). The right side shows the performance benefits of smoothing overlaid line time series data. Much of the 'noise' in the time series is removed and studying the overall trend shows a greatly improved ability to successfully detect the true data plot when it is negatively correlated. The scatter plot still appears to be the superior plot, but much of the gap between the two is reduced for positive correlation. 
+
+\begin{figure}[htbp]
+  \centering
+<<powerdiff, dependson='results', fig.width=6, fig.height=8, out.width='0.7\\textwidth', echo=FALSE>>=
+Turk$correct <- Turk$percent*Turk$attempt
+Turk$r <- round(Turk$correlation, 1)
+#Turk.line <- subset(Turk, test_param=="line")
+#Turk.scatter <- subset(Turk, test_param=="scatter")
+prop <- Turk[order(Turk$r, Turk$n, Turk$smoothed),c("smoothed", "n", "attempt", "correct", "r", "plot")]
+prop <- summarise(group_by(prop, smoothed, n, r), l.attempt=sum(ifelse(plot=="Overlaid Lines", attempt, 0)),
+                                                  l.correct=sum(ifelse(plot=="Overlaid Lines", correct, 0)),
+                                                  s.attempt=sum(ifelse(plot=="Scatterplot", attempt, 0)),
+                                                  s.correct=sum(ifelse(plot=="Scatterplot", correct, 0)))
+#Turk.line <- Turk.line[order(Turk.line$r, Turk.line$n, Turk.line$smoothed),c("smoothed", "n", "attempt", "correct", "r")]
+#Turk.line <- summarise(group_by(Turk.line, smoothed, n, r, test_param), sum(attempt), sum(correct))
+#Turk.scatter <- Turk.scatter[order(Turk.scatter$r, Turk.scatter$n, Turk.scatter$smoothed),c("smoothed", "n", "attempt", "correct", "r")]
+#Turk.scatter <- summarise(group_by(Turk.scatter, smoothed, n, r), sum(attempt), sum(correct))
+#colnames(Turk.scatter) <- c("smoothed", "n", "r", "s.attempt", "s.correct")
+#colnames(Turk.line) <- c("smoothed", "n", "r", "l.attempt", "l.correct")
+#prop <- cbind(Turk.line, Turk.scatter[4:5])
+prop <- mutate(prop, l.adj = (l.correct+1)/(l.attempt+1), s.adj = (s.correct+1)/(s.attempt+1),
+               df = s.attempt + l.attempt - 1, difference=s.adj-l.adj, t = qt(0.975, df),
+               upper = difference + t*sqrt(s.adj*(1-s.adj)/s.attempt+l.adj*(1-l.adj)/l.attempt),
+               lower = difference - t*sqrt(s.adj*(1-s.adj)/s.attempt+l.adj*(1-l.adj)/l.attempt))
+ggplot(data=prop) + geom_errorbar(aes(x=r, ymax=upper, ymin=lower)) + geom_point(aes(x=r, y=difference)) +
+        geom_hline(aes(yint=0, colour="red")) + labs(title="Difference in Power", x="Correlation", y="Scatterplot Advantage") + facet_grid(n~smoothed)
+@
+ \label{powerdiff}
+ \caption{Difference in estimated power to reveal the true plot by smoothness and sample size with a 95\% confidence interval. Values above zero indicate the scatter plot is more powerful than the overlaid line graph.}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+<<samplesize, dependson='powerdiff', fig.width=6, fig.height=8, out.width='0.7\\textwidth', echo=FALSE>>=
+ggplot(data=subset(Turk, smoothed==0), aes(x=correlation, y=percent, colour=factor(n))) + geom_smooth(se=F) + geom_point() + facet_grid(plot~.) + scale_colour_discrete(name = "Sample size") +  labs(title="Effect of sample size, with unsmoothed data", y="Percent Correct", x="Correlation") + theme(legend.position="bottom")
+@
+ \label{samplesize}
+ \caption{Effects of increasing sample size for unsmoothed data. Both plot designs appear to benefit from increased sample sizes}
+\end{figure}
+
+Figure~\ref{samplesize} demonstrates the effects of changing sample size for unsmoothed data. The scatter plot has increased power to detect correlation almost universally for any increase. Sample size influences the overlaid lines differently, they appears to benefit for positively correlated true plots, but it does not improve the weak performance in negative correlation.
+Figure~\ref{time} and Figure~\ref{confidence} give a breakdown of the interactions between the response variables: plot detection, time and confidence. Figure~\ref{time} is the histogram of the time taken to record a response, split by plot design and sign of correlation and true plot detection. The time data was highly positively skewed with a maximum of 1760 seconds so the variable was log-transformed. We found that the subject could identify the true plot out of the overlaid line graph 33.6\% of the time and it took on average $e^{3.442}$ = 31.2 seconds to make a choice. Successful detections were slightly faster than unsuccessful decision, taking on average 28.7 seconds to pick the true plot and 32.6 seconds if a null was selected. The scatter plots performed much better, with the true plot picked 52.9\% of the time, with an average of 22.7 seconds required to make a decision. If the true plot was detected it took only 18.6 seconds, and 29.3 seconds for a null plot selection.
+
+\begin{figure}[htbp]
+  \centering
+<<time, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE>>=
+full <- mutate(full, sign = ifelse(correlation >= 0, 1, 0), n24 = ifelse(n ==24, 1, 0), n48 = ifelse(n ==48,  1, 0), n96 = ifelse(n ==96, 1, 0), plot = ifelse(test_param ==1, "Overlaid Lines", "Scatterplot"))
+time <- data.frame(plot=full$plot, time=full$log_time, correct=full$correct, rsgn=full$sign)
+#ggplot(data=time, aes(x=time, fill=factor(correct))) +geom_bar(stat="bin") + facet_grid(~plot) +labs(x="Log(Time) Taken", y=element_blank()) + scale_fill_discrete(name = "Correct")
+time$rsgn <- factor(time$rsgn, labels=c("r -","r +"))
+tm <- summarise(group_by(time, correct, plot, rsgn), m=mean(time))
+t1 <- ggplot(data=subset(time, correct==0), aes(x=time)) + geom_histogram(binwidth=0.5) + 
+  geom_vline(data=subset(tm, correct==0), aes(xintercept = m), color="red") +
+  facet_grid(plot~rsgn) + labs(title="Did not detect", x="Log(Time) Taken", y=element_blank())  
+t2 <- ggplot(data=subset(time, correct==1), aes(x=time)) + geom_histogram(binwidth=0.5) + 
+  geom_vline(data=subset(tm, correct==1), aes(xintercept = m), color="red") +
+  facet_grid(plot~rsgn) + labs(title="Detected", x="Log(Time) Taken", y=element_blank())  
+grid.arrange(t1, t2, ncol=2, top = "Log(Time) by plot design, true plot correlation and detection")
+@
+  \label{time} 
+  \caption{Histograms of log time taken to make a decision. r+ and r- indicate the sign of true plot correlation. The vertical red line is the average time of the particular group. On average scatter plots are faster and the true plot is detected more often, with r-.}
+\end{figure}
+
+Subjects were asked to give a number from 1 to 5 to rate how confident they were in there choice (1 - most confident, 5 - least confident, average = 3.34). There were no statistically significant differences between plot designs, however subjects were slightly less confident on true plot detections (by $0.25 \pm  0.16, p=0.002$) and every one percent extra time required to make a decision increased confidence (by $0.19 \pm 0.07, p<0.001$). One possible explanation is that subjects often focused on a null plot and picked it confidently. This would suggest that the null plots often produced visually interesting features subjects assumed were caused by the association between plots.
+
+Subjects spending longer on a plot immediately draws two hypotheses:
+\begin{enumerate}
+  \item The lineup was more difficult and it took longer to determine which plot was best, reducing confidence.
+  \item The subject picked a plot relatively easily but spent extra time going over its details and making comparisons to alternative plots, increasing confidence.
+\end{enumerate}
+
+The result suggests that the latter hypothesis is more likely to be correct. We also found a negative relationship between plot detection and time spent on a lineup, supporting the major relationship found: quick decisions are less confident but more likely to successfully detect the true plot.
+
+\begin{figure}[htbp]
+  \centering
+<<confidence, dependson='time', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE>>=
+conf <- data.frame(plot=full$plot, conf=full$conf_level, correct=full$correct, rsgn=full$sign)
+conf$rsgn <- factor(conf$rsgn, labels=c("r -","r +"))
+cm <- summarise(group_by(conf, correct, plot, rsgn), m=mean(conf))
+c1 <- ggplot(data=subset(conf, correct==0), aes(x=conf)) + geom_histogram(binwidth=1) + 
+  geom_vline(data=subset(cm, correct==0), aes(xintercept = m), color="red") +
+  facet_grid(plot~rsgn) + labs(title="Did not detect", x="Confidence", y=element_blank())  
+c2 <- ggplot(data=subset(conf, correct==1), aes(x=conf)) + geom_histogram(binwidth=1) + 
+  geom_vline(data=subset(cm, correct==1), aes(xintercept = m), color="red") +
+  facet_grid(plot~rsgn) + labs(title="Detected", x="Confidence", y=element_blank())  
+grid.arrange(c1, c2, ncol=2, top = "Confidence by plot design, true plot correlation and detection")
+@
+  \label{confidence} 
+  \caption{Histograms of reported confidence levels. 1 - Low, 5 - High. Detection had a minor detrimental impact on confidence, whilst time taken increased it. There was no statistically significant difference on confidence level between plot designs.}
+\end{figure}
+
+\subsection{Selection Analysis}
+
+Next we analysed the individual ability of each of our subjects. Figure~\ref{confidence2} plots the accuracy of each subject on the y axis versus the average confidence on the x axis. While we expected that subjects with greater visual skills would report lower values of confidence, there does not appear to be any relationship between the two. The accuracy is normally distributed (Jarque-Bera p value = 0.418), with a mean of 42.5\% and a standard deviation of 17.8\%. The strongest subject successfully identified the true plot 91\% of the time, whilst the weakest was never able to identify the true plot. As all subjects were shown a balanced mix of true plot correlations, the extreme difference in individual visual ability is striking. Visual ability will be controlled via a subject specific random effect in the models in the next section.
+
+\begin{figure}[htbp]
+  \centering
+<<confidence2, dependson='time', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE>>=
+full$subj_id <- factor(full$ip_address, labels=1:207)
+y <- data.frame(table(full$subj_id))
+keep2 <- y$Var1[y$Freq>9]
+sub <- filter(full, subj_id %in% keep2)
+sub <- select(sub, conf_level, correlation, test_param, smoothed, n, correct, sign, plot, subj_id) #c(7, 15, 16, 17, 20, 27)]
+#sub <- summarise(group_by(sub, subj_id), correct = sum(correct), conf=mean(conf_level))
+#sub <- merge(sub, y, by.x="subj_id", by.y="Var1")
+#sub <- mutate(sub, prop = correct/Freq)
+qplot(correlation, 6-conf_level, data=sub, alpha=I(0.1)) + 
+  geom_smooth(method="loess") + 
+  facet_grid(n~plot+smoothed) +
+  labs(x = "Correlation", y = "Confidence (5=High, 1=Low)")
+@
+  \label{confidence2}
+  \caption{Individual subject accuracy versus confidence. There does not appear to be any relationship between the two.}
+\end{figure}
+
+There are two major reasons why a subject may fail to detect the true plot out of a lineup. Either the plot design was unable to display correlation for that particular combination of factors (and the analyst would commit a Type II error by not rejecting the null hypothesis), or a null plot that had a greater correlation than the true plot was selected instead (and the analyst would commit a Type I error by rejecting the null hypothesis). We next can analyse these kinds of errors with the pin plots found in Figure~\ref{pins}. The frequency of selection of each plot in each lineup, either true or null, is represented by a pin, placed at the value of the correlation between the two variables shown in that plot. The correlation of the selected plot is on the x-axis and the frequency of selection is plotted on the y axis. The correlation of the simulated (true) data (r=-0.9, -0.7, -0.3, 0.3, 0.7, 0.9) in the plot, the sample size (t=12, 24, 48, 96), and the plot design (unsmoothed/smoothed, scatterplot/lineplot) is used to facet the plots. The blue pins indicate the true plots and the red pins indicate the null plots. If the plot design has the power to display correlation, we would expect the highest correlation plot to be selected, leading to a Type I error where a plot from the null distribution spuriously had high correlation. We find that this is generally not the case. The selections appear to have a wide range of correlations, indicating that if a subject selected a null plot it was typically not due to excess spurious correlation. Instead the failure to select the highest correlated plot indicates that a Type II error was committed rather than Type I as the plot designs did not have the power to differentiate between medium and low correlation plots. However, for the scatter plot, whenever there was a plot with a very strong correlation, usually in the form of the true plot, it was overwhelmingly selected. For the overlaid lines this mostly occurred only for plots with strong positive correlation, which is consistent with its general lack of power to reveal negative relationships in data. 
+
+\begin{figure}[htbp]
+  \centering
+<<pins, dependson='samplesize', fig.width=6, fig.height=10, out.width='0.7\\textwidth', echo=FALSE>>=
+# correl <- read.csv("correlations.csv") # You have already read this
+count.setup <- select(full, pic_id, response_0, actual_location, 
+              test_param, smoothed, n) #full[,c(5, 6, 10, 15, 16, 17)]
+# Need to use the tidyr commands instead of cSplit
+# Here's where we will need to make some changes to incorporate the multiple picks
+#pin <- pin %>% transform(response_0= strsplit(as.character(response_0), ",")) %>% unnest(response_0)
+#pin$response_0 <- separate(pin, response_0, "response_0", sep=",", extra="drop")
+count.setup$choice <- separate(count.setup, response_0, c("choice", "l1", "l2"), ",", extra="drop")$choice
+count.setup$choice[str_detect(count.setup$actual_location, count.setup$response_0)] <- 
+  count.setup$actual_location[str_detect(count.setup$actual_location, count.setup$response_0)]
+                         #as.integer(pin$response_0)
+counts <- data.frame(table(count.setup$pic_id, count.setup$choice))
+counts$Var1 <- as.numeric(as.character(counts$Var1))
+counts$Var2 <- as.numeric(as.character(counts$Var2))
+colnames(counts) <- c("lineup", "plot", "count")
+pin <- merge(counts, Turk, by.x="lineup", by.y="pic_id")
+pin <- select(pin, lineup, plot.x, count, smoothed, true_pos, n, test_param, r)#pin[,c(1, 2, 3, 12, 13, 15, 11, 20)]
+pin$r <- factor(pin$r)
+colnames(pin) <- c("lineup", "plot", "count", "smoothed", "true_pos", "n", "design", "r")
+pin <- mutate(pin, design=ifelse(design=="scatter", "Scatterplot", "Overlaid Lines"))#, smoothed=ifelse(smoothed=="no", 0, 1))
+pin$base <- 0
+pin$Correlation <- diag(as.matrix(correl[pin$lineup, (pin$plot+2)]))
+pin <- mutate(pin, true = ifelse(plot==true_pos, "True plot", "Null plot"))
+pin <- merge(pin, Turk[,c(2, 16)], by.x = "lineup", by.y = "pic_id")
+pin <- mutate(pin, percent = count/attempt)
+pin.a <- ggplot(data=filter(pin, smoothed==0 & design == "Scatterplot")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
+       geom_point(aes(x=Correlation, y=percent, colour=true)) + coord_fixed() + facet_grid(n~r) + labs(title="Unsmoothed Scatterplot", y="Percent Chosen") + theme(legend.position="none")
+pin.b <- ggplot(data=subset(pin, smoothed==1 & design == "Scatterplot")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
+  geom_point(aes(x=Correlation, y=percent, colour=true)) + coord_fixed()  + facet_grid(n~r) + labs(title="Smoothed Scatterplot", y="Percent Chosen") + theme(legend.position="none")
+pin.c <- ggplot(data=subset(pin, smoothed==0 & design == "Overlaid Lines")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
+  geom_point(aes(x=Correlation, y=percent, colour=true)) + coord_fixed()  + facet_grid(n~r) + labs(title="Unsmoothed Overlaid Lines", y="Percent Chosen") + theme(legend.position="none")
+pin.d <- ggplot(data=subset(pin, smoothed==1 & design == "Overlaid Lines")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
+  geom_point(aes(x=Correlation, y=percent, colour=true)) + coord_fixed()  + facet_grid(n~r) + labs(title="Smoothed Overlaid Lines", y="Percent Chosen") + theme(legend.position="none")
+grid.arrange(pin.a, pin.b, pin.c, pin.d, ncol=1)
+@
+
+  \label{pins}
+  \caption{Pin plots of the subject selections of each lineup. On the x-axis is the correlation of the plot (there is potentially spurious correlation in the null plots), and on the y-axis is the proportion a plot was chosen. Red pins indicate null plots and blue indicates the true plot, occasionally the true plot does not appear as it has a frequency of zero and is visually blocked by the red pins. The pin plots are split with true plot correlation on the columns and sample size on the rows. Each plot contains information from all three lineups with that unique combination of factors: plot design, smoothness, sample size and true correlation.}
+\end{figure}
+
+Occasionally there was an anomaly where a single null plot was selected with a high frequency despite having a weak correlation. Occasionally the null distribution cangenerate visually interesting patterns that draw the analyst’s attention.  We asked subjects for reasons behind their selections and found that choosing on the basis that “the points in the plot were close together”, or had “a unique pattern” more often led to an unsuccessful detection. Conversely, decisions based on “matching the peaks and troughs” of the overlaid lines or “seeing a line formed in the dots” of the scatter plot were more likely to be successful in identification of the true plot. However, these true detections are, on average, made less confidently than unsuccessful evaluations, which indicates that decisions made on the basis of closeness or patterns are more convincing of an association than the more successful reasons. 
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.5\textwidth]{anom1}
+  \label{anom1}
+  \caption{A lineup of unsmoothed overlaid lines with a sample size of 12 and true correlation of -0.707. The true plot in position 8 was not detected in five evaluations. However, plot 13 was selected four times, (p –value < 0.001) despite having a correlation of only 0.225. When asked for a reason of their selections, subjects answered that the lines were closest together.}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.5\textwidth]{anom2}
+  \label{anom2}
+  \caption{A lineup of unsmoothed scatter plots with a sample size of 24. The true plot is located in position 4 with a correlation of -0.491, and was selected by one out of eleven observers (p = 0.33, see formula \ref{eq:1}). The plot in position 6 was selected by nine of these eleven observers (p < 0.001) despite having a correlation of -0.037. This null plot shows a unique clustering effect that draws in the observer despite not having any linear relationship in the data, an example of the over-interpretation of randomness. Subjects most often cited the clustering pattern formed as the reason for their selection. The final selection was position 8, with a correlation of -0.226 (p = 0.33).}
+\end{figure}
+
+Figures~\ref{anom1} and \ref{anom2} show lineups where a null plot with a strong pattern led to its selection over the data plot.  Mostly, when a null plot was chosen over the data plot it was because the correlation was stronger, but in a few lineups a null plot with small correlation was selected by many subjects. In Figure~\ref{anom1}, the true data plot is in position 4, but 9/11 subjects chose plot 6. Plot 6 is unusual, most of the points are scattered around the vertical median, but there are two outlying points, one with a high y-value and one with a low y-value.  Other concurrent work has suggested that outliers are pre-attentive patterns and this plot selection by the observers is consistent with that. Figure~\ref{anom2} above is another example of where subjects chose a null plot that had smaller correlation than the data plot. Four out of five evaluations selected the null plot in position 13,  instead of the data plot in position 8. Plot 13 has a correlation of 0.225, smaller (in absolute value) than the -0.707 of plot 8.  This selection is in-line with Wertheimer’s gestalt law of common fate. It appears to be strongly correlated in the beginning of the series but breaks apart towards the end. The selection implies that subjects selecting this plot focused on the joint path of the two series early in the plot and ignored the contradictory evidence of no relationship as they diverged later in the plot.  It also confounded by the seeming preference to find positive correlation over negative correlation, and we suspect that if one of the series in plot 8 had the values flipped, then the strong positive correlation would have been noticed.
+
+\subsection{Modelling Subject Responses}
+
+A mixed effects logit model is used separately for scatter plot and overlaid line evaluations. The tested model is:
+
+$$Power_{i} = \psi\left\{ \beta_{i,0} + \beta_{i,1} \cdot |\alpha| + \beta_{i,2}\cdot Sign + \beta_{i,3}\cdot Smoothed + \beta_{i,4}\cdot t + \beta_{i,5}\cdot |\alpha| \cdot Sign + \gamma_{i,1} \cdot subject_{j} \right\}$$
+
+Where $\psi$ is the logit link function, $\psi(x) = \frac{e^{x}}{1+e^{x}}$, $\alpha$ is the true plot correlation, Sign is the direction of $\alpha$, $i$  is the plot design and $j$ is an observer specific random effect.
+
+\begin{table}[htp]
+\caption{Mixed Effects Logit Model for the predicted power of plot design. Sign = 1 if correlation > 0, 0 otherwise. Each plot design is estimated separately. Results must be transformed via the logit link function to generate a power prediction. Subjects with less than ten lineup evaluations were removed from the sample. Sample size for scatter plot model: 841, overlaid lines model: 843. The model is fitted using the lme4 package in R.}
+\label{tab1}
+\centering
+<<powerfit, dependson='setup', results='asis', echo=FALSE, message=FALSE, error=FALSE, warning=FALSE>>=
+full$subj_id <- factor(full$ip_address, labels=1:207)
+
+# Need to keep only evaluations done by subject who completed at least 10
+x <- data.frame(table(full$subj_id))
+keep <- x$Var1[x$Freq>9]
+full.sub <- filter(full, subj_id %in% keep)
+full.sub$r <- round(full.sub$correlation, 1)
+full.sub$rsgn <- ifelse(full.sub$r >= 0, 1, 0)
+full.sub$rabs <- abs(full.sub$r)
+#full.sub$rabs <- factor(full.sub$rabs)
+full.sub$plot <- ifelse(full.sub$test_param == 0, "S", "L")
+full.sub <- select(full.sub, subj_id, correct, r, rsgn, rabs, smoothed, n, plot, log_time, response_0, actual_location)#[,c(1,7, 15,16,17,20:26)]
+full.sub$attempts <- sapply(strsplit(as.character(full.sub$response_0), ","), length)
+#full.sub$weights = 1/(full.sub$attempts) #weights are actually number of attempts in the glm
+#full.sub <- full.sub %>% transform(response_0= strsplit(as.character(response_0), ",")) %>% unnest(response_0)
+#full.sub$correct <- ifelse(full.sub$response_0 == full.sub$actual_location, 1, 0) #fixing correct for multiple guesses
+#full.sub$rpos <- ifelse(full.sub$r > 0, full.sub$r, 0)
+#full.sub$rneg <- ifelse(full.sub$r < 0, full.sub$r, 0)
+full.sub$alpha <- log(.05/0.95)
+full.sub$correct.prop <- full.sub$correct/full.sub$attempts #correct.prop - proportion of correct selections, weights - number of attempts
+
+m8l <- glmer(correct.prop~offset(alpha) + rabs*rsgn + smoothed + n + (1|subj_id), data=filter(full.sub, plot == "L"), family="binomial", weights=attempts)
+m8s <- glmer(correct.prop~offset(alpha) + rabs*rsgn + smoothed + n + (1|subj_id), data=filter(full.sub, plot == "S"), family="binomial", weights=attempts)
+#pander(summary(m8l), justify=c('left', 'right', 'right', 'right', 'right', caption="Model fit for overlaid lines"))
+#pander(summary(m8s)$coefficients, justify=c('left', 'right', 'right', 'right', 'right'), caption="Model fit for scatter plots")
+#library(xtable)
+kable(summary(m8l)$coefficients, format="latex")
+kable(summary(m8s)$coefficients, format="latex")
+@
+\end{table}
+
+Table \ref{tab1} summarises the model fits. It can be confusing the interpret the model estimates, and at first glance it appears the overlaid lines (-0.660) are substantially more powerful than the scatter plot (-4.403), but this is misleading, and  interpreting the the full model involves combining the estimates for the different interactions with correlation and sign. Taking correlation into account, the scatter plot shows superior performance. It needs to be noted that we only tested correlations at  0.3, 0.5, 0.7 and 0.9, so the results below an absolute value of 0.3 are unreliable and may be artifacts of regression smoothing methods. The correlation:sign interaction shows that the scatter plot has close to symmetric performance for positive (correlation:sign + correlation) and negative (-correlation) correlation while the overlaid line graph is substantially weaker for negative values of correlation. Surprisingly, smoothing out the excess 'noise' from a time series had a negative effect on scatter plots, despite a minimal visual impact of smoothed (Figure~\ref{smoothing}). It did have a significant positive impact on the power of overlaid line graphs. Increasing the sample size, $t$, improved the power of the scatter plot but it was not statistically significant for the overlaid line graph.
+Figure~\ref{powermodel} shows the fitted unrestricted model, with power predictions (y axis) plotted against correlation (x axis) for each of the four sample sizes tested. The thicker lines represent the fixed effect fit, or the average performance across all tested individuals whilst the thinner lines represent the random effects fit, the variation in power that can be attributed to an individual's visual skill. \citet{Majumder:2014} show that this random visual skill is not impacted by demographics such as age and gender; whilst education increases the power of a graphic display by only approximately one percent, not a practically significant amount. We did not include these characteristics of the individual in the modelling due to this lack of significance. Figure~\ref{powermodel} especially highlights the weak performance of the overlaid lines and the benefits of smoothing.
+
+\begin{figure}[htbp]
+ \centering
+<<powermodel, dependson='powerfit', fig.height=6, fig.width=6, out.width='0.7\\textwidth', echo=FALSE>>=
+r <- seq(-0.9,0.9,0.02)
+n <- c(12, 24, 48, 96)
+full.pred8l <- data.frame(expand.grid(r=r, n=n, alpha=log(.05/0.95),
+                                      smoothed=c(0,1), 
+                                      subj_id=subset(full.sub, plot=="L")$subj_id)) #ranef(m4)[[1]][,1]))
+full.pred8l$rsgn <- ifelse(full.pred8l$r > 0, 1, 0)
+full.pred8l$rabs <- abs(full.pred8l$r)
+full.pred8l$fitre <- predict(m8l, full.pred8l, type="response", re.form=~(1|subj_id),
+                             allow.new.levels=TRUE)
+full.pred8l$fitfx <- predict(m8l, full.pred8l, type="response", re.form=NA,
+                             allow.new.levels=TRUE)
+full.pred8l$plot <- ifelse(full.pred8l$smoothed == 0, "Overlaid Lines", "Overlaid Lines (Smoothed)")
+full.pred8l <- filter(full.pred8l, smoothed == 0 | smoothed == 1 & n==48 | smoothed ==1 & n==96)
+
+full.pred8s <- data.frame(expand.grid(r=r, n=n, alpha=log(.05/0.95),
+                                      smoothed=c(0,1), 
+                                      subj_id=subset(full.sub, plot=="S")$subj_id)) #ranef(m4)[[1]][,1]))
+full.pred8s$rsgn <- ifelse(full.pred8s$r > 0, 1, 0)
+full.pred8s$rabs <- abs(full.pred8s$r)
+full.pred8s$fitre <- predict(m8s, full.pred8s, type="response", re.form=~(1|subj_id),
+                             allow.new.levels=TRUE)
+full.pred8s$fitfx <- predict(m8s, full.pred8s, type="response", re.form=NA,
+                             allow.new.levels=TRUE)
+full.pred8s$plot <- ifelse(full.pred8s$smoothed == 0, "Scatterplot", "Scatterplot (Smoothed)")
+full.pred8s <- filter(full.pred8s, smoothed == 0 | smoothed == 1 & n==48 | smoothed ==1 & n==96)
+full.pred <- rbind(full.pred8s, full.pred8l)
+
+
+#full.pred <- mutate(full.pred2, plot2 = ifelse(substr(plot, 1, 1) =="S", "Scatterplot", "Overlaid Lines"))
+
+qplot(r, fitre, data=full.pred, color=plot, 
+      group=interaction(subj_id, plot), geom="line", alpha=I(0.1)) + 
+  scale_color_manual("Plot Design", values=c("#33AA33", "#9977EE", "#FF9933", "#00DDAA")) + 
+  xlab("Correlation") + ylab("Estimated Power") + labs(title="Predicted Power") +
+  geom_line(aes(y=fitfx), size=2, alpha=1) + theme_bw() + facet_wrap(~n, ncol = 2) + theme(aspect.ratio=1.2)
+@
+  \label{powermodel}
+  \caption{Predicted power fit from the mixed effects logit power model. The weakness of the overlaid line graph in negative correlation and  the scatter plot's gain from sample size are highlighted.}
+\end{figure}
+
+\begin{figure}
+  \centering
+<<residuals, dependson='powerfit', fig.height=4, fig.width=6, out.width='0.7\\textwidth', echo=FALSE>>=
+resids <- resid(m8s)
+residl <- resid(m8l)
+resids[842:843] <- NA
+resid <- data.frame(line = residl, scatter = resids)
+p1b <- ggplot(data=resid[1:841,]) + geom_histogram(aes(y=..density.., x=scatter)) + labs(title="Scatter plot", x="residual", y=element_blank())
+p2b <- ggplot(data=resid) + geom_histogram(aes(y=..density.., x=line))+ labs(title="Overlaid Lines", x="residual", y=element_blank())
+grid.arrange(p1b, p2b, ncol=2, top = "Residual density plots")
+@
+  \label{residuals}
+  \caption{Histograms of residuals for both the scatter plot (left) and the overlaid lines (right).}
+\end{figure}
+
+Analysing the residuals allows us to test the model fit. As the dependent variable is a binary variable, the model will only have a residual close to zero if it predicts either a power of zero or one. As the rate of picking the true plot purely by chance is, $1/m$ or 0.05, the model should never predict a power of zero even if the plot has no ability to display correlation. This effect is especially notable in the overlaid line residual plot, the model fit is never close to zero or one so the residuals are split with no values around zero.
+The scatter plot residuals are normally distributed with a Jarque-Bera normality test statistic of 0.09 (p-value = 0.95), however the overlaid lines strongly reject normality with a Jarque-Bera statistic of 75.6 (p-value = 0.00). The significance tests associated with the overlaid lines are only valid asymptotically. Also concerning, the mean value of the overlaid lines residuals is - 0.08, implicating that the model tends to over-predict power, further weakening the performance of this plot design relative to the scatter plot.
+This unrestricted model used in to test the symmetry restriction for the scatter plot design is written formally as:
+
+$$Power_{UR,s} = \psi\left\{ \beta_{s,0} + \beta_{s,1} \cdot |\alpha| + \beta_{s,2}\cdot Sign + \beta_{s,3}\cdot Smoothed + \beta_{s,4}\cdot t + \beta_{s,5}\cdot |\alpha| \cdot Sign + \gamma_{s,1} \cdot subject_{j} \right\}$$
+
+Testing if the scatter plot displays positive and negative correlation equally is equivalent to testing the hypothesis:
+
+\begin{itemize}
+  \item $H_{0}: \beta_{2} = \beta_{5} = 0$
+  \item $H_{1}:$ Either equality does not hold.
+\end{itemize}
+
+The restricted model is therefore:
+$$Power_{R,s} = \psi\left\{ \beta_{s,0}+\beta_{s,1}\cdot |\alpha| + \beta_{s,3}\cdot Smoothed + \beta_{s,4}\cdot t +\gamma_{s,1} \cdot subject_{j} \right\}$$
+
+The unrestricted model has a log-likelihood value of -346.9, where the restricted model has a log-likelihood of -355.8. The test statistic is therefore, with a null distributed as a $\chi^{2}_{2}$ variable. The null hypothesis is rejected (p = 0.02). We find that the scatter plot has asymmetric performance over negative and positive values of correlation. This may be a result of unwittingly introducing bias into the methodology, the first scatter plot shown to subjects in the instruction set always had strong positive correlation. 
+A similar setup rejects the symmetric performance of the overlaid line graphs with a log likelihood ratio test statistic of 105.30 (p-value < 0.001). Such an extreme result is due to a systematic difference in the overlaid line graph and cannot be attributed simply to bias.
+
+Table 2: Mixed Effects Linear Model with the dependent variable log(time). Sign = 1 if correlation > 0, 0 otherwise. Both plot designs estimated together with Overlaid Lines as the base design. Sample size: 1684. The model is fitted using the lme4 package in R.
+
+
+<<timefit, dependson='powerfit', echo=FALSE, results='hide', message=FALSE, error=FALSE, warning=FALSE>>=
+timelmer <-  lmer(log_time ~ smoothed + r + n + rsgn*r + plot + plot*smoothed 
+                  + plot*r + plot*n + plot*rsgn*r + plot*correct + (1|subj_id), data=full.sub)
+xable(summary(timelmer)$coefficients, format="latex")
+@
+
+While it appears that the overlaid lines are on the verge of statistical significance (at the 5\% level) for being the faster plot for a subject to visually process, this effect only holds for correlation values close to zero. The interactions between correlation and sign significantly reduce the time taken to pick the lineup for stronger correlations. Unsurprisingly, correct decisions are made faster. Surprisingly, neither smoothness nor sample size has an impact on the time for either plot design, despite having statistically significant impacts on power. An overlaid line graph having positive correlation increases the time required, eliminating the benefits from the almost significant plot design term. This result seems counter-intuitive as the weak performance of the overlaid lines in negative correlation implies that negative would require more time than positive, but the interactions between plot design, correlation and sign result in there being almost no decrease in time for strongly negatively correlated line plots.
+
+\section{Conclusion}
+
+This research showed that the scatterplot is better than the overlaid lines for displaying two time series when the purpose is to examine the association between the two series. This is especially true if correlation between the series is negative.  This comparison was made possible by the use of the lineup protocol for comparing plot designs.  The power of two plot designs for reading correlation between variables was modelled using a logistic regression incorporating subject’s individual visual ability as a random effect.  We found that  the scatterplot, in most situations is both more powerful and quicker to process than  the overlaid line graph. The overlaid line graph appeared to have stronger performance at extremely low correlations, but this research did not test absolute values of correlation below 0.3. Other non-linear associations may exist in data that are not measured by correlation, and it may be of interest to compare plot power with a broader range of true plot features.
+Investigation of the individual selections of the lineup evaluations finds some results in-line with Wertheimer’s Gestalt Law of common fate, as demonstrated in Figure 15. The law suggested that people would find relationships between two lines that briefly move together, regardless of whether the relationship actually existed. Whilst this is shown, the overlaid line graph did not have a corresponding increase in confidence compared to the scatter plot; so research into similar confidence-boosting visual anomalies that can occur in scatter plots would be necessary to further investigate the law. Diaconis's Magical Thinking was supported by the finding on the relationships between time, confidence and correctness. A more difficult true plot may be picked rarely and require a longer to make a decision; resulting in decreased subject confidence. However, we found that time increases confidence but reduces correctness. Highly confident, but incorrect decisions, suggests subjects may have been distracted by strong, spurious patterns in the null plots.
+If a data analyst is required to use overlaid line graphs in their work, substantial improvements to power and hence readability can be made by smoothing time series data if the sample size is long enough for these techniques to become feasible.
+
+\bibliographystyle{asa}
+\bibliography{references}
+
+\end{document}

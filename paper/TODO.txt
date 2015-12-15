@@ -1,0 +1,18 @@
+15/12/2015
+
+- chunk options, ermove messages
+- proportion differnce plot - make into errorbars
+- clean code chunks
+- remove the NA value for smooth on the last line
+- why only one pin plot. add the rest
+- notation for the model
+- subsectioning
+- find other software to do weighted glm (SAS, ASREML)
+
+3/12/2015
+
+- Convert what you have to latex, Rnw: https://github.com/niladrir/metrics-paper
+- Handling the multiple choice - Lendie Follett's paper - adjusting calculations
+- Break into main paper and supplementary material
+
+

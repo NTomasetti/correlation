@@ -74,6 +74,8 @@ Visual inference in EDA is prone to type 1 errors from the over-interpretation o
 \spacingset{1.45} % DON'T change the spacing!
 \newpage
 
+\tableofcontents
+
 <<setup, echo=FALSE, results='hide', message=FALSE, error=FALSE, warning=FALSE>>=
 library(lme4)
 library(ggplot2)
@@ -579,9 +581,10 @@ $$Power_{i} = \psi\left\{ \beta_{i,0} + \beta_{i,1} \cdot Correlation + \beta_{i
 
 Where $\psi$ is the logit link function, $\psi(x) = \frac{e^{x}}{1+e^{x}}$, $r$ is the true plot correlation, Sign is the direction of the true plot correlation, $i$  is the plot design and $j$ is an observer specific random effect.
 
-Table 1: Mixed Effects Logit Model for the predicted power of plot design. Sign = 1 if correlation > 0, 0 otherwise. Each plot design is estimated separately. Results must be transformed via the logit link function to generate a power prediction. Subjects with less than ten lineup evaluations were removed from the sample. Sample size for scatter plot model: 841, overlaid lines model: 843. The model is fitted using the lme4 package in 
-
-<<powerfit, dependson='setup', echo=FALSE, results='hide', message=FALSE, error=FALSE, warning=FALSE>>=
+\begin{table}[htp]
+\caption{Mixed Effects Logit Model for the predicted power of plot design. Sign = 1 if correlation > 0, 0 otherwise. Each plot design is estimated separately. Results must be transformed via the logit link function to generate a power prediction. Subjects with less than ten lineup evaluations were removed from the sample. Sample size for scatter plot model: 841, overlaid lines model: 843. The model is fitted using the lme4 package in R.}
+\label{tab1}
+<<powerfit, dependson='setup', results='asis', echo=FALSE, message=FALSE, error=FALSE, warning=FALSE>>=
 full$subj_id <- factor(full$ip_address, labels=1:207)
 
 # Need to keep only evaluations done by subject who completed at least 10
@@ -603,13 +606,16 @@ full.sub$attempts <- sapply(strsplit(as.character(full.sub$response_0), ","), le
 full.sub$alpha <- log(.05/0.95)
 full.sub$correct.prop <- full.sub$correct/full.sub$attempts #correct.prop - proportion of correct selections, weights - number of attempts
 
-m8l <- glmer(correct.prop~offset(alpha) + rabs*rsgn + smoothed + n + (1|subj_id), data=filter(full.sub, plot == "L"), family="binomial", weights=attempts)
+#m8l <- glmer(correct.prop~offset(alpha) + rabs*rsgn + smoothed + n + (1|subj_id), data=filter(full.sub, plot == "L"), family="binomial", weights=attempts)
 m8s <- glmer(correct.prop~offset(alpha) + rabs*rsgn + smoothed + n + (1|subj_id), data=filter(full.sub, plot == "S"), family="binomial", weights=attempts)
-pander(summary(m8l), justify=c('left', 'right', 'right', 'right', 'right', caption="Model fit for overlaid lines"))
-pander(summary(m8s), justify=c('left', 'right', 'right', 'right', 'right', caption="Model fit for scatter plots"))
+#pander(summary(m8l), justify=c('left', 'right', 'right', 'right', 'right', caption="Model fit for overlaid lines"))
+#pander(summary(m8s)$coefficients, justify=c('left', 'right', 'right', 'right', 'right'), caption="Model fit for scatter plots")
+#library(xtable)
+kable(summary(m8s)$coefficients, format="latex")
 @
+\end{table}
 
-Table 1 summarises the model fits. It can be confusing the interpret the model estimates, and at first glance it appears the overlaid lines (-0.660) are substantially more powerful than the scatter plot (-4.403), but this is misleading, and  interpreting the the full model involves combining the estimates for the different interactions with correlation and sign. Taking correlation into account, the scatter plot shows superior performance. It needs to be noted that we only tested correlations at  0.3, 0.5, 0.7 and 0.9, so the results below an absolute value of 0.3 are unreliable and may be artifacts of regression smoothing methods. The correlation:sign interaction shows that the scatter plot has close to symmetric performance for positive (correlation:sign + correlation) and negative (-correlation) correlation while the overlaid line graph is substantially weaker for negative values of correlation. Surprisingly, smoothing out the excess 'noise' from a time series had a negative effect on scatter plots, despite a minimal visual impact of smoothed (Figure~\ref{smoothing}). It did have a significant positive impact on the power of overlaid line graphs. Increasing the sample size, $t$, improved the power of the scatter plot but it was not statistically significant for the overlaid line graph.
+Table \ref{tab1} summarises the model fits. It can be confusing the interpret the model estimates, and at first glance it appears the overlaid lines (-0.660) are substantially more powerful than the scatter plot (-4.403), but this is misleading, and  interpreting the the full model involves combining the estimates for the different interactions with correlation and sign. Taking correlation into account, the scatter plot shows superior performance. It needs to be noted that we only tested correlations at  0.3, 0.5, 0.7 and 0.9, so the results below an absolute value of 0.3 are unreliable and may be artifacts of regression smoothing methods. The correlation:sign interaction shows that the scatter plot has close to symmetric performance for positive (correlation:sign + correlation) and negative (-correlation) correlation while the overlaid line graph is substantially weaker for negative values of correlation. Surprisingly, smoothing out the excess 'noise' from a time series had a negative effect on scatter plots, despite a minimal visual impact of smoothed (Figure~\ref{smoothing}). It did have a significant positive impact on the power of overlaid line graphs. Increasing the sample size, $t$, improved the power of the scatter plot but it was not statistically significant for the overlaid line graph.
 Figure~\ref{powermodel} shows the fitted unrestricted model, with power predictions (y axis) plotted against correlation (x axis) for each of the four sample sizes tested. The thicker lines represent the fixed effect fit, or the average performance across all tested individuals whilst the thinner lines represent the random effects fit, the variation in power that can be attributed to an individual's visual skill. \citet{Majumder:2014} show that this random visual skill is not impacted by demographics such as age and gender; whilst education increases the power of a graphic display by only approximately one percent, not a practically significant amount. We did not include these characteristics of the individual in the modelling due to this lack of significance. Figure~\ref{powermodel} especially highlights the weak performance of the overlaid lines and the benefits of smoothing.
 
 \begin{figure}[htbp]

@@ -322,7 +322,7 @@ In this research, we had three basic factors:
 
 \begin{itemize}
   \item Factor 1: Plot design, levels = scatter plot, overlaid time series
-  \item Factor 2: Sample size, levels = 12, 24, 48, 96
+  \item Factor 2: Sample size (t), levels = 12, 24, 48, 96
   \item Factor 3: True plot correlation, levels 
 \end{itemize}
 
@@ -619,7 +619,7 @@ m8s <- glmer(correct.prop~offset(alpha) + rabs*rsgn + smoothed + n + (1|subj_id)
 line.fit <- summary(m8l)$coefficients
 scatter.fit <- summary(m8s)$coefficients
 colnames(scatter.fit)[4] <- "p-value"
-rownames(scatter.fit) <- c("Intercept", "abs(r)", "sign(r)", "smooth", "sample size", "Interaction(r+, r-)")
+rownames(scatter.fit) <- c("Intercept", "abs(r)", "sign(r)", "smoothed", "t", "Interaction(r+, r-)")
 #colnames(line.fit)[4] <- "p-value"
 #rownames(line.fit) <- c("Intercept", "abs(r)", "sign(r)", "smooth", "sample size", "Interaction(r+, r-)")
 kable(scatter.fit, format="latex", digits=2, caption="Scatter plot")
@@ -723,8 +723,9 @@ pv <- function(x){
 p.value <- sapply(time.fit[,3], pv)
 time.fit <- cbind(time.fit, p.value)
 time.fit <- time.fit[c(1, 2, 4, 3, 5, 8, 7, 6, 9, 11, 10, 12, 14, 13),] #separate into main effects then interaction effects in same order
-kable(time.fit[1:7,], format="latex", caption="Main Effects")
-kable(time.fit[8:14,], format="latex", caption="Interaction Effects")
+rownames(time.fit) <- c("Intercept", "Smoothed", "t", "r", "sign(r)", "r*sign(r)", "correct", "Plot", "Plot*Smoothed", "Plot*t", "Plot*r", "Plot*sign(r)", "Plot*r*sign(r)", "Plot*correct")
+kable(time.fit[1:7,], format="latex", caption="Main Effects (Overlaid Lines)")
+kable(time.fit[8:14,], format="latex", caption="Interaction Effects (Scatter plot)")
 @
 \end{table}
 

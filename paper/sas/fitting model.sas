@@ -1,10 +1,10 @@
 data choices;
 	infile "/folders/myshortcuts/sas/choices.csv" delimiter=',' firstobs=2;
-	input rabs samplesize offsetalpha rsgn smoothed plotstyle subjid weights detected included;
+	input rabs samplesize offsetalpha rsgn smoothed plotstyle subjid weights detected;
 run;
 data predgrid;
 	infile "/folders/myshortcuts/sas/predgrid.csv" delimiter=',' firstobs=2;
-	input rabs samplesize offsetalpha rsgn smoothed plotstyle subjid weights included;
+	input rabs samplesize offsetalpha rsgn smoothed plotstyle subjid weights;
 run;
 data combined;
 	set choices predgrid;

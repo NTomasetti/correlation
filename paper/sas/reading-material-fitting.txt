@@ -1,0 +1,11 @@
+Info on fitting mixed effects models
+
+http://www4.ncsu.edu/~fisik/Fikret%20Isik%20-%20Lecture%20notes%20for%20statistics%20session%20-%20IUFRO%20Genetics%20of%20Host-Parasite%20Interactions%20in%20Forestry%20-%202011.pdf
+
+http://www.ats.ucla.edu/stat/sas/glimmix.pdf
+
+https://www.stats.otago.ac.nz/webdata/resources/david_fletcher/Dept_Jul_08.pdf
+
+http://www.ats.ucla.edu/stat/sas/seminars/sas_mlm/mlm_sas_seminar.htm
+
+http://www.uic.edu/classes/bstt/bstt513/ACerrorsLS.pdf

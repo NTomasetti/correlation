@@ -586,7 +586,7 @@ $$Power_{ijkt} = \psi\left\{ \beta_{0} + \beta_{1} x_{1,i}  + \beta_{2} x_{2,j} 
 Where $\psi$ is the logit link function, $\psi(x) = \frac{e^{x}}{1+e^{x}}$, $x_{1}$ is the absolute value of the true plot correlation, with $i \in {0.3, 0.5, 0.7, 0.9}$ $x_{2,j} is a dummy variable for the sign of the true plot correlation, with $j = 0$ for negative correlation, $x_{3,k}$ is a dummy variable for the smoothing procedure, with $k = 0$ for unsmoothed data, $x_{4,t}$ is the sample size, with $t \in {12, 24, 48, 96}$ and $z_{s}$ is an observer specific random effect, with $s = 1, 2, \cdot , 157$
 
 \begin{table}[htp]
-\caption{Weighted Mixed Effects Logit Model for the predicted power of plot design. Sample size for scatter plot model: 900, overlaid lines model: 949, total: 1849. Default plot design is an overlaid lines type. The model is fitted using the glimmix procedure in SAS. Subjects with less than ten lineup evaluations were removed from the sample. %Sign = 1 if correlation > 0, 0 otherwise. Each plot design is estimated separately. Results must be transformed via the logit link function to generate a power prediction. Subjects with less than ten lineup evaluations were removed from the sample..}
+\caption{Weighted Mixed Effects Logit Model for the predicted power of plot design. Sample size for scatter plot evaluations: 900, overlaid lines: 949, total: 1849. Default plot design is an overlaid lines type. The model is fitted using the glimmix procedure in SAS. Subjects with less than ten lineup evaluations were removed from the sample. %Sign = 1 if correlation > 0, 0 otherwise. Each plot design is estimated separately. Results must be transformed via the logit link function to generate a power prediction. Subjects with less than ten lineup evaluations were removed from the sample..}
 \label{tab1}
 \centering
 <<powerfit, dependson='setup', results='asis', echo=FALSE, message=FALSE, error=FALSE, warning=FALSE>>=
@@ -599,31 +599,22 @@ full.sub <- filter(full, subj_id %in% keep)
 full.sub$r <- round(full.sub$correlation, 1)
 full.sub$rsgn <- ifelse(full.sub$r >= 0, 1, 0)
 full.sub$rabs <- abs(full.sub$r)
-#full.sub$rabs <- factor(full.sub$rabs)
 full.sub$plot <- ifelse(full.sub$test_param == 0, "S", "L")
 full.sub <- select(full.sub, subj_id, correct, r, rsgn, rabs, smoothed, n, plot, log_time, response_0, actual_location)#[,c(1,7, 15,16,17,20:26)]
 full.sub$attempts <- sapply(strsplit(as.character(full.sub$response_0), ","), length)
 full.sub$weights = 1/(full.sub$attempts) #weights are actually number of attempts in the glm
 full.sub <- full.sub %>% transform(response_0= strsplit(as.character(response_0), ",")) %>% unnest(response_0)
 full.sub$correct <- ifelse(full.sub$response_0 == full.sub$actual_location, 1, 0) #fixing correct for multiple guesses
-#full.sub$rpos <- ifelse(full.sub$r > 0, full.sub$r, 0)
-#full.sub$rneg <- ifelse(full.sub$r < 0, full.sub$r, 0)
 full.sub$alpha <- log(.05/0.95)
-#full.sub$correct.prop <- full.sub$correct/full.sub$attempts #correct.prop - proportion of correct selections, weights - number of attempts
-#weirw.csv(full.sub, "choices.csv") #exporting data to be estimated in SAS.
-#m8l <- glmer(correct.prop~offset(alpha) + rabs*rsgn + smoothed + n + (1|subj_id), data=filter(full.sub, plot == "L"), family="binomial", weights=attempts)
-#m8s <- glmer(correct.prop~offset(alpha) + rabs*rsgn + smoothed + n + (1|subj_id), data=filter(full.sub, plot == "S"), family="binomial", weights=attempts)
-#pander(summary(m8l), justify=c('left', 'right', 'right', 'right', 'right', caption="Model fit for overlaid lines"))
-#pander(summary(m8s)$coefficients, justify=c('left', 'right', 'right', 'right', 'right'), caption="Model fit for scatter plots")
-#library(xtable)
-#line.fit <- summary(m8l)$coefficients
-#scatter.fit <- summary(m8s)$coefficients
-#colnames(scatter.fit)[4] <- "p-value"
-#rownames(scatter.fit) <- c("Intercept", "abs(r)", "sign(r)", "smoothed", "t", "Interaction(r+, r-)")
-#colnames(line.fit)[4] <- "p-value"
-#rownames(line.fit) <- c("Intercept", "abs(r)", "sign(r)", "smooth", "sample size", "Interaction(r+, r-)")
-#kable(scatter.fit, format="latex", digits=2, caption="Scatter plot")
-#kable(line.fit, format="latex", digits=2, caption="Overlaid Lines")
+full.sub$subj_id <- as.numeric(full.sub$subj_id)
+subsetted <- select(full.sub, rabs, n, alpha, rsgn, smoothed, plot, subj_id, weights, correct)
+#write.csv(subsetted, "sas/choices.csv")
+
+powercoef <- read.csv("sas/PowerEstimates.csv")
+powercoef <- powercoef[,-1]
+rownames(powercoef) <- c("Intercept", "abs(r)", "sign(r)", "abs(r)*sign(r)", "smoothed", "t", "plot", "plot*abs(r)", "plot*sign(r)", "plot*abs(r)*sign(r)", "plot*smoothed", "plot*t")
+kable(powercoef[1:6,], format="latex", digits=2, caption="Main Effects")
+kable(powercoef[7:12,], format="latex", digits=2, caption="Interaction Effects")
 @
 \end{table}
 
@@ -633,41 +624,25 @@ Figure~\ref{powermodel} shows the fitted unrestricted model, with power predicti
 \begin{figure}[htbp]
  \centering
 <<powermodel, dependson='powerfit', fig.height=6, fig.width=6, out.width='0.7\\textwidth', echo=FALSE>>=
-r <- seq(-0.9,0.9,0.02)
-n <- c(12, 24, 48, 96)
-predl <- data.frame(expand.grid(r=r, n=n, alpha=log(.05/0.95),
-                                      smoothed=c(0,1), 
-                                      subj_id=subset(full.sub, plot=="L")$subj_id)) #ranef(m4)[[1]][,1]))
-predl$rsgn <- ifelse(predl$r > 0, 1, 0)
-predl$rabs <- abs(predl$r)
-predl$fitre <- predict(m8l, predl, type="response", re.form=~(1|subj_id),
-                             allow.new.levels=TRUE)
-predl$fitfx <- predict(m8l, predl, type="response", re.form=NA,
-                             allow.new.levels=TRUE)
-predl$plot <- ifelse(predl$smoothed == 0, "Overlaid Lines", "Overlaid Lines (Smoothed)")
-predl <- filter(predl, smoothed == 0 | smoothed == 1 & n==48 | smoothed ==1 & n==96)
+rabs <- seq(0,0.9,0.02)
+t <- c(12, 24, 48, 96)
+#pred <- data.frame(expand.grid(rabs=rabs, t=t, alpha=log(.05/0.95), rsgn=c(0,1),
+#                                      smoothed=c(0,1), plot=c(0,1),
+#                                      subj_id=full.sub$subj_id))
+#write.csv(pred, "sas/predgrid.csv") # these lines are done, but its a large file so commented out for knitr
+#Code exported to sas, see sas/model\ fit.sas
+prediction <- read.csv("sas/predfit.csv") #Large file, very slow
+rownames(prediction) <- c("rabs", "t", "alpha", "rsgn", "smoothed", "plot", "subj_id", "weights", "detected", "RandomEf", "FixedEf", "resid")
+resid <- subset(prediction, detected==0 | detected==1)
+prediction <- mutate(prediction, r = ifelse(rsgn==1, rabs, -rabs), plot = ifelse(plot==1, "Overlaid Lines", "Scatterplot"), plot = ifelse(smoothed==1, paste(plot, "(Smoothed)", sep=" "), plot))
+prediction <- select(prediction, rabs, t, rsgn, smoothed, plot, subj_id, RandomEf, FixedEf)
+prediction <- mutate(prediction, RandomEf = exp(RandomEf)/(1+exp(RandomEf)), FixedEf = exp(FixedEf)/(1+exp(FixedEf)))
 
-preds <- data.frame(expand.grid(r=r, n=n, alpha=log(.05/0.95),
-                                      smoothed=c(0,1), 
-                                      subj_id=subset(full.sub, plot=="S")$subj_id)) #ranef(m4)[[1]][,1]))
-preds$rsgn <- ifelse(preds$r > 0, 1, 0)
-preds$rabs <- abs(preds$r)
-preds$fitre <- predict(m8s, preds, type="response", re.form=~(1|subj_id),
-                             allow.new.levels=TRUE)
-preds$fitfx <- predict(m8s, preds, type="response", re.form=NA,
-                             allow.new.levels=TRUE)
-preds$plot <- ifelse(preds$smoothed == 0, "Scatterplot", "Scatterplot (Smoothed)")
-preds <- filter(preds, smoothed == 0 | smoothed == 1 & n==48 | smoothed ==1 & n==96)
-full.pred <- rbind(preds, predl)
-
-
-#full.pred <- mutate(full.pred2, plot2 = ifelse(substr(plot, 1, 1) =="S", "Scatterplot", "Overlaid Lines"))
-
-qplot(r, fitre, data=full.pred, color=plot, 
+qplot(r, RandomEf, data=prediction, color=plot, 
       group=interaction(subj_id, plot), geom="line", alpha=I(0.1)) + 
   scale_color_manual("Plot Design", values=c("#33AA33", "#9977EE", "#FF9933", "#00DDAA")) + 
-  xlab("Correlation") + ylab("Estimated Power") + labs(title="Predicted Power") +
-  geom_line(aes(y=fitfx), size=2, alpha=1) + theme_bw() + facet_wrap(~n, ncol = 2) + theme(aspect.ratio=1.2)
+  xlab("Correlation") + ylab("Estimated Power") +
+  geom_line(aes(y=FixedEf), size=2, alpha=1) + theme_bw() + facet_wrap(~t, ncol = 2) + theme(aspect.ratio=1.2)
 @
   \label{powermodel}
   \caption{Predicted power fit from the mixed effects logit power model. The weakness of the overlaid line graph in negative correlation and  the scatter plot's gain from sample size are highlighted.}
@@ -676,13 +651,13 @@ qplot(r, fitre, data=full.pred, color=plot,
 \begin{figure}
   \centering
 <<residuals, dependson='powerfit', fig.height=4, fig.width=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE>>=
-resids <- resid(m8s)
-residl <- resid(m8l)
-resids[842:843] <- NA
-resid <- data.frame(line = residl, scatter = resids)
-p1b <- ggplot(data=resid[1:841,]) + geom_histogram(aes(y=..density.., x=scatter)) + labs(title="Scatter plot", x="residual", y=element_blank())
-p2b <- ggplot(data=resid) + geom_histogram(aes(y=..density.., x=line))+ labs(title="Overlaid Lines", x="residual", y=element_blank())
-grid.arrange(p1b, p2b, ncol=2, top = "Residual density plots")
+resids <- subset(resid, plot==1)
+residl <- subset(resid, plot==0)
+#resids[842:843] <- NA  #fix residual stuff later
+#resid <- data.frame(line = residl, scatter = resids)
+#p1b <- ggplot(data=resid[1:841,]) + geom_histogram(aes(y=..density.., x=scatter)) + labs(title="Scatter plot", x="residual", y=element_blank())
+#p2b <- ggplot(data=resid) + geom_histogram(aes(y=..density.., x=line))+ labs(title="Overlaid Lines", x="residual", y=element_blank())
+#grid.arrange(p1b, p2b, ncol=2, top = "Residual density plots")
 @
   \label{residuals}
   \caption{Histograms of residuals for both the scatter plot (left) and the overlaid lines (right).}
@@ -712,7 +687,7 @@ Table 2: Mixed Effects Linear Model with the dependent variable log(time). Sign 
 \begin{table}
 \label{tab2}
 \centering
-\caption{Mixed Linear Model fit for time taken to make a selection}
+\caption{Mixed Linear Model fit for time taken to make a selection, default plot style is overlaid lines.}
 <<timefit, dependson='powerfit', echo=FALSE, results='hide', message=FALSE, error=FALSE, warning=FALSE>>=
 timelmer <-  lmer(log_time ~ smoothed + r + n + rsgn*r + plot + plot*smoothed 
                   + plot*r + plot*n + plot*rsgn*r + plot*correct + (1|subj_id), data=full.sub)
@@ -724,8 +699,8 @@ p.value <- sapply(time.fit[,3], pv)
 time.fit <- cbind(time.fit, p.value)
 time.fit <- time.fit[c(1, 2, 4, 3, 5, 8, 7, 6, 9, 11, 10, 12, 14, 13),] #separate into main effects then interaction effects in same order
 rownames(time.fit) <- c("Intercept", "Smoothed", "t", "r", "sign(r)", "r*sign(r)", "correct", "Plot", "Plot*Smoothed", "Plot*t", "Plot*r", "Plot*sign(r)", "Plot*r*sign(r)", "Plot*correct")
-kable(time.fit[1:7,], format="latex", caption="Main Effects (Overlaid Lines)")
-kable(time.fit[8:14,], format="latex", caption="Interaction Effects (Scatter plot)")
+kable(time.fit[1:7,], format="latex", caption="Main Effects", digits=2)
+kable(time.fit[8:14,], format="latex", caption="Interaction Effects", digits=2)
 @
 \end{table}
 

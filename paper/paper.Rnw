@@ -614,8 +614,8 @@ subsetted <- select(full.sub, rabs, n, alpha, rsgn, smoothed, plot, subj_id, wei
 powercoef <- read.csv("sas/PowerEstimates.csv")
 powercoef <- powercoef[,-1]
 rownames(powercoef) <- c("Intercept", "abs(r)", "sign(r)", "abs(r)*sign(r)", "smoothed", "t", "plot", "plot*abs(r)", "plot*sign(r)", "plot*abs(r)*sign(r)", "plot*smoothed", "plot*t")
-kable(powercoef[1:6,], format="latex", digits=2, caption="Main Effects")
-kable(powercoef[7:12,], format="latex", digits=2, caption="Interaction Effects")
+kable(powercoef[1:6,], format="latex", digits=2)
+kable(powercoef[7:12,], format="latex", digits=2)
 @
 \end{table}
 
@@ -633,10 +633,10 @@ t <- c(12, 24, 48, 96)
 #write.csv(pred, "sas/predgrid.csv") # these lines are done, but its a large file so commented out for knitr
 #Code exported to sas, see sas/model\ fit.sas
 prediction <- read.csv("sas/predfit.csv") #Large file, very slow
-colnames(prediction) <- c("rabs", "t", "alpha", "rsgn", "smoothed", "plot", "subj_id", "weights", "detected", "RandomEf", "FixedEf", "residual")
+colnames(prediction) <- c("rabs", "t", "alpha", "rsgn", "smoothed", "plot", "subj_id", "weights", "detected", "Included", "RandomEf", "FixedEf", "residual")
 glmm.resid <- subset(prediction, detected==0 | detected==1)
-prediction <- mutate(prediction, r = ifelse(rsgn==1, rabs, -rabs), plot = ifelse(plot==1, "Overlaid Lines", "Scatterplot"), plot = ifelse(smoothed==1, paste(plot, "(Smoothed)", sep=" "), plot))
-prediction <- select(prediction, rabs, t, rsgn, smoothed, plot, subj_id, RandomEf, FixedEf)
+prediction <- mutate(prediction, r = ifelse(rsgn==1, rabs, -rabs), plot = ifelse(plot==0, "Overlaid Lines", "Scatterplot"), plot = ifelse(smoothed==1, paste(plot, "(Smoothed)", sep=" "), plot))
+prediction <- select(prediction, r, t, rsgn, smoothed, plot, subj_id, RandomEf, FixedEf)
 prediction <- mutate(prediction, RandomEf = exp(RandomEf)/(1+exp(RandomEf)), FixedEf = exp(FixedEf)/(1+exp(FixedEf)))
 
 qplot(r, RandomEf, data=prediction, color=plot, 

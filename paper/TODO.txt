@@ -1,3 +1,15 @@
+18/12/2015
+
+- fix biblio
+- captions: first sentence what is the basic structure of plot, e.g Scatterplot of proportion detected against correlation. Second sentences explain details color, shape, lines, ... Third sentence what do you expect the reader to learn by looking at the plot e.g. Proprtion dtected is higher when correlation is large.  Always add a "."
+- Investigate the extreme residuals
+- plot random effects
+- subject plots, like proportion correct for each subject and display histogram
+* - lineup plots, proportion correct for each lineup
+- reasons plots
+- fix grid of predicted values
+- sizing of figures
+
 16/12/2015
 
 - subsectioning

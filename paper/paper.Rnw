@@ -684,11 +684,8 @@ Table 2: Mixed Effects Linear Model with the dependent variable log(time). Sign 
 \begin{table}
 \label{tab2}
 \centering
-<<<<<<< HEAD
 \caption{Linear mixed model fit for time taken to make a selection, default plot style is overlaid lines.}
-=======
-\caption{Linear mixed model fit for time taken to make a selection}
->>>>>>> 87129b971f8f6cb5753df99d05dcb503ec04b02c
+
 <<timefit, dependson='powerfit', echo=FALSE, results='hide', message=FALSE, error=FALSE, warning=FALSE>>=
 timelmer <-  lmer(log_time ~ smoothed + r + n + rsgn*r + plot + plot*smoothed 
                   + plot*r + plot*n + plot*rsgn*r + plot*correct + (1|subj_id), data=full.sub)

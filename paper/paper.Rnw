@@ -385,7 +385,7 @@ The web site that the Turk workers accessed to complete the task can be seen at 
 
 \begin{figure}[htbp]
  \centering
-<<results, dependson='setup', fig.width=6, fig.height=8, out.width='0.7\\textwidth', echo=FALSE>>=
+<<results, dependson='setup', fig.width=6, fig.height=8, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE>>=
 Turk <- mutate(Turk, plot = ifelse(test_param =="line", "Overlaid Lines", "Scatterplot"), 
                sign=ifelse(correlation > 0, 1, 0), smoothed=ifelse(smoothed=="yes", 1, 0))
 #ggplot(data=subset(Turk, smoothed==0), aes(x=correlation, y=percent, colour=plot)) + geom_smooth() + geom_point() + facet_grid(n~.) + scale_colour_discrete(name = "Plot Design") +  labs(title="Unsmoothed Plot Accuracy", y="Percent Correct", x="True Plot Correlation")
@@ -601,7 +601,7 @@ full.sub$r <- round(full.sub$correlation, 1)
 full.sub$rsgn <- ifelse(full.sub$r >= 0, 1, 0)
 full.sub$rabs <- abs(full.sub$r)
 full.sub$plot <- ifelse(full.sub$test_param == 0, "S", "L")
-full.sub <- select(full.sub, subj_id, correct, r, rsgn, rabs, smoothed, n, plot, log_time, response_0, actual_location)#[,c(1,7, 15,16,17,20:26)]
+full.sub <- select(full.sub, subj_id, correct, r, rsgn, rabs, smoothed, n, plot, log_time, response_0, actual_location, pic_id)#[,c(1,7, 15,16,17,20:26)]
 full.sub$attempts <- sapply(strsplit(as.character(full.sub$response_0), ","), length)
 full.sub$weights = 1/(full.sub$attempts) #weights are actually number of attempts in the glm
 full.sub <- full.sub %>% transform(response_0= strsplit(as.character(response_0), ",")) %>% unnest(response_0)
@@ -651,7 +651,7 @@ qplot(r, RandomEf, data=prediction, color=plot,
 
 \begin{figure}
   \centering
-<<residuals, dependson='powerfit', fig.height=4, fig.width=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE>>=
+<<residuals, dependson='powerfit', fig.height=4, fig.width=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
 p1b <- ggplot(data=subset(glmm.resid, plot==1)) + geom_histogram(aes(y=..density.., x=residual)) + labs(title="Scatter plot", x="residual", y=element_blank())
 p2b <- ggplot(data=subset(glmm.resid, plot==0)) + geom_histogram(aes(y=..density.., x=residual))+ labs(title="Overlaid Lines", x="residual", y=element_blank())
 grid.arrange(p1b, p2b, ncol=2, top = "Residual density plots")

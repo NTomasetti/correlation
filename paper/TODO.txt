@@ -1,7 +1,14 @@
+5/01/2016
+-redo residual diagnostics
+-do level 2 diag according to PhD thesis (includes random effects plot)
+-redo symmetry restrictions
+-rerun model on new grid
+-redo time model with weighting
+
 18/12/2015
 
-- fix biblio
-- captions: first sentence what is the basic structure of plot, e.g Scatterplot of proportion detected against correlation. Second sentences explain details color, shape, lines, ... Third sentence what do you expect the reader to learn by looking at the plot e.g. Proprtion dtected is higher when correlation is large.  Always add a "."
+*- fix biblio
+*- captions: first sentence what is the basic structure of plot, e.g Scatterplot of proportion detected against correlation. Second sentences explain details color, shape, lines, ... Third sentence what do you expect the reader to learn by looking at the plot e.g. Proprtion dtected is higher when correlation is large.  Always add a "."
 *- Investigate the extreme residuals
 - plot random effects
 *- subject plots, like proportion correct for each subject and display histogram

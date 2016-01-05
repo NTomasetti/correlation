@@ -22,3 +22,22 @@ ggplot(data=subjplot, aes(x=byattempt)) + geom_histogram(binwidth=0.05) + ylim(0
 #mean 0.37
 ggplot(data=subjplot, aes(x=byeval)) + geom_histogram(binwidth=0.05) + ylim(0,30) # proportion: detection to lineup evals.
 #mean 0.40
+
+#Choice plots
+full.sub$choice_reason <-as.numeric(unlist(strsplit(as.character(unlist(full.sub$choice_reason)), "[^0-9]+")))
+#Multiple selections#
+m.select <- summarise(group_by(subset(full.sub, attempts>1), subj_id, pic_id), attempts=max(attempts))
+##112 subject/lineup combinations
+##53 different subjects choose multiple plots
+##84 different lineups had multiple selections, 61 with 1, 19 with 2, 3 with 2, 1 with  
+##55 lines, 29 scatter (1 person selecting multiple - 40 lines, 21 scatter
+#                       2 people selecting multiple - 11 lines, 8 scatter
+#                       3 people selecting multiple - 3 lines
+#                       4 people selecting multiple - 1 line
+)
+
+m.freq <- data.frame(table(m.select$pic_id))
+m.lineup <- merge(m.freq, Turk, by.x="Var1", by.y="pic_id")
+ggplot(data=subset(m.lineup, Freq==2)) + geom_bar(aes(x=r, fill=plot)) + facet_wrap(~n)
+#high sample size increases chance of multiple selection, even spread across correlations except -0.5/-0.3 lines t=96
+

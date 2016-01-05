@@ -212,7 +212,7 @@ Where $T_{x}$ is all possible sets of $x$ trials out of $K$ resulting in a succe
 
 \begin{figure}[htbp]
   \centering
-<<lineup.example, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE>>=
+<<lineup.example, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
 set.seed(1234)
 a <- gen_true_data(24, 0.95)
 td <- gather(a, variable, value, c(X1, X2))
@@ -281,7 +281,7 @@ Setting $\lambda = 1$ produced a smoothing that is more consistent with real wor
 
 \begin{figure}[htbp]
   \centering
-<<smoothing, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE>>=
+<<smoothing, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
 set.seed(123)
 uns <- gen_true_data(96, 0.8)
 uns_l <- gather(uns, variable, value, -t)
@@ -346,7 +346,7 @@ Subjects were allowed to make multiple selections, which is handled by probabili
 
 \begin{figure}[htbp]
   \centering
-<<designs, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE>>=
+<<designs, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
 set.seed(101)
 a <- gen_true_data(24, 0.95)
 b <- gen_true_data(24, -0.95)
@@ -394,7 +394,7 @@ The web site that the Turk workers accessed to complete the task can be seen at 
 
 \begin{figure}[htbp]
  \centering
-<<results, dependson='setup', fig.width=6, fig.height=8, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE>>=
+<<results, dependson='setup', fig.width=6, fig.height=8, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, error=FALSE, message=FALSE>>=
 Turk <- mutate(Turk, plot = ifelse(test_param =="line", "Overlaid Lines", "Scatterplot"), 
                sign=ifelse(correlation > 0, 1, 0), smoothed=ifelse(smoothed=="yes", 1, 0))
 #ggplot(data=subset(Turk, smoothed==0), aes(x=correlation, y=percent, colour=plot)) + geom_smooth() + geom_point() + facet_grid(n~.) + scale_colour_discrete(name = "Plot Design") +  labs(title="Unsmoothed Plot Accuracy", y="Percent Correct", x="True Plot Correlation")
@@ -411,7 +411,7 @@ Performance between the two plot designs appears to be similar for positive corr
 
 \begin{figure}[htbp]
   \centering
-<<powerdiff, dependson='results', fig.width=6, fig.height=8, out.width='0.7\\textwidth', echo=FALSE>>=
+<<powerdiff, dependson='results', fig.width=6, fig.height=8, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
 Turk$correct <- Turk$percent*Turk$attempt
 Turk$r <- round(Turk$correlation, 1)
 #Turk.line <- subset(Turk, test_param=="line")
@@ -441,7 +441,7 @@ ggplot(data=prop) + geom_errorbar(aes(x=r, ymax=upper, ymin=lower)) + geom_point
 
 \begin{figure}[htbp]
   \centering
-<<samplesize, dependson='powerdiff', fig.width=6, fig.height=8, out.width='0.7\\textwidth', echo=FALSE>>=
+<<samplesize, dependson='powerdiff', fig.width=6, fig.height=8, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
 ggplot(data=subset(Turk, smoothed==0), aes(x=correlation, y=percent, colour=factor(n))) + geom_smooth(se=F) + geom_point() + facet_grid(plot~.) + scale_colour_discrete(name = "Sample size") +  labs(title="Effect of sample size, with unsmoothed data", y="Percent Correct", x="Correlation") + theme(legend.position="bottom")
 @
  \label{samplesize}
@@ -453,7 +453,7 @@ Figure~\ref{time} and Figure~\ref{confidence} give a breakdown of the interactio
 
 \begin{figure}[htbp]
   \centering
-<<time, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE>>=
+<<time, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
 full <- mutate(full, sign = ifelse(correlation >= 0, 1, 0), n24 = ifelse(n ==24, 1, 0), n48 = ifelse(n ==48,  1, 0), n96 = ifelse(n ==96, 1, 0), plot = ifelse(test_param ==1, "Overlaid Lines", "Scatterplot"))
 time <- data.frame(plot=full$plot, time=full$log_time, correct=full$correct, rsgn=full$sign)
 #ggplot(data=time, aes(x=time, fill=factor(correct))) +geom_bar(stat="bin") + facet_grid(~plot) +labs(x="Log(Time) Taken", y=element_blank()) + scale_fill_discrete(name = "Correct")
@@ -483,7 +483,7 @@ The result suggests that the latter hypothesis is more likely to be correct. We 
 
 \begin{figure}[htbp]
   \centering
-<<confidence, dependson='time', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE>>=
+<<confidence, dependson='time', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
 conf <- data.frame(plot=full$plot, conf=full$conf_level, correct=full$correct, rsgn=full$sign)
 conf$rsgn <- factor(conf$rsgn, labels=c("r -","r +"))
 cm <- summarise(group_by(conf, correct, plot, rsgn), m=mean(conf))
@@ -505,7 +505,7 @@ Next we analysed the individual ability of each of our subjects. Figure~\ref{con
 
 \begin{figure}[htbp]
   \centering
-<<confidence2, dependson='time', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE>>=
+<<confidence2, dependson='time', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
 full$subj_id <- factor(full$ip_address, labels=1:207)
 y <- data.frame(table(full$subj_id))
 keep2 <- y$Var1[y$Freq>9]
@@ -527,7 +527,7 @@ There are two major reasons why a subject may fail to detect the true plot out o
 
 \begin{figure}[htbp]
   \centering
-<<pins, dependson='samplesize', fig.width=6, fig.height=10, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE>>=
+<<pins, dependson='samplesize', fig.width=6, fig.height=10, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
 # correl <- read.csv("correlations.csv") # You have already read this
 count.setup <- select(full, pic_id, response_0, actual_location, 
               test_param, smoothed, n)
@@ -545,9 +545,9 @@ counts$Var1 <- as.numeric(as.character(counts$Var1))
 counts$Var2 <- as.numeric(as.character(counts$Var2))
 colnames(counts) <- c("lineup", "plot", "count")
 pin <- merge(counts, Turk[-19], by.x="lineup", by.y="pic_id")
-pin <- select(pin, lineup, plot, count, smoothed, true_pos, n, test_param, r)#pin[,c(1, 2, 3, 12, 13, 15, 11, 20)]
+pin <- select(pin, lineup, plot, count, smoothed, true_pos, n, test_param, r, attempt)#pin[,c(1, 2, 3, 12, 13, 15, 11, 20)]
 pin$r <- factor(pin$r)
-colnames(pin) <- c("lineup", "plot", "count", "smoothed", "true_pos", "n", "design", "r")
+colnames(pin) <- c("lineup", "plot", "count", "smoothed", "true_pos", "n", "design", "r", "attempt")
 pin <- mutate(pin, design=ifelse(design=="scatter", "Scatterplot", "Overlaid Lines"))#, smoothed=ifelse(smoothed=="no", 0, 1))
 pin$base <- 0
 pin$Correlation <- diag(as.matrix(correl[pin$lineup, (pin$plot+2)]))
@@ -565,7 +565,7 @@ grid.arrange(pin.a, pin.b, pin.c, pin.d, ncol=1)
 @
 
   \label{pins}
-  \caption{Pin plots of the subject selections of each lineup, by design, smoothness, true plot correlaition and sample size. On the x-axis is the correlation of the plot (there is potentially spurious correlation in the null plots), and on the y-axis is the proportion a plot was chosen. Each plot contains data from the three lineups with the requisite characteristics. Red pins indicate null plots and blue indicates the true plot, occasionally the true plot does not seem to appear as it has a proportion of zero and is visually blocked by the red pins. Strongly correlated plot seem to be selected regardless of if the relationship is spurious (a null plot) or real (a true plot).}
+  \caption{Pin plots of the subject selections of each lineup, by design, smoothness, true plot correlaition and sample size. On the x-axis is the correlation of the plot (there is potentially spurious correlation in the null plots), and on the y-axis is the proportion a plot was chosen. Each plot contains data from the three lineups with the requisite characteristics. Red pins indicate null plots and blue indicates the true plot, occasionally the true plot does not seem to appear as it has a proportion of zero and is visually blocked by the red pins. Strongly correlated plot seem to be selected regardless of if the relationship is real or spurious.}
 \end{figure}
 
 Occasionally there was an anomaly where a single null plot was selected with a high frequency despite having a weak correlation. Occasionally the null distribution cangenerate visually interesting patterns that draw the analyst’s attention.  We asked subjects for reasons behind their selections and found that choosing on the basis that “the points in the plot were close together”, or had “a unique pattern” more often led to an unsuccessful detection. Conversely, decisions based on “matching the peaks and troughs” of the overlaid lines or “seeing a line formed in the dots” of the scatter plot were more likely to be successful in identification of the true plot. However, these true detections are, on average, made less confidently than unsuccessful evaluations, which indicates that decisions made on the basis of closeness or patterns are more convincing of an association than the more successful reasons. 
@@ -601,7 +601,7 @@ Where a subject made multiple selections, each selection is treated as a separat
 
 \label{tab1}
 \centering
-<<powerfit, dependson='setup', results='asis', echo=FALSE, message=FALSE, error=FALSE, warning=FALSE>>=
+<<powerfit, dependson='setup', results='asis', echo=FALSE, message=FALSE, error=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
 full$subj_id <- factor(full$ip_address, labels=1:207)
 
 # Need to keep only evaluations done by subject who completed at least 10
@@ -612,7 +612,7 @@ full.sub$r <- round(full.sub$correlation, 1)
 full.sub$rsgn <- ifelse(full.sub$r >= 0, 1, 0)
 full.sub$rabs <- abs(full.sub$r)
 full.sub$plot <- ifelse(full.sub$test_param == 0, "S", "L")
-full.sub <- select(full.sub, subj_id, correct, r, rsgn, rabs, smoothed, n, plot, log_time, response_0, actual_location, pic_id)#[,c(1,7, 15,16,17,20:26)]
+full.sub <- select(full.sub, subj_id, correct, r, rsgn, rabs, smoothed, n, plot, log_time, response_0, actual_location, pic_id, choice_reason)#[,c(1,7, 15,16,17,20:26)]
 full.sub$attempts <- sapply(strsplit(as.character(full.sub$response_0), ","), length)
 full.sub$weights = 1/(full.sub$attempts) #weights are actually number of attempts in the glm
 full.sub <- full.sub %>% transform(response_0= strsplit(as.character(response_0), ",")) %>% unnest(response_0)
@@ -635,7 +635,7 @@ Figure~\ref{powermodel} shows the fitted unrestricted model, with power predicti
 
 \begin{figure}[htbp]
  \centering
-<<powermodel, dependson='powerfit', fig.height=6, fig.width=6, out.width='0.7\\textwidth', echo=FALSE>>=
+<<powermodel, dependson='powerfit', fig.height=8, fig.width=8, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
 rabs <- seq(0,0.9,0.03)
 t <- c(12, 24, 48, 96)
 #pred <- data.frame(expand.grid(rabs=rabs, t=t, alpha=log(.05/0.95), rsgn=c(0,1),

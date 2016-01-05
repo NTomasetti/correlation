@@ -4,6 +4,16 @@
 -redo symmetry restrictions
 -rerun model on new grid
 -redo time model with weighting
+- figure refs/labels
+- check bibliography
+- all sas work hopefully
+- spell check
+- figure resizing
+- investigate the poor performers, high performers
+- table of lineup evaluations
+- calculate the number of selections on each lineup, were some more likely to choose more than 1
+- by subject
+- think about how to incorporate multiple selections in evaluating subjects
 
 18/12/2015
 

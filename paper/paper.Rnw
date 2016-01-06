@@ -619,12 +619,16 @@ full.sub <- full.sub %>% transform(response_0= strsplit(as.character(response_0)
 full.sub$correct <- ifelse(full.sub$response_0 == full.sub$actual_location, 1, 0) #fixing correct for multiple guesses
 full.sub$alpha <- log(.05/0.95)
 full.sub$subj_id <- as.numeric(full.sub$subj_id)
-subsetted <- select(full.sub, rabs, n, alpha, rsgn, smoothed, plot, subj_id, weights, correct)
-#write.csv(subsetted, "sas/choices.csv")
+subsetted <- select(full.sub, rabs, n, alpha, rsgn, smoothed, plot, subj_id, weights, correct, log_time)
+subsetted$rabs <- as.numeric(subsetted$rabs)
+subsetted$subj_id <- as.numeric(subsetted$subj_id)
+subsetted <- mutate(subsetted, plot = ifelse(plot=="S", 1, 0))
+#write.csv(subsetted, "sas/choices.csv", row.names = FALSE)
 
 powercoef <- read.csv("sas/PowerEstimates.csv")
 powercoef <- powercoef[,-1]
 rownames(powercoef) <- c("Intercept", "abs(r)", "sign(r)", "abs(r)*sign(r)", "smoothed", "t", "plot", "plot*abs(r)", "plot*sign(r)", "plot*abs(r)*sign(r)", "plot*smoothed", "plot*t")
+colnames(powercoef) <- c("Estimate", "standard error", "df", "t-value", "p-value")
 kable(powercoef, format="latex", digits=2)
 #kable(powercoef[7:12,], format="latex", digits=2)
 @
@@ -636,18 +640,17 @@ Figure~\ref{powermodel} shows the fitted unrestricted model, with power predicti
 \begin{figure}[htbp]
  \centering
 <<powermodel, dependson='powerfit', fig.height=8, fig.width=8, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
-rabs <- seq(0,0.9,0.03)
-t <- c(12, 24, 48, 96)
-#pred <- data.frame(expand.grid(rabs=rabs, t=t, alpha=log(.05/0.95), rsgn=c(0,1),
+# data.frame(expand.grid(rabs=rabs, t=t, alpha=log(.05/0.95), rsgn=c(0,1),
 #                                      smoothed=c(0,1), plot=c(0,1),
 #                                      subj_id=full.sub$subj_id))
-#pred <- subset(pred, smoothed==0 | smoothed == 1 & n ==48 | smoothed ==1 & n ==96)
-#write.csv(pred, "sas/predgrid.csv") # these lines are done, but its a large file so commented out for knitr
+#pred <- subset(pred, smoothed==0 | smoothed == 1 & t ==48 | smoothed ==1 & t ==96)
+#write.csv(pred, "sas/predgrid.csv", row.names=FALSE) # these lines are done, but its a large file so commented out for knitr
 #Code exported to sas, see sas/model\ fit.sas
 prediction <- read.csv("sas/predfit.csv") #Large file, very slow
-colnames(prediction) <- c("rabs", "t", "alpha", "rsgn", "smoothed", "plot", "subj_id", "weights", "detected", "Included", "RandomEf", "FixedEf", "residual")
+colnames(prediction) <- c("rabs", "t", "alpha", "rsgn", "smoothed", "plot", "subj_id", "weights", "detected", "log_time", "RandomEf", "FixedEf", "residual")
 glmm.resid <- subset(prediction, detected==0 | detected==1)
-prediction <- mutate(prediction, r = ifelse(rsgn==1, rabs, -rabs), plot = ifelse(plot==0, "Overlaid Lines", "Scatterplot"), plot = ifelse(smoothed==1, paste(plot, "(Smoothed)", sep=" "), plot))
+prediction <- mutate(prediction, r = ifelse(rsgn==1, rabs, -rabs), plot = ifelse(plot==0, "Overlaid Lines", "Scatterplot"), plot = ifelse(smoothed==1, paste(plot, "(Smoothed)", sep=" "), plot),  diff = round(RandomEf - FixedEf,5))
+randomeffects <- summarise(group_by(prediction, subj_id), re=max(diff)) #all values of diff are identical for a given subject, max chosen just as a function to select one of them
 prediction <- select(prediction, r, t, rsgn, smoothed, plot, subj_id, RandomEf, FixedEf)
 prediction <- mutate(prediction, RandomEf = exp(RandomEf)/(1+exp(RandomEf)), FixedEf = exp(FixedEf)/(1+exp(FixedEf)))
 
@@ -669,11 +672,20 @@ p2b <- ggplot(data=subset(glmm.resid, plot==0)) + geom_histogram(aes(y=..density
 grid.arrange(p1b, p2b, ncol=2, top = "Residual density plots")
 @
   \label{residuals}
-  \caption{Histograms of residuals for both the scatter plot (left) and the overlaid lines (right). Both appear to be normal}
+  \caption{Histograms of residuals, $\hat{\epsilon}$ for both the scatter plot (left) and the overlaid lines (right). Both appear to be normal, though there are some extreme outliers.}
 \end{figure}
 
 Analysing the residuals allows us to test the model fit. As the dependent variable is a binary variable, the model will only have a residual close to zero if it predicts either a power of zero or one. As the rate of picking the true plot purely by chance is, $1/m$ or 0.05, the model should never predict a power of zero even if the plot has no ability to display correlation. This effect is especially notable in the overlaid line residual plot, the model fit is never close to zero or one so the residuals are split with no values around zero.
 The scatter plot residuals are normally distributed with a Jarque-Bera normality test statistic of 0.09 (p-value = 0.95), however the overlaid lines strongly reject normality with a Jarque-Bera statistic of 75.6 (p-value = 0.00). The significance tests associated with the overlaid lines are only valid asymptotically. Also concerning, the mean value of the overlaid lines residuals is - 0.08, implicating that the model tends to over-predict power, further weakening the performance of this plot design relative to the scatter plot.
+
+\begin{figure}
+  \centering
+<<residuals, dependson='powerfit', fig.height=4, fig.width=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
+ggplot(data=randomeffects) + geom_histogram(aes(x=re, y=..density..)) + xlab("Random Effects") + ylab(NULL)
+@
+  \label{random}
+  \caption{Histograms of estimated subject random effects, $\hat{\gamma}$}
+\end{figure}
 This unrestricted model used in to test the symmetry restriction for the scatter plot design was written earlier as:
 
 $$Power_{UR,ijkt} = \psi\left\{ \beta_{0} + \beta_{1} x_{1,i}  + \beta_{2} x_{2,j}  + \beta_{3} x_{3,k} + \beta_{4} x_{4,t} + \beta_{5} x_{1,i} \* x_{2,j} + \gamma z_{s} + \epsilon_{ijkt} \right\}$$
@@ -697,20 +709,23 @@ Table 2: Mixed Effects Linear Model with the dependent variable log(time). Sign 
 \begin{table}
 \label{tab2}
 \centering
-\caption{Linear mixed model fit for time taken to make a selection, default plot style is overlaid lines.}
+\caption{Linear mixed model fit for time taken to make a selection, default plot style is overlaid lines. Fitted with the MIXED procedure in SAS}
 
 <<timefit, dependson='powerfit', echo=FALSE, results='hide', message=FALSE, error=FALSE, warning=FALSE>>=
-timelmer <-  lmer(log_time ~ smoothed + r + n + rsgn*r + plot + plot*smoothed 
+#timelmer <-  lmer(log_time ~ smoothed + r + n + rsgn*r + plot + plot*smoothed 
                   + plot*r + plot*n + plot*rsgn*r + plot*correct + (1|subj_id), data=full.sub)
-time.fit <- summary(timelmer)$coefficients
-pv <- function(x){
-  p <- 2*(1-pt(x, 1835))
-}
-p.value <- sapply(time.fit[,3], pv)
-time.fit <- cbind(time.fit, p.value)
-time.fit <- time.fit[c(1, 2, 4, 3, 5, 8, 7, 6, 9, 11, 10, 12, 14, 13),] #separate into main effects then interaction effects in same order
-rownames(time.fit) <- c("Intercept", "Smoothed", "t", "r", "sign(r)", "r*sign(r)", "correct", "Plot", "Plot*Smoothed", "Plot*t", "Plot*r", "Plot*sign(r)", "Plot*r*sign(r)", "Plot*correct")
-kable(time.fit[1:14,], format="latex", caption="Main Effects", digits=2)
+#time.fit <- summary(timelmer)$coefficients
+#pv <- function(x){
+#  p <- 2*(1-pt(x, 1835))
+#}
+#p.value <- sapply(time.fit[,3], pv)
+#time.fit <- cbind(time.fit, p.value)
+time.fit <- read.csv("sas/time.csv")
+time.fit <- time.fit[c(1, 5, 6, 2, 3, 4, 7, 8, 12, 13, 9, 10, 11, 14),] #separate into main effects then interaction effects in same order
+rownames(time.fit) <- c("Intercept", "Smoothed", "t", "r", "sign(r)", "r*sign(r)", "detected", "Plot", "Plot*Smoothed", "Plot*t", "Plot*abs(r)", "Plot*sign(r)", "Plot*abs(r)*sign(r)", "Plot*detected")
+time.fit$Effect <- NULL
+colnames(time.fit) <- c("Estimate", "standard error", "df", "t-value", "p-value")
+kable(time.fit[1:14,], format="latex", digits=2)
 #kable(time.fit[8:14,], format="latex", caption="Interaction Effects", digits=2)
 @
 \end{table}

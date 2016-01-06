@@ -41,3 +41,9 @@ m.lineup <- merge(m.freq, Turk, by.x="Var1", by.y="pic_id")
 ggplot(data=subset(m.lineup, Freq==2)) + geom_bar(aes(x=r, fill=plot)) + facet_wrap(~n)
 #high sample size increases chance of multiple selection, even spread across correlations except -0.5/-0.3 lines t=96
 
+#Subject ability#
+ability <- merge(full.sub[,c("subj_id", "pic_id", "correct")], Turk[,c("pic_id", "percent")], by="pic_id")
+ability <- summarise(group_by(ability, subj_id), actual=sum(correct), estimated=sum(percent))
+ability$diff <- ability$actual - ability$estimated
+ability.re <- merge(ability, randomeffects, by="subj_id")
+ggplot(data=ability.re, aes(x=diff, y=re)) + geom_point()

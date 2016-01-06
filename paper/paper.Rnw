@@ -607,15 +607,15 @@ full$subj_id <- factor(full$ip_address, labels=1:207)
 # Need to keep only evaluations done by subject who completed at least 10
 x <- data.frame(table(full$subj_id))
 keep <- x$Var1[x$Freq>9]
-full.sub <- filter(full, subj_id %in% keep)
-full.sub$r <- round(full.sub$correlation, 1)
-full.sub$rsgn <- ifelse(full.sub$r >= 0, 1, 0)
-full.sub$rabs <- abs(full.sub$r)
-full.sub$plot <- ifelse(full.sub$test_param == 0, "S", "L")
-full.sub <- select(full.sub, subj_id, correct, r, rsgn, rabs, smoothed, n, plot, log_time, response_0, actual_location, pic_id, choice_reason)#[,c(1,7, 15,16,17,20:26)]
-full.sub$attempts <- sapply(strsplit(as.character(full.sub$response_0), ","), length)
-full.sub$weights = 1/(full.sub$attempts) #weights are actually number of attempts in the glm
-full.sub <- full.sub %>% transform(response_0= strsplit(as.character(response_0), ",")) %>% unnest(response_0)
+full.subs <- filter(full, subj_id %in% keep)
+full.subs$r <- round(full.subs$correlation, 1)
+full.subs$rsgn <- ifelse(full.subs$r >= 0, 1, 0)
+full.subs$rabs <- abs(full.subs$r)
+full.subs$plot <- ifelse(full.subs$test_param == 0, "S", "L")
+full.subs <- select(full.subs, subj_id, correct, r, rsgn, rabs, smoothed, n, plot, log_time, response_0, actual_location, pic_id, choice_reason)#[,c(1,7, 15,16,17,20:26)]
+full.subs$attempts <- sapply(strsplit(as.character(full.subs$response_0), ","), length)
+full.subs$weights = 1/(full.subs$attempts) #weights are actually number of attempts in the glm
+full.sub <- full.subs %>% transform(response_0= strsplit(as.character(response_0), ",")) %>% unnest(response_0)
 full.sub$correct <- ifelse(full.sub$response_0 == full.sub$actual_location, 1, 0) #fixing correct for multiple guesses
 full.sub$alpha <- log(.05/0.95)
 full.sub$subj_id <- as.numeric(full.sub$subj_id)
@@ -653,7 +653,7 @@ prediction <- mutate(prediction, r = ifelse(rsgn==1, rabs, -rabs), plot = ifelse
 randomeffects <- summarise(group_by(prediction, subj_id), re=max(diff)) #all values of diff are identical for a given subject, max chosen just as a function to select one of them
 prediction <- select(prediction, r, t, rsgn, smoothed, plot, subj_id, RandomEf, FixedEf)
 prediction <- mutate(prediction, RandomEf = exp(RandomEf)/(1+exp(RandomEf)), FixedEf = exp(FixedEf)/(1+exp(FixedEf)))
-
+ 
 qplot(r, RandomEf, data=prediction, color=plot, 
       group=interaction(subj_id, plot), geom="line", alpha=I(0.1)) + 
   scale_color_manual("Plot Design", values=c("#33AA33", "#9977EE", "#FF9933", "#00DDAA")) + 

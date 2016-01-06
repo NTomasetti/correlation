@@ -23,12 +23,22 @@ ggplot(data=subjplot, aes(x=byattempt)) + geom_histogram(binwidth=0.05) + ylim(0
 ggplot(data=subjplot, aes(x=byeval)) + geom_histogram(binwidth=0.05) + ylim(0,30) # proportion: detection to lineup evals.
 #mean 0.40
 
-#Choice plots
-full.sub$choice_reason <-as.numeric(unlist(strsplit(as.character(unlist(full.sub$choice_reason)), "[^0-9]+")))
+#Choice plots#
+full.subs$choice_reason <-sapply(strsplit(as.character(unlist(full.subs$choice_reason)), "[^0-9]+"), "[[", 1)
+ggplot(data=full.subs) + geom_bar(aes(x=choice_reason))
+choice <- full.subs %>% transform(choice_reason= strsplit(as.character(choice_reason), "")) %>% unnest(choice_reason)
+choice$rsgn <- factor(choice$rsgn, labels=c("r -","r +"))
+#tm <- summarise(group_by(time, correct, plot, rsgn), m=mean(time))
+c1 <- ggplot(data=subset(choice, correct==0), aes(x=choice_reason)) + geom_bar() + 
+  facet_grid(plot~rsgn) + labs(title="Did not detect", x=element_blank(), y=element_blank())  
+c2 <- ggplot(data=subset(choice, correct==1), aes(x=choice_reason)) + geom_bar() + 
+  facet_grid(plot~rsgn) + labs(title="Detected", x=element_blank, y=element_blank())  
+grid.arrange(c1, c2, ncol=2, top = "Choice by plot design, true plot correlation and detection")
+
 #Multiple selections#
 m.select <- summarise(group_by(subset(full.sub, attempts>1), subj_id, pic_id), attempts=max(attempts))
 ##112 subject/lineup combinations
-##53 different subjects choose multiple plots
+##53 different subjects chose multiple plots
 ##84 different lineups had multiple selections, 61 with 1, 19 with 2, 3 with 2, 1 with  
 ##55 lines, 29 scatter (1 person selecting multiple - 40 lines, 21 scatter
 #                       2 people selecting multiple - 11 lines, 8 scatter
@@ -42,8 +52,12 @@ ggplot(data=subset(m.lineup, Freq==2)) + geom_bar(aes(x=r, fill=plot)) + facet_w
 #high sample size increases chance of multiple selection, even spread across correlations except -0.5/-0.3 lines t=96
 
 #Subject ability#
-ability <- merge(full.sub[,c("subj_id", "pic_id", "correct")], Turk[,c("pic_id", "percent")], by="pic_id")
+turk.correct <- summarise(group_by(full.sub, pic_id), correct=sum(correct), attempts=sum(weights*attempts))
+turk.correct$percent <- turk.correct$correct/turk.correct$attempts
+ability <- merge(full.sub[,c("subj_id", "pic_id", "correct")], turk.correct[c("pic_id", "percent")], by="pic_id")
 ability <- summarise(group_by(ability, subj_id), actual=sum(correct), estimated=sum(percent))
 ability$diff <- ability$actual - ability$estimated
 ability.re <- merge(ability, randomeffects, by="subj_id")
 ggplot(data=ability.re, aes(x=diff, y=re)) + geom_point()
+
+

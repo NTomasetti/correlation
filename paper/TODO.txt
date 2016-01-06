@@ -1,18 +1,18 @@
 5/01/2016
--redo residual diagnostics
--do level 2 diag according to PhD thesis (includes random effects plot)
+*-redo residual diagnostics
+*-do level 2 diag according to PhD thesis (includes random effects plot)
 -redo symmetry restrictions
--rerun model on new grid
--redo time model with weighting
-- figure refs/labels
-- check bibliography
+*-rerun model on new grid
+*-redo time model with weighting
+*- figure refs/labels
+*- check bibliography
 - all sas work hopefully
 - spell check
 - figure resizing
 - investigate the poor performers, high performers
 - table of lineup evaluations
-- calculate the number of selections on each lineup, were some more likely to choose more than 1
-- by subject
+*- calculate the number of selections on each lineup, were some more likely to choose more than 1
+*- by subject
 - think about how to incorporate multiple selections in evaluating subjects
 
 18/12/2015
@@ -20,11 +20,11 @@
 *- fix biblio
 *- captions: first sentence what is the basic structure of plot, e.g Scatterplot of proportion detected against correlation. Second sentences explain details color, shape, lines, ... Third sentence what do you expect the reader to learn by looking at the plot e.g. Proprtion dtected is higher when correlation is large.  Always add a "."
 *- Investigate the extreme residuals
-- plot random effects
+*- plot random effects
 *- subject plots, like proportion correct for each subject and display histogram
 * - lineup plots, proportion correct for each lineup
-- reasons plots
-- fix grid of predicted values
+*- reasons plots
+*- fix grid of predicted values
 - sizing of figures
 
 16/12/2015

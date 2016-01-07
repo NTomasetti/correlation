@@ -28,7 +28,6 @@ full.subs$choice_reason <-sapply(strsplit(as.character(unlist(full.subs$choice_r
 ggplot(data=full.subs) + geom_bar(aes(x=choice_reason))
 choice <- full.subs %>% transform(choice_reason= strsplit(as.character(choice_reason), "")) %>% unnest(choice_reason)
 choice$rsgn <- factor(choice$rsgn, labels=c("r -","r +"))
-#tm <- summarise(group_by(time, correct, plot, rsgn), m=mean(time))
 c1 <- ggplot(data=subset(choice, correct==0), aes(x=choice_reason)) + geom_bar() + 
   facet_grid(plot~rsgn) + labs(title="Did not detect", x=element_blank(), y=element_blank())  
 c2 <- ggplot(data=subset(choice, correct==1), aes(x=choice_reason)) + geom_bar() + 
@@ -60,4 +59,16 @@ ability$diff <- ability$actual - ability$estimated
 ability.re <- merge(ability, randomeffects, by="subj_id")
 ggplot(data=ability.re, aes(x=diff, y=re)) + geom_point()
 
+#Results Tables#
+turk.tbl <- select(Turk, test_param, smoothed, r, n, correct, attempt)
+turk.tbl$result <- paste(round(turk.tbl$correct, 0), turk.tbl$attempt, sep="/")
+turk.tbl <- turk.tbl[order(turk.tbl$r, turk.tbl$n),]
+scatter.uns <- data.frame(c(12, "", "", 24, "", "", 48, "", "", 96, "", ""), matrix(subset(turk.tbl, smoothed==0 & test_param=="scatter")$result, ncol=8))
+scatter.sm <- data.frame(c(12, "", "", 24, "", "", 48, "", "", 96, "", ""), matrix(subset(turk.tbl, smoothed==1 & test_param=="scatter")$result, ncol=8))
+line.uns <- data.frame(c(12, "", "", 24, "", "", 48, "", "", 96, "", ""), matrix(subset(turk.tbl, smoothed==0 & test_param=="line")$result, ncol=8))
+line.sm <- data.frame(c(12, "", "", 24, "", "", 48, "", "", 96, "", ""), matrix(subset(turk.tbl, smoothed==1 & test_param=="line")$result, ncol=8))
+colnames(scatter.uns) <- c("", "-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
+colnames(scatter.sm) <- c("","-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
+colnames(line.uns) <- c("","-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
+colnames(line.sm) <- c("","-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
 

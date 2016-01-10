@@ -609,7 +609,7 @@ A mixed effects logit model is used separately for scatter plot and overlaid lin
 \label{modelpower}
 Power_{ijklt} &=& \psi \{ \beta_{0} + \beta_{1} x_{1,i}  + \beta_{2} x_{2,j}  + \beta_{3} x_{3,k} + \beta_{4} x_{4,t} + \\
  & & \beta_{5} x_{1,i} \* x_{2,j} + \beta_{6} x_{5,l}(\beta_{7} + \beta_{8} x_{1,i}  + \beta_{9} x_{2,j}  + \beta_{10} x_{3,k} + \nonumber \\
- & & \beta_{11} x_{4,t} + \beta_{12} x_{1,i} \* x_{2,j}) \gamma z_{s} + \epsilon_{ijklt} \} \nonumber
+ & & \beta_{11} x_{4,t} + \beta_{12} x_{1,i} \* x_{2,j}) + \gamma z_{s} + \epsilon_{ijklt} \} \nonumber
 \end{eqnarray}
 
 Where $\psi$ is the logit link function, $\psi(x) = \frac{e^{x}}{1+e^{x}}$. Additionally:
@@ -717,7 +717,7 @@ Analysing the level one residuals, $\hat{\epsilon_{i}}$ and level two residuals,
 <<random, dependson='powerfit', fig.height=4, fig.width=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
 ggplot(data=randomeffects) + geom_histogram(aes(x=re, y=..density..), binwidth=0.08) + xlab("Random Effects") + ylab(NULL)
 @
-    \caption{Histograms of estimated subject random effects, $\hat{\gamma}$}
+    \caption{Histograms of estimated subject random effects, $\hat{\gamma}$. They appear to be normally distributed with mean zero.}
 \end{figure}
 
 In Figure~\ref{random}, the level two residuals, $\hat{\gamma}$, generated appear to be normally distributed validating the assumptions of the modelling process.
@@ -769,7 +769,7 @@ Time_{ijklmt} &=& \beta_{0} + \beta_{1} x_{1,i}  + \beta_{2} x_{2,j}  + \beta_{3
 
 The structure of the model is similar to that in Equation~\ref{modelpower} except the link function is removed and a new variable, $x_{6,m}$ is introduced, with $m = \{0,1\}$ indicating if the subject detected the true plot.
 
-\begin{table}
+\begin{table}[htbp]
 \label{tab2}
 \centering
 \caption{Linear mixed model fit for time taken to make a selection, default plot style is overlaid lines. Fitted with the MIXED procedure in SAS.}
@@ -807,7 +807,7 @@ If a data analyst is required to use overlaid line graphs in their work, substan
 
 \section{Appendix}
 
-\begin{table}
+\begin{table}[htbp]
 \label{tab3}
 \centering
 <<answertables, dependson='setup', echo=FALSE, results='hide', message=FALSE, error=FALSE, warning=FALSE>>=

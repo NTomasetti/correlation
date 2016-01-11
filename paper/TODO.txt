@@ -1,3 +1,9 @@
+11/01/2016
+
+- calculate using weighting by number of selections
+- check model fits with R
+- check confidence interval calculations, bootstrap and/or permutation
+
 5/01/2016
 *-redo residual diagnostics
 *-do level 2 diag according to PhD thesis (includes random effects plot)
@@ -13,7 +19,7 @@
 - table of lineup evaluations
 *- calculate the number of selections on each lineup, were some more likely to choose more than 1
 *- by subject
-- think about how to incorporate multiple selections in evaluating subjects
+*- think about how to incorporate multiple selections in evaluating subjects
 
 18/12/2015
 

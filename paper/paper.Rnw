@@ -395,8 +395,8 @@ p4b <- ggplot(data=b, aes(x=X1, y=X2)) + geom_point() + labs(title="Scatterplot"
           legend.position="none")
 grid.arrange(p1b, p2b, p3b, p4b, ncol=2)
 @
-  \label{designs}
   \caption{The same two data sets in both plot designs. t=24, correlation (left) = 0.946, correlation (right) = -0.943}
+    \label{designs}
 \end{figure}
 
 The web site that the Turk workers accessed to complete the task can be seen at http://104.236.245.153:8080/mahbub/turk18/index.html.  You can also try out the tasks, but your results will not be recorded. (The experiment cost \$210 to run.)
@@ -415,8 +415,8 @@ ggplot(data=Turk, aes(x=correlation, y=percent, colour=plot)) + geom_smooth(se=F
   scale_colour_discrete(name = "Plot Design") + labs(y="True plot detection rate", x="Correlation") +
   theme(legend.position="bottom")
 @
-  \label{results}
   \caption{Response accuracy for unsmoothed data, broken by unsmoothed (left), smoothed (right) and sample size. The dots are data points, the lines represent a naive model average fit. Both plot designs have similar performance for positively correlated data, however the overlaid line graphs are particularly weak at revealing negative correlation.}
+    \label{results}
 \end{figure}
 
 Figure~\ref{results} shows the raw results of the survey and Figure~\ref{powerdiff} shows the difference in power with a $95\%$ confidence interval calculated according to  formula~\ref{propci}. Values above zero indicate that the scatter plot had more power to detect the true plot than the overlaid lines.
@@ -448,8 +448,8 @@ prop <- mutate(prop, l.adj = (l.correct+1)/(l.attempt+1), s.adj = (s.correct+1)/
 ggplot(data=prop) + geom_errorbar(aes(x=r, ymax=upper, ymin=lower)) + geom_point(aes(x=r, y=difference)) +
         geom_hline(aes(yint=0, colour="red")) + labs(x="Correlation", y="Scatterplot power minus Overlaid Lines") + facet_grid(n~smoothed)
 @
- \label{powerdiff}
  \caption{The difference in estimated power (scatter plot power minus overlaid line power) to reveal the true plot by smoothness and sample size with a 95\% confidence interval. The red line indicates the point where both plot designs are equally powerful while values above this line indicate that the scatter plot is more powerful than the overlaid line graph. The largest differences appear in negative correlation, where the scatter plot is more powerful.}
+ \label{powerdiff}
 \end{figure}
 
 \begin{figure}[htbp]
@@ -457,8 +457,8 @@ ggplot(data=prop) + geom_errorbar(aes(x=r, ymax=upper, ymin=lower)) + geom_point
 <<samplesize, dependson='powerdiff', fig.width=6, fig.height=8, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
 ggplot(data=subset(Turk, smoothed==0), aes(x=correlation, y=percent, colour=factor(n))) + geom_smooth(se=F) + geom_point() + facet_grid(plot~.) + scale_colour_discrete(name = "Sample size") +  labs(y="Percent Correct", x="Correlation") + theme(legend.position="bottom")
 @
- \label{samplesize}
  \caption{Replotting figure~\ref{results} to highlight the effects of changes in sample size of unsmoothed data. The scatter plot appears to universaly benefit from increased sample sizes but the overlaid lines only see a benefit in positive correlation.}
+ \label{samplesize}
 \end{figure}
 
 Figure~\ref{samplesize} demonstrates the effects of changing sample size for unsmoothed data. The scatter plot has increased power to detect correlation almost universally for any increase. Sample size influences the overlaid lines differently, they appears to benefit for positively correlated true plots, but it does not improve the weak performance in negative correlation.
@@ -480,8 +480,8 @@ t2 <- ggplot(data=subset(time, correct==1), aes(x=time)) + geom_histogram(binwid
   facet_grid(plot~rsgn) + labs(title="Detected", x="Log(Time) Taken", y=element_blank())  
 grid.arrange(t1, t2, ncol=2)
 @
-  \label{time} 
   \caption{Histograms of log time taken to make a decision. r+ and r- indicate the sign of true plot correlation. The vertical red line is the average time of the particular group. On average scatter plots are faster and the true plot is detected more often, with r-.}
+  \label{time} 
 \end{figure}
 
 Subjects were asked to give a number from 1 to 5 to rate how confident they were in there choice (1 - most confident, 5 - least confident, average = 3.34). There were no statistically significant differences between plot designs, however subjects were slightly less confident on true plot detections (by $0.25 \pm  0.16, p=0.002$) and every one percent extra time required to make a decision increased confidence (by $0.19 \pm 0.07, p<0.001$). One possible explanation is that subjects often focused on a null plot and picked it confidently. This would suggest that the null plots often produced visually interesting features subjects assumed were caused by the association between plots.
@@ -508,8 +508,8 @@ c2 <- ggplot(data=subset(conf, correct==1), aes(x=conf)) + geom_histogram(binwid
   facet_grid(plot~rsgn) + labs(title="Detected", x="Confidence", y=element_blank())  
 grid.arrange(c1, c2, ncol=2)
 @
-  \label{confidence} 
   \caption{Histograms of reported confidence levels. 1 - Low, 5 - High. Detection had a minor detrimental impact on confidence, whilst time taken increased it. There was no statistically significant difference on confidence level between plot designs.}
+  \label{confidence} 
 \end{figure}
 
 %Next we analysed the individual ability of each of our subjects. Figure~\ref{confidence2} plots the accuracy of each subject on the y axis versus the average confidence on the x axis. While we expected that subjects with greater visual skills would report lower values of confidence, there does not appear to be any relationship between the two. The accuracy is normally distributed (Jarque-Bera p value = 0.418), with a mean of 42.5\% and a standard deviation of 17.8\%. The strongest subject successfully identified the true plot 91\% of the time, whilst the weakest was never able to identify the true plot. As all subjects were shown a balanced mix of true plot correlations, the extreme difference in individual visual ability is striking. Visual ability will be controlled via a subject specific random effect in the models in the next section.
@@ -532,8 +532,8 @@ qplot(correlation, 6-conf_level, data=conf2, alpha=I(0.1)) +
   facet_grid(n~plot+smoothed) +
   labs(x = "Correlation", y = "Confidence (5=High, 1=Low)")
 @
-  \label{confidence2}
   \caption{Reported confidence against true plot correlation. Darker points indicate a confidence level selected more regularly. Strong correlation is more often associated with a lower reported confidence.}
+  \label{confidence2}
 \end{figure}
 
 \subsection{Selection Analysis}
@@ -579,8 +579,8 @@ pin.d <- ggplot(data=subset(pin, smoothed==1 & design == "Overlaid Lines")) + ge
 grid.arrange(pin.a, pin.b, pin.c, pin.d, ncol=1)
 @
 
-  \label{pins}
   \caption{Pin plots of the subject selections of each lineup, by design, smoothness, true plot correlaition and sample size. On the x-axis is the correlation of the plot (there is potentially spurious correlation in the null plots), and on the y-axis is the proportion a plot was chosen. Each plot contains data from the three lineups with the requisite characteristics. Red pins indicate null plots and blue indicates the true plot, occasionally the true plot does not seem to appear as it has a proportion of zero and is visually blocked by the red pins. Strongly correlated plot seem to be selected regardless of if the relationship is real or spurious.}
+  \label{pins}
 \end{figure}
 
 Occasionally there was an anomaly where a single null plot was selected with a high frequency despite having a weak correlation. Occasionally the null distribution cangenerate visually interesting patterns that draw the analyst’s attention.  We asked subjects for reasons behind their selections and found that choosing on the basis that “the points in the plot were close together”, or had “a unique pattern” more often led to an unsuccessful detection. Conversely, decisions based on “matching the peaks and troughs” of the overlaid lines or “seeing a line formed in the dots” of the scatter plot were more likely to be successful in identification of the true plot. However, these true detections are, on average, made less confidently than unsuccessful evaluations, which indicates that decisions made on the basis of closeness or patterns are more convincing of an association than the more successful reasons. 
@@ -588,15 +588,15 @@ Occasionally there was an anomaly where a single null plot was selected with a h
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.5\textwidth]{anom1}
-  \label{anom1}
   \caption{A lineup of unsmoothed scatter plots with a sample size of 24. The true plot is located in position 4 with a correlation of -0.491, and was selected by one out of eleven observers (p = 0.33). The plot in position 6 was selected by nine of these eleven observers (p < 0.001) despite having a correlation of -0.037. Subjects most often cited the clustering effect shown as the reason for their selection, an example of the over-interpretation of randomness.}
+  \label{anom1}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.5\textwidth]{anom2}
-  \label{anom2}
   \caption{A lineup of unsmoothed overlaid lines with a sample size of 12 and true correlation of -0.707. The true plot in position 8 was not detected in five evaluations. However, the null plot in position 13 was selected four times, (p –value < 0.001) despite having a correlation of only 0.225. When asked for a reason of their selections, subjects typically answered that the lines were close together, another misleading visual artefact of the random data.} 
+  \label{anom2}
 \end{figure}
 
 Figures~\ref{anom1} and \ref{anom2} show lineups where a null plot with a strong pattern led to its selection over the data plot.  Mostly, when a null plot was chosen over the data plot it was because the correlation was stronger, but in a few lineups a null plot with small correlation was selected by many subjects. In Figure~\ref{anom1}, the true data plot is in position 4, but 9 out of 11 subjects chose plot 6. Plot 6 is unusual, most of the points are scattered around the vertical median, but there are two outlying points, one with a high y-value and one with a low y-value.  Other concurrent work has suggested that outliers are pre-attentive patterns and this plot selection by the observers is consistent with that. Figure~\ref{anom2} above is another example of where subjects chose a null plot that had smaller correlation than the data plot. Four out of five evaluations selected the null plot in position 13,  instead of the data plot in position 8. Plot 13 has a correlation of 0.225, smaller (in absolute value) than the -0.707 of plot 8.  This selection is in-line with Wertheimer’s gestalt law of common fate. It appears to be strongly correlated in the beginning of the series but breaks apart towards the end. The selection implies that subjects selecting this plot focused on the joint path of the two series early in the plot and ignored the contradictory evidence of no relationship as they diverged later in the plot.  It also confounded by the seeming preference to find positive correlation over negative correlation, and we suspect that if one of the series in plot 8 had the values flipped, then the strong positive correlation would have been noticed.
@@ -696,8 +696,8 @@ qplot(r, RandomEf, data=prediction, color=plot,
   xlab("Correlation") + ylab("Estimated Power") +
   geom_line(aes(y=FixedEf), size=2, alpha=1) + theme_bw() + facet_wrap(~t, ncol = 2) + theme(aspect.ratio=1.2)
 @
-  \label{powermodel}
   \caption{Predicted power fit from the mixed effects logit power model. The thicker lines shows the fixed effects prediction while the thinner lines show the range of random effects, the observer's visual ability. The weakness of the overlaid line graph in negative correlation and the scatter plot's gain from sample size are highlighted.}
+  \label{powermodel}
 \end{figure}
 
 \begin{figure}
@@ -705,19 +705,19 @@ qplot(r, RandomEf, data=prediction, color=plot,
 <<residuals, dependson='powermodel', fig.height=4, fig.width=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
 ggplot(data=glmm.resid) + geom_histogram(aes(y=..density.., x=residual), binwidth=2) + labs(x=NULL, y=NULL)
 @
-  \label{residuals}
   \caption{Histograms of residuals, $\hat{\epsilon}$ for both the scatter plot (left) and the overlaid lines (right). Both appear to be normal, though there are some extreme outliers.}
+  \label{residuals}
 \end{figure}
 
 Analysing the level one residuals, $\hat{\epsilon_{i}}$ and level two residuals, $\hat{\gamma_{i}}$ allows us to test the model fit as described \citet{Loy}. There are some negative extreme outliers but the distributional assumption appears to hold.
 
 \begin{figure}[htbp]
-\label{random}
   \centering
 <<random, dependson='powerfit', fig.height=4, fig.width=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
 ggplot(data=randomeffects) + geom_histogram(aes(x=re, y=..density..), binwidth=0.08) + xlab("Random Effects") + ylab(NULL)
 @
     \caption{Histograms of estimated subject random effects, $\hat{\gamma}$. They appear to be normally distributed with mean zero.}
+\label{random}
 \end{figure}
 
 In Figure~\ref{random}, the level two residuals, $\hat{\gamma}$, generated appear to be normally distributed validating the assumptions of the modelling process.
@@ -725,7 +725,6 @@ For each lineup, we rate the difficulty by the proportion of true plot detection
 
 \begin{figure}[htbp]
 \centering
-\label{random2}
 <<random2, dependson='random', fig.height=6, fig.width=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
 turk.correct <- summarise(group_by(full.sub, pic_id), correct=sum(correct), attempts=sum(weights*attempts))
 turk.correct$percent <- turk.correct$correct/turk.correct$attempts
@@ -736,7 +735,31 @@ ability.re <- merge(ability, randomeffects, by="subj_id")
 ggplot(data=ability.re, aes(x=diff, y=re)) + geom_point() + labs(x="Visual Ability", y="Random Effects")
 @
 \caption{Visual ability plotted against random effects. The diagonal pattern suggests a strong positive relationship, indicating that the random effects in the model are a suitable measure of visual ability.}
+\label{random2}
 \end{figure}
+
+\begin{table}[htbp]
+\caption{Linear mixed model fit for time taken to make a selection, default plot style is overlaid lines. Fitted with the MIXED procedure in SAS.}
+\centering
+\label{tab2}
+<<timefit, dependson='powerfit', echo=FALSE, results='hide', message=FALSE, error=FALSE, warning=FALSE>>=
+#timelmer <-  lmer(log_time ~ smoothed + r + n + rsgn*r + plot + plot*smoothed 
+#                  + plot*r + plot*n + plot*rsgn*r + plot*correct + (1|subj_id), data=full.sub)
+#time.fit <- summary(timelmer)$coefficients
+#pv <- function(x){
+#  p <- 2*(1-pt(x, 1835))
+#}
+#p.value <- sapply(time.fit[,3], pv)
+#time.fit <- cbind(time.fit, p.value)
+time.fit <- read.csv("sas/time.csv")
+time.fit <- time.fit[c(1, 5, 6, 2, 3, 4, 7, 8, 12, 13, 9, 10, 11, 14),] #separate into main effects then interaction effects in same order
+rownames(time.fit) <- c("Intercept", "Smoothed", "t", "abs(r)", "sign(r)", "abs(r)*sign(r)", "detected", "Plot", "Plot*Smoothed", "Plot*t", "Plot*abs(r)", "Plot*sign(r)", "Plot*abs(r)*sign(r)", "Plot*detected")
+time.fit$Effect <- NULL
+colnames(time.fit) <- c("Estimate", "standard error", "df", "t-value", "p-value")
+kable(time.fit[1:14,], format="latex", digits=2)
+#kable(time.fit[8:14,], format="latex", caption="Interaction Effects", digits=2)
+@
+\end{table}
 
 \iffalse
 This unrestricted model used in to test the symmetry restriction for the scatter plot design was written earlier as:
@@ -768,30 +791,6 @@ Time_{ijklmt} &=& \beta_{0} + \beta_{1} x_{1,i}  + \beta_{2} x_{2,j}  + \beta_{3
 \end{eqnarray}
 
 The structure of the model is similar to that in Equation~\ref{modelpower} except the link function is removed and a new variable, $x_{6,m}$ is introduced, with $m = \{0,1\}$ indicating if the subject detected the true plot.
-
-\begin{table}[htbp]
-\label{tab2}
-\centering
-\caption{Linear mixed model fit for time taken to make a selection, default plot style is overlaid lines. Fitted with the MIXED procedure in SAS.}
-
-<<timefit, dependson='powerfit', echo=FALSE, results='hide', message=FALSE, error=FALSE, warning=FALSE>>=
-#timelmer <-  lmer(log_time ~ smoothed + r + n + rsgn*r + plot + plot*smoothed 
-#                  + plot*r + plot*n + plot*rsgn*r + plot*correct + (1|subj_id), data=full.sub)
-#time.fit <- summary(timelmer)$coefficients
-#pv <- function(x){
-#  p <- 2*(1-pt(x, 1835))
-#}
-#p.value <- sapply(time.fit[,3], pv)
-#time.fit <- cbind(time.fit, p.value)
-time.fit <- read.csv("sas/time.csv")
-time.fit <- time.fit[c(1, 5, 6, 2, 3, 4, 7, 8, 12, 13, 9, 10, 11, 14),] #separate into main effects then interaction effects in same order
-rownames(time.fit) <- c("Intercept", "Smoothed", "t", "abs(r)", "sign(r)", "abs(r)*sign(r)", "detected", "Plot", "Plot*Smoothed", "Plot*t", "Plot*abs(r)", "Plot*sign(r)", "Plot*abs(r)*sign(r)", "Plot*detected")
-time.fit$Effect <- NULL
-colnames(time.fit) <- c("Estimate", "standard error", "df", "t-value", "p-value")
-kable(time.fit[1:14,], format="latex", digits=2)
-#kable(time.fit[8:14,], format="latex", caption="Interaction Effects", digits=2)
-@
-\end{table}
 
 Table~\ref{tab2} shows a similar story for time as Table~\ref{tab1} did for power, that the overlaid lines have better performance close to zero correlation, but the scatter plot is much faster at high correlations. Postivie correlation reduces time for both plot designs, but only the scatter plot sees improvements in negative correlation. Detecing the true plot was also faster than a null. Neither smoothness nor sample size has an impact on the time for either plot design, despite having statistically significant impacts on power. 
 %An overlaid line graph having positive correlation increases the time required, eliminating the benefits from the almost significant plot design term. This result seems counter-intuitive as the weak performance of the overlaid lines in negative correlation implies that negative would require more time than positive, but the interactions between plot design, correlation and sign result in there being almost no decrease in time for strongly negatively correlated line plots.
@@ -837,8 +836,9 @@ Table~\ref{tab3} contains the true plot detections / attempts for each lineup in
 <<map, , dependson='setup', echo=FALSE, results='hide', message=FALSE, error=FALSE, warning=FALSE>>=
 location <- read.csv("location.csv")
 map.dat <- map_data("world")
-ggplot() + geom_polygon(aes(long,lat, group=group), fill="grey65", data=map.dat) + theme_bw() +
-  geom_point(data=location, aes(x=lon, y=lat, colour= "blue")) +scale_colour_manual(values=c("#FF5500", "#00FFFF")) + theme(axis.text=element_blank(), axis.title=element_blank(), legend.position="none")
+ggplot() + geom_polygon(aes(long,lat, group=group), fill="grey65", data=map.dat) + 
+  geom_point(data=location, aes(x=lon, y=lat, colour= "blue")) + scale_colour_manual(values=c("#FF5500", "#00FFFF")) + 
+  theme_bw() + theme(aspect.ratio=0.67, axis.text=element_blank(), axis.title=element_blank(), legend.position="none")
 @
 \end{figure}
 

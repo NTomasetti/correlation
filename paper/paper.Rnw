@@ -632,14 +632,14 @@ sasdata$subj_id <- as.numeric(sasdata$subj_id)
 sasadata <- mutate(sasdata, design = ifelse(design=="Scatterplot", 1, 0))
 #write.csv(subsetted, "sas/choices.csv", row.names = FALSE)
 powercoef <- powercoef[,-1]
-rownames(powercoef) <- c("Intercept", "abs(r)", "sign(r)", "abs(r)*sign(r)", "smoothed", "t", "plot", "plot*abs(r)", "plot*sign(r)", "plot*abs(r)*sign(r)", "plot*smoothed", "plot*t")
+rownames(powercoef) <- c("Intercept", "abs(r)", "sign(r)", "abs(r)*sign(r)", "smoothed", "t", "design", "design*abs(r)", "design*sign(r)", "design*abs(r)*sign(r)", "design*smoothed", "design*t")
 colnames(powercoef) <- c("Estimate", "standard error", "df", "t-value", "p-value")
 kable(powercoef, format="latex", digits=2)
 @
 \end{table}
 
-Table \ref{tab1} summarises the model estimates. It can be confusing the interpret the model estimates, and at first glance it appears the negative plot coefficient implies that overliad lines are substantially more powerful than the scatter plot, but this is misleading and interpreting the full model involves combining the estimates for the different interactions with $abs(\rho)$ and $sign(\rho)$. $abs(\rho)$ models the power difference between low and high correlations, and $abs(\rho)*sign(\rho)$ models an increase in power appearing in positive but not negative correlation. 
-Taking these into account, the scatter plot shows superior performance and higher values of abs($\rho$), It needs to be restated that we only tested correlations at  $0.3, 0.5, 0.7$ and $0.9$, so the results below an absolute value of $0.3$ are unreliable and may be artifacts of regression smoothing methods.
+Table \ref{tab1} summarises the model estimates. It can be confusing the interpret the model estimates, and at first glance it appears the negative plot coefficient implies that overlaid lines are substantially more powerful than the scatter plot, but this is misleading and interpreting the full model involves combining the estimates for the different interactions with $\rho$. $\beta_{2}$ and $\beta_{8}$ model the power difference between low and high correlations, while $\beta_{3}, \beta_{4}, beta_{9}$ and $\beta_{10}$ model any increase in power appearing only in positive correlation. 
+Taking these into account, the scatter plot shows superior performance relative to the overlaid lines at higher values of abs($\rho$). It needs to be restated that we only tested correlations at  $0.3, 0.5, 0.7$ and $0.9$, so the results below an absolute value of $0.3$ are unreliable and may be artifacts of regression smoothing methods.
 
 %The correlation:sign interaction shows that the scatter plot has close to symmetric performance for positive (correlation:sign + correlation) and negative (-correlation) correlation while the overlaid line graph is substantially weaker for negative values of correlation.
 Smoothing out the excess 'noise' from a time series had a minimal effect on scatter plots(...), it did have a significant positive impact on the power of overlaid line graphs as smoothing induces a large visual difference (Figure~\ref{smoothing}. Increasing the sample size, $t$, improved the power of the scatter plot but it was not statistically significant for the overlaid line graph.

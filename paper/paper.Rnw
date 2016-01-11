@@ -106,6 +106,7 @@ time.fit <- read.csv("sas/time.csv")
 powercoef <- read.csv("sas/PowerEstimates.csv")
 
 colnames(prediction) <- c("rabs", "t", "alpha", "rsgn", "smoothed", "design", "subj_id", "weights", "detected", "log_time", "RandomEf", "FixedEf", "residual")
+prediction <- mutate(prediction, r = ifelse(rsgn==1, rabs, -rabs), design = ifelse(design==0, "Overlaid Lines", "Scatterplot"), design = ifelse(smoothed==1, paste(design, "(Smoothed)", sep=" "), design),  diff = round(RandomEf - FixedEf,5))
 
 full$subj_id <- factor(full$ip_address, labels=1:207)
 y <- data.frame(table(full$subj_id))
@@ -122,7 +123,7 @@ full <- full %>% transform(response_0= strsplit(as.character(response_0), ",")) 
 #split multiple selections in response_0 into different rows
 full <- mutate(full, correct = ifelse(response_0 == actual_location, 1, 0),
                    score = ifelse(correct==1, (20-attempts)/19, 0))
-full <- select(full, subj_id, correct, score, r, rsgn, rabs, smoothed, n, design, log_time, response_0, actual_location, pic_id, choice_reason, attempts, weights, alpha)
+full <- select(full, subj_id, correct, score, r, rsgn, rabs, smoothed, n, design, log_time, response_0, actual_location, pic_id, choice_reason, attempts, weights, alpha, conf_level)
 
 full.sub <- filter(full, subj_id %in% keep) #keeping only >9 selections in actual modelling to better estimate random effects
 
@@ -450,17 +451,17 @@ Performance between the two plot designs appears to be similar for positive corr
 \begin{figure}[htbp]
   \centering
 <<powerdiff, dependson='setup', fig.width=6, fig.height=8, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
-prop <- Turk[order(Turk$r, Turk$n, Turk$smoothed),c("smoothed", "n", "attempt", "correct", "r", "design")]
-prop <- summarise(group_by(prop, smoothed, n, r), l.attempt=sum(ifelse(design=="Overlaid Lines", attempt, 0)),
-                                                  l.correct=sum(ifelse(design=="Overlaid Lines", correct, 0)),
-                                                  s.attempt=sum(ifelse(design=="Scatterplot", attempt, 0)),
-                                                  s.correct=sum(ifelse(design=="Scatterplot", correct, 0)))
-prop <- mutate(prop, l.adj = (l.correct+1)/(l.attempt+1), s.adj = (s.correct+1)/(s.attempt+1),
-               df = s.attempt + l.attempt - 1, difference=s.adj-l.adj, t = qt(0.975, df),
-               upper = difference + t*sqrt(s.adj*(1-s.adj)/s.attempt+l.adj*(1-l.adj)/l.attempt),
-               lower = difference - t*sqrt(s.adj*(1-s.adj)/s.attempt+l.adj*(1-l.adj)/l.attempt))
-ggplot(data=prop) + geom_errorbar(aes(x=r, ymax=upper, ymin=lower)) + geom_point(aes(x=r, y=difference)) +
-        geom_hline(aes(yint=0, colour="red")) + labs(x="Correlation", y="Scatterplot power minus Overlaid Lines") + facet_grid(n~smoothed)
+#prop <- bylineup[order(bylineup$r, bylineup$n, bylineup$smoothed),c("smoothed", "n", "evals", "total", "r", #"design")]
+#prop <- summarise(group_by(prop, smoothed, n, r), l.attempt=sum(ifelse(design=="Overlaid Lines", total, 0)),
+#                                                  l.correct=sum(ifelse(design=="Overlaid Lines", score, 0)),
+#                                                  s.attempt=sum(ifelse(design=="Scatterplot", total, 0)),
+#                                                  s.correct=sum(ifelse(design=="Scatterplot", score, 0)))
+#prop <- mutate(prop, l.adj = (l.correct+1)/(l.attempt+1), s.adj = (s.correct+1)/(s.attempt+1),
+#               df = s.attempt + l.attempt - 1, difference=s.adj-l.adj, t = qt(0.975, df),
+#               upper = difference + t*sqrt(s.adj*(1-s.adj)/s.attempt+l.adj*(1-l.adj)/l.attempt),
+##               lower = difference - t*sqrt(s.adj*(1-s.adj)/s.attempt+l.adj*(1-l.adj)/l.attempt))
+#ggplot(data=prop) + geom_errorbar(aes(x=r, ymax=upper, ymin=lower)) + geom_point(aes(x=r, y=difference)) +
+#        geom_hline(aes(yint=0, colour="red")) + labs(x="Correlation", y="Scatterplot power minus Overlaid Lines") + facet_grid(n~smoothed)
 @
  \caption{The difference in estimated power (scatter plot power minus overlaid line power) to reveal the true plot by smoothness and sample size with a 95\% confidence interval. The red line indicates the point where both plot designs are equally powerful while values above this line indicate that the scatter plot is more powerful than the overlaid line graph. The largest differences appear in negative correlation, where the scatter plot is more powerful.}
  \label{powerdiff}
@@ -482,7 +483,7 @@ Figure~\ref{time} and Figure~\ref{confidence} give a breakdown of the interactio
 \begin{figure}[htbp]
   \centering
 <<time, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
-time <- select(full, design, log_time, correct,, sign)
+time <- select(full, design, log_time, correct, rsgn)
 time$rsgn <- factor(time$rsgn, labels=c("r -","r +"))
 tm <- summarise(group_by(time, correct, design, rsgn), m=mean(log_time))
 t1 <- ggplot(data=subset(time, correct==0), aes(x=log_time)) + geom_histogram(binwidth=0.5) + 
@@ -510,7 +511,7 @@ The result suggests that the latter hypothesis is more likely to be correct. We 
 \begin{figure}[htbp]
   \centering
 <<confidence, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
-conf <- select(full, design, conf_level, correct, sign)
+conf <- select(full, design, conf_level, correct, rsgn)
 conf$rsgn <- factor(conf$rsgn, labels=c("r -","r +"))
 cm <- summarise(group_by(conf, correct, design, rsgn), m=mean(conf_level))
 c1 <- ggplot(data=subset(conf, correct==0), aes(x=conf_level)) + geom_histogram(binwidth=1) + 
@@ -532,8 +533,8 @@ Figure~\ref{confidence2} compares the reported confidence for each selection aga
 \begin{figure}[htbp]
   \centering
 <<confidence2, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
-conf2 <- select(full, conf_level, correlation, smoothed, n, design) #c(7, 15
-qplot(correlation, 6-conf_level, data=conf2, alpha=I(0.1)) + 
+conf2 <- select(full, conf_level, r, smoothed, n, design) #c(7, 15
+qplot(r, 6-conf_level, data=conf2, alpha=I(0.1)) + 
   geom_smooth(method="loess") + 
   facet_grid(n~design+smoothed) +
   labs(x = "Correlation", y = "Confidence (5=High, 1=Low)")
@@ -607,18 +608,18 @@ Power_{ijklt} &=& \psi \{ \beta_{0} + \beta_{1} x_{1,i}  + \beta_{2} x_{2,j}  + 
 
 Where $\psi$ is the logit link function, $\psi(x) = \frac{e^{x}}{1+e^{x}}$. Additionally:
 
-\begin{enumerate}
+\begin{itemize}
 \item $x_{1,i}$ is the absolute value of the true plot correlation, $\rho$, with $i \in \{0.3, 0.5, 0.7, 0.9\}$,
 \item $x_{2,j}$ is a dummy variable for the sign of the true plot correlation, with $j = 0$ for negative correlation, 
 \item $x_{3,k}$ is a dummy variable for the smoothing procedure, with $k = 0$ for unsmoothed data, 
 \item $x_{4,t}$ is the sample size, with $t \in \{12, 24, 48, 96\}$ ,
 \item $x_{5,l}$ denotes the plot design, with $l =0$ for the overlaid lines type,
 \item $z_{s}$ is an observer specific random effect, with $s = 1, 2, \dots , 157$.
-\end{enumerate}
+\end{itemize}
 
 It is assumed that $\epsilon_{ijkt} \sim \mathcal{N} (0, \Sigma_{ijkt})$ and $\gamma \sim \mathcal{N} (0, \delta)$.
 
-Where a subject made multiple selections from the same lineup, each selection is treated as a separate data point with a probability weighting equal to the inverse of the number of selections.
+If a subject made multiple selections from the same lineup, each selection is treated as a separate data point with a probability weighting equal to the inverse of the number of selections.
 
 \begin{table}[htp]
 \caption{Weighted Mixed Effects Logit Model for the predicted power of plot design. Sample size for scatter plot evaluations: 900, overlaid lines: 949, total: 1849. Default plot design is overlaid lines. The model is fitted using the GLIMMIX procedure in SAS.}
@@ -654,12 +655,11 @@ Figure~\ref{powermodel} shows the fitted unrestricted model, with power predicti
 #pred <- subset(pred, smoothed==0 | smoothed == 1 & t ==48 | smoothed ==1 & t ==96)
 #write.csv(pred, "sas/predgrid.csv", row.names=FALSE) # these lines are done, but its a large file so commented out for knitr
 #Code exported to sas, see sas/model\ fit.sas
-prediction <- mutate(prediction, r = ifelse(rsgn==1, rabs, -rabs), design = ifelse(design==0, "Overlaid Lines", "Scatterplot"), design = ifelse(smoothed==1, paste(design, "(Smoothed)", sep=" "), design),  diff = round(RandomEf - FixedEf,5))
-randomeffects <- summarise(group_by(prediction, subj_id), re=max(diff)) #all values of diff are identical for a given subject, max chosen just as a function to select one of them
-prediction <- select(prediction, r, t, rsgn, smoothed, design, subj_id, RandomEf, FixedEf)
-prediction <- mutate(prediction, RandomEf = exp(RandomEf)/(1+exp(RandomEf)), FixedEf = exp(FixedEf)/(1+exp(FixedEf)))
+#all values of diff are identical for a given subject, max chosen just as a function to select one of them
+predplot <- select(prediction, r, t, rsgn, smoothed, design, subj_id, RandomEf, FixedEf)
+predplot <- mutate(prediction, RandomEf = exp(RandomEf)/(1+exp(RandomEf)), FixedEf = exp(FixedEf)/(1+exp(FixedEf)))
  
-qplot(r, RandomEf, data=prediction, color=design, 
+qplot(r, RandomEf, data=predplot, color=design, 
       group=interaction(subj_id, design), geom="line", alpha=I(0.1)) + 
   scale_color_manual("Plot Design", values=c("#33AA33", "#9977EE", "#FF9933", "#00DDAA")) + 
   xlab("Correlation") + ylab("Estimated Power") +
@@ -684,6 +684,7 @@ Analysing the level one residuals, $\hat{\epsilon_{i}}$ and level two residuals,
 \begin{figure}[htbp]
   \centering
 <<random, dependson='powermodel', fig.height=4, fig.width=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
+randomeffects <- summarise(group_by(prediction, subj_id), re=max(diff))
 ggplot(data=randomeffects) + geom_histogram(aes(x=re, y=..density..), binwidth=0.08) + xlab("Random Effects") + ylab(NULL)
 @
     \caption{Histograms of estimated subject random effects, $\hat{\gamma}$. They appear to be normally distributed with mean zero.}
@@ -735,14 +736,13 @@ Time_{ijklmt} &=& \beta_{0} + \beta_{1} x_{1,i}  + \beta_{2} x_{2,j}  + \beta_{3
  & & \beta_{11} x_{4,t} + \beta_{12} x_{1,i} \* x_{2,j}) + \beta_{13} x_{6,m} + \beta_{14} x_{5_l} \* x_{6,m} \gamma z_{s} + \epsilon_{ijklmt} \nonumber 
 \end{eqnarray}
 
-The structure of the model is similar to that in Equation~\ref{modelpower} except the link function is removed and a new variable, $x_{6,m}$ is introduced, with $m = \{0,1\}$ indicating if the subject detected the true plot.
+The structure of the model ~\ref{timemodel} is similar to that in Equation~\ref{modelpower} except the link function is replace with the identity function, $\psi(x) = x$, and a new variable, $x_{6,m}$, is introduced with $m = \{0,1\}$ indicating if the subject detected the true plot, where $m = 0$ is a failure to detect the true plot.
 
 \begin{table}[htp]
 \caption{Linear mixed model fit for time taken to make a selection, default plot style is overlaid lines. Fitted with the MIXED procedure in SAS.}
 \label{tab2}
 \centering
 <<timefit, dependson='setup', results='asis', echo=FALSE, message=FALSE, error=FALSE, warning=FALSE>>=
-<<answertables, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
 time.fit <- time.fit[c(1, 5, 6, 2, 3, 4, 7, 8, 12, 13, 9, 10, 11, 14),] #separate into main effects then interaction effects in same order
 rownames(time.fit) <- c("Intercept", "Smoothed", "t", "abs(r)", "sign(r)", "abs(r)*sign(r)", "detected", "design", "design*Smoothed", "design*t", "design*abs(r)", "design*sign(r)", "design*abs(r)*sign(r)", "design*detected")
 time.fit$Effect <- NULL
@@ -766,6 +766,7 @@ If a data analyst is required to use overlaid line graphs in their work, substan
 \section{Appendix}
 
 \begin{table}[htbp]
+\caption{The true plot detections / attempts for each lineup in the data collection. Results ignore multiple selection weighting. True plot correlation is on the x axis and t is on the y axis. }
 \label{tab3}
 \centering
 <<answertables, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
@@ -787,20 +788,17 @@ kable(line.sm, format="latex", caption="Smoothed overlaid line results")
 @
 \end{table}
 
-Table~\ref{tab3} contains the true plot detections / attempts for each lineup in the data collection. Results ignore multiple selection weighting. True plot correlation is on the x axis and t is on the y axis. 
-
 \begin{figure}[htbp]
 \centering
-<<answertables, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
+<<map, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
 location <- read.csv("location.csv")
 map.dat <- map_data("world")
 ggplot() + geom_polygon(aes(long,lat, group=group), fill="grey65", data=map.dat) + theme_bw() +
-  geom_point(data=location, aes(x=lon, y=lat, colour= "blue")) +scale_colour_manual(values=c("#FF5500", "#00FFFF")) + theme(axis.text=element_blank(), axis.title=element_blank(), legend.position="none")
+  geom_point(data=location, aes(x=lon, y=lat, colour= "blue")) +scale_colour_manual(values=c("#FF5500", "#00FFFF")) + theme(aspect.ratio = 0.67, axis.text=element_blank(), axis.title=element_blank(), legend.position="none")
 @
+\caption{The location of the recruited subjects. The majority reside in the United States but some are spread around other countries in Europe and Asia.}
 \label{map}
 \end{figure}
-
-Figure~\ref{map} shows the location of the recruited subjects. The majority reside in the United States but some are spread around other countries in Europe and Asia.
 
 
 

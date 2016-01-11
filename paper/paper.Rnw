@@ -624,7 +624,7 @@ Where a subject made multiple selections from the same lineup, each selection is
 \caption{Weighted Mixed Effects Logit Model for the predicted power of plot design. Sample size for scatter plot evaluations: 900, overlaid lines: 949, total: 1849. Default plot design is overlaid lines. The model is fitted using the GLIMMIX procedure in SAS.}
 \label{tab1}
 \centering
-<<powerfit, dependson='setup', results='asis', echo=FALSE, message=FALSE, error=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
+<<powerfit, dependson='setup', results='asis', echo=FALSE, message=FALSE, error=FALSE, warning=FALSE>>=
 sasdata <- select(full.sub, rabs, n, alpha, rsgn, smoothed, design, subj_id, weights, correct, log_time)
 sasdata$rabs <- as.numeric(sasdata$rabs)
 sasdata$subj_id <- as.numeric(sasdata$subj_id)
@@ -741,7 +741,8 @@ The structure of the model is similar to that in Equation~\ref{modelpower} excep
 \caption{Linear mixed model fit for time taken to make a selection, default plot style is overlaid lines. Fitted with the MIXED procedure in SAS.}
 \label{tab2}
 \centering
-<<timefit, dependson='setup', results='asis', echo=FALSE, message=FALSE, error=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
+<<timefit, dependson='setup', results='asis', echo=FALSE, message=FALSE, error=FALSE, warning=FALSE>>=
+<<answertables, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
 time.fit <- time.fit[c(1, 5, 6, 2, 3, 4, 7, 8, 12, 13, 9, 10, 11, 14),] #separate into main effects then interaction effects in same order
 rownames(time.fit) <- c("Intercept", "Smoothed", "t", "abs(r)", "sign(r)", "abs(r)*sign(r)", "detected", "design", "design*Smoothed", "design*t", "design*abs(r)", "design*sign(r)", "design*abs(r)*sign(r)", "design*detected")
 time.fit$Effect <- NULL
@@ -790,7 +791,7 @@ Table~\ref{tab3} contains the true plot detections / attempts for each lineup in
 
 \begin{figure}[htbp]
 \centering
-<<map, dependson='setup', echo=FALSE, results='hide', message=FALSE, error=FALSE, warning=FALSE>>=
+<<answertables, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
 location <- read.csv("location.csv")
 map.dat <- map_data("world")
 ggplot() + geom_polygon(aes(long,lat, group=group), fill="grey65", data=map.dat) + theme_bw() +

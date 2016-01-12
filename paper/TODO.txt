@@ -1,6 +1,6 @@
 11/01/2016
 
-- calculate using weighting by number of selections
+*- calculate using weighting by number of selections
 - check model fits with R
 - check confidence interval calculations, bootstrap and/or permutation
 

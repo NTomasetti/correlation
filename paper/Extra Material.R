@@ -59,16 +59,7 @@ ability$diff <- ability$actual - ability$estimated
 ability.re <- merge(ability, randomeffects, by="subj_id")
 ggplot(data=ability.re, aes(x=diff, y=re)) + geom_point()
 
-#Results Tables#
-turk.tbl <- select(Turk, test_param, smoothed, r, n, correct, attempt)
-turk.tbl$result <- paste(round(turk.tbl$correct, 0), turk.tbl$attempt, sep="/")
-turk.tbl <- turk.tbl[order(turk.tbl$r, turk.tbl$n),]
-scatter.uns <- data.frame(c(12, "", "", 24, "", "", 48, "", "", 96, "", ""), matrix(subset(turk.tbl, smoothed==0 & test_param=="scatter")$result, ncol=8))
-scatter.sm <- data.frame(c(12, "", "", 24, "", "", 48, "", "", 96, "", ""), matrix(subset(turk.tbl, smoothed==1 & test_param=="scatter")$result, ncol=8))
-line.uns <- data.frame(c(12, "", "", 24, "", "", 48, "", "", 96, "", ""), matrix(subset(turk.tbl, smoothed==0 & test_param=="line")$result, ncol=8))
-line.sm <- data.frame(c(12, "", "", 24, "", "", 48, "", "", 96, "", ""), matrix(subset(turk.tbl, smoothed==1 & test_param=="line")$result, ncol=8))
-colnames(scatter.uns) <- c("", "-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
-colnames(scatter.sm) <- c("","-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
-colnames(line.uns) <- c("","-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
-colnames(line.sm) <- c("","-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
-
+#Attempts histogram#
+attempts <- summarise(group_by(full.sub, subj_id, pic_id), attempts = max(attempts))
+ggplot(data=attempts) + geom_bar(aes(x=as.factor(attempts))) + labs(x="Number of selections", y=NULL)
+summary(as.factor(attempts$attempts))

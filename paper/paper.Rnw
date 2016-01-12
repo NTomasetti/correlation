@@ -16,6 +16,7 @@
 \usepackage{ulem}
 \usepackage[section]{placeins}
 \usepackage{afterpage}
+\usepackage{bbm}
 
 \graphicspath{{images/}}
 \DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
@@ -83,60 +84,77 @@ library(ggplot2)
 library(mnormt)
 library(tidyr)
 library(knitr)
-# Convert reshape2 to tidyr, melt to gather - done
-#library(reshape2)
 library(nullabor)
 library(dplyr)
 library(mFilter)
 library(grid)
 library(gridExtra)
 library(stringr)
-#library(ipapi)
 library(maps)
-library(moments)
-#library(pander)
-#library(splitstackshape) - changed cSplit to unnest
 #library(readr)
 #library(lubridate)
 # Convert these to read_csv at some point
-correl <- read.csv("correlations.csv", stringsAsFactors = FALSE)
-full <- read.csv("full.csv", row.names=1, stringsAsFactors = FALSE) 
-prediction <- read.csv("sas/predfit.csv") #Large file, very slow
-time.fit <- read.csv("sas/time.csv")
-powercoef <- read.csv("sas/PowerEstimates.csv")
-
-colnames(prediction) <- c("rabs", "t", "alpha", "rsgn", "smoothed", "design", "subj_id", "weights", "detected", "log_time", "RandomEf", "FixedEf", "residual")
-prediction <- mutate(prediction, r = ifelse(rsgn==1, rabs, -rabs), design = ifelse(design==0, "Overlaid Lines", "Scatterplot"), design = ifelse(smoothed==1, paste(design, "(Smoothed)", sep=" "), design),  diff = round(RandomEf - FixedEf,5))
+correl <- read.csv("correlations.csv", stringsAsFactors = FALSE) ##Correlations of every plot in every lineup
+full <- read.csv("full.csv", row.names=1, stringsAsFactors = FALSE) ##MTurk evaluations
+prediction <- read.csv("sas/predfit.csv") ##Large file, very slow, fitted data from SAS
+time.fit <- read.csv("sas/time.csv") ##coefficients for time model from SAS
+powercoef <- read.csv("sas/PowerEstimates.csv") ##coefficients for power model from SAS
 
 full$subj_id <- factor(full$ip_address, labels=1:207)
 y <- data.frame(table(full$subj_id))
 keep <- y$Var1[y$Freq>9]
+##Recording who evaluated at least ten lineups. Done prior to splitting multiple selections
 
-full <- mutate(full, design = ifelse(test_param ==1, "Overlaid Lines", "Scatterplot"),
-               r = round(correlation, 1),
-               rsgn = ifelse(r >= 0, 1, 0),
-               rabs=abs(r),
-               alpha = log(0.05/0.95),
-               attempts = sapply(strsplit(as.character(full$response_0), ","), length), #count number of selections in response_0 column
-               weights = 1/attempts)
-full <- full %>% transform(response_0= strsplit(as.character(response_0), ",")) %>% unnest(response_0)
-#split multiple selections in response_0 into different rows
-full <- mutate(full, correct = ifelse(response_0 == actual_location, 1, 0),
-                   score = ifelse(correct==1, (20-attempts)/19, 0))
-full <- select(full, subj_id, correct, score, r, rsgn, rabs, smoothed, n, design, log_time, response_0, actual_location, pic_id, choice_reason, attempts, weights, alpha, conf_level)
+full <- full %>% mutate(design = ifelse(test_param ==1, "Overlaid Lines", "Scatterplot"),
+                         r = round(correlation, 1),
+                         rsgn = ifelse(r >= 0, 1, 0),
+                         rabs = abs(r),
+                         alpha = log(0.05/0.95),
+                         attempts = sapply(strsplit(as.character(full$response_0), ","), length), 
+                         ##count number of selections in response_0 column
+                         weights = 1/attempts) %>%
+  transform(response_0= strsplit(as.character(response_0), ",")) %>% unnest(response_0) %>%
+  ##split multiple selections in response_0 into different rows
+  mutate(correct = ifelse(response_0 == actual_location, 1, 0), 
+         score = ifelse(correct==1, (20-attempts)/19, 0)) %>%
+  select(subj_id, correct, score, r, rsgn, rabs, smoothed, n, design, log_time, response_0,
+         actual_location, pic_id, choice_reason, attempts, weights, alpha, conf_level)
 
-full.sub <- filter(full, subj_id %in% keep) #keeping only >9 selections in actual modelling to better estimate random effects
+full.sub <- filter(full, subj_id %in% keep) 
+##keeping only subjects with >0 evaluations in actual modelling to better estimate random effects
 
-bylineup <- summarise(group_by(full.sub, pic_id, n, smoothed, design, r, actual_location), total=sum(score), correct=sum(correct), evals=sum(attempts*weights))
+bylineup <- summarise(group_by(full, pic_id, n, smoothed, design, r, actual_location), total=sum(score), correct=sum(correct), evals=sum(weights))
 bylineup <- mutate(bylineup, percent = total/evals)
-bylineup.sub <- summarise(group_by(full.sub, pic_id), total=sum(score), evals=sum(weights*attempts))
+bylineup.sub <- summarise(group_by(full.sub, pic_id), total=sum(score), evals=sum(weights))
+bylineup.sub <- mutate(bylineup.sub, percent = total/evals)
 
-gen_true_data <- function(n, r, dep=TRUE, smoothed = FALSE) {
+##Summarise data by lineup
+
+#sasdata <- select(full.sub, rabs, n, alpha, rsgn, smoothed, design, subj_id, weights, correct, log_time)
+#sasadata <- mutate(sasdata, rabs = as.numeric(rabs),
+#                   subj_id = as.numeric(subj_id)
+#                   design = ifelse(design=="Scatterplot", 1, 0))
+#write.csv(subsetted, "sas/sasdata.csv", row.names = FALSE)
+##The code that is exported to fit the model into SAS, see sas/model fit.sas
+
+# data.frame(expand.grid(rabs=rabs, t=t, alpha=log(.05/0.95), rsgn=c(0,1),
+#                                      smoothed=c(0,1), design=c(0,1),
+#                                      subj_id=full.sub$subj_id))
+#pred <- subset(pred, smoothed==0 | smoothed == 1 & t ==48 | smoothed ==1 & t ==96)
+#write.csv(pred, "sas/predgrid.csv", row.names=FALSE) # these lines are done, but its a large file so commented out for knitr
+#Code exported to SAS to predict new values
+
+colnames(prediction) <- c("rabs", "t", "alpha", "rsgn", "smoothed", "design", "subj_id", "weights", "detected", "log_time", "RandomEf", "FixedEf", "residual")
+prediction <- mutate(prediction, r = ifelse(rsgn==1, rabs, -rabs),
+                     design = ifelse(design==0, "Overlaid Lines", "Scatterplot"), 
+                     design = ifelse(smoothed==1, paste0(design, " (Smoothed)"), design),  
+                     diff = round(RandomEf - FixedEf,5))
+##Data from SAS
+
+gen_true_data <- function(n, r, smoothed = FALSE) {
   d <- data.frame(rmnorm(n, c(0, 0), matrix(c(1, r, r, 1), 2, 2))) 
-  if (dep) {
-    d$X1 <- as.vector(arima.sim(list(ar=n/100), n, innov=d$X1))
-    d$X2 <- as.vector(arima.sim(list(ar=n/100), n, innov=d$X2))
-  }
+  d$X1 <- as.vector(arima.sim(list(ar=n/100), n, innov=d$X1))
+  d$X2 <- as.vector(arima.sim(list(ar=n/100), n, innov=d$X2))
   if (smoothed) {
     d$X1 <- as.vector(hpfilter(d$X1, freq=1, type="lambda", drift = FALSE)[[2]])
     d$X2 <- as.vector(hpfilter(d$X2, freq=1, type="lambda", drift = FALSE)[[2]])
@@ -147,15 +165,13 @@ gen_true_data <- function(n, r, dep=TRUE, smoothed = FALSE) {
   d$t <- 1:n
   return(d)
 }
+##Generates a pair of data, length n, correlation r
 
-gen_null <- function(n, m=20, dep=TRUE, smoothed = FALSE){
+gen_null <- function(n, m=20, smoothed = FALSE){
   nd <- NULL
-  for(i in 1:(m-1)) { 
-    d <- data.frame(rmnorm(n, c(0, 0), matrix(c(1, 0, 0, 1), 2, 2)))
-    if (dep) {
-      d$X1 <- as.vector(arima.sim(list(ar=n/100), n))
-      d$X2 <- as.vector(arima.sim(list(ar=n/100), n))
-    }
+  for(i in 1:(m-1)) {
+    d <- data.frame(X1 = as.vector(arima.sim(list(ar=n/100), n)),
+                    X2 = as.vector(arima.sim(list(ar=n/100), n)))
     if (smoothed) {
       d$X1 <- as.vector(hpfilter(d$X1, freq=1, type="lambda", drift = FALSE)[[2]])
       d$X2 <- as.vector(hpfilter(d$X2, freq=1, type="lambda", drift = FALSE)[[2]])
@@ -169,6 +185,7 @@ gen_null <- function(n, m=20, dep=TRUE, smoothed = FALSE){
   nd$t <- 1:n
   return(nd)
 }
+##Generates m-1 pairs of uncorrelated data, length n
 @
 
 \section{Introduction}
@@ -292,7 +309,7 @@ We can them estimate the power difference of competing lineups, $\hat\pi_{1} - \
   \hat\pi_{1} - \hat\pi_{2}\pm t_{1-\alpha,2n-1}\sqrt{\hat\pi_{1} (1-\hat\pi_{1}) /n_{1} + \hat\pi_{2} (1-\hat\pi_{2}) /n_{2} }
 \end{equation}
 
-Where $\hat\pi_{i} = (x_{i}+1)/(n_{i}+1)$, where $x$ is the number of times a true lineup was correctly identified and $n$ is the Welch-Satterwaite estimate for the degrees of freedom.
+Where $\hat\pi_{i} = (x_{i}+1)/(n_{i}+1)$, $x$ is the number of times a true lineup was correctly identified and $n$ is the Welch-Satterwaite estimate for the degrees of freedom.
 
 Some individuals may have a better natural ability at detecting the correct correlation pattern in the graphics, but by having each participant viewing multiple lineups and each lineup being viewed by multiple different participants, this can be controlled via a random effect variable in the model. We recruited participants through Amazon's Mechanical Turk, where the lineup protocol has been applied to a number of problems in prior papers \citep{Heer, Majumder:2013, Wickham}. Amazon’s Mechanical Turk \citep{MTurk} is a labour crowd-sourcing platform developed to give easy access to workers with basic tasks paid in line with the United States minimum wage. MTurk can be used to recruit subjects to read a variety of graphics and report on particular visual tasks. The time taken to decide, confidence in the decision and the reason for that decision can also be recorded. \citet{Heer} use MTurk to replicate previous findings in graphical perception from \citet{Cleveland} and find that it is a valid method of data collection, once controls to eliminate anyone 'gaming' the system by randomly selecting answers to minimise time spent working are implemented. Further details of our use of Amazons’ Mechanical Turk is included in Section 3. The protocol has successfully been used to measure statistical power as a means to determine plot type superiority in \citet{Hofmann:2012}, and this work follows that approach.
 
@@ -308,7 +325,7 @@ With $t \in \left\{12, 24, 48, 96\right\}$ and $e_{t}$ being generated with from
 
 $$e_{t} \sim \mathcal{N} \left( \mu = \left| \begin{array}{c}0 \\ 0 \end{array} \right| , \hspace{4mm} \Sigma = \left| \begin{array}{cc}1 & \rho \\ \rho & 1\end{array} \right| \right)$$
 
-The variation in the covariance parameter allows for control in the correlation in the pairs of data. The null data has no structure, so uncorrelated pairs are produced by setting $\rho = 0$. True data pairs are generated with $\rho = \pm \{0.3, 0.5, 0.7, 0.9\}$. Pilot testing found that the rate of picking the true data plot fell to approximately $5\%$, the $1/m$ rate of randomly picking the true plot, for pairs with correlation below $\rho = 0.3$. Further to this, relationships weaker than this point are often of little interest to analysts. Hence we found it unnecessary to test a more full range of correlations. Simulating data does not produce correlations exactly equal to $\rho$, so simulated data pairs were accepted as real data if pairwise correlation between the two series is within 0.015 of the desired value of $\rho$. The null pairs often had correlation generated spuriously through the simulation process. This was particularly problematic for generating small sample data, but setting $\beta = max(0.5,100t)$ for both true and null data reduced spurious correlation to manageable levels.
+The variation in the covariance parameter allows for control in the correlation in the pairs of data. The null data has no structure, so uncorrelated pairs are produced by setting $\rho = 0$. True data pairs are generated with $\rho \in \pm \{0.3, 0.5, 0.7, 0.9\}$. Pilot testing found that the rate of picking the true data plot fell to approximately $5\%$, the $1/m$ rate of randomly picking the true plot, for pairs with correlation below $\rho = 0.3$. Further to this, relationships weaker than this point are often of little interest to analysts. Hence we found it unnecessary to test a more full range of correlations. Simulating data does not produce correlations exactly equal to $\rho$, so simulated data pairs were accepted as real data if pairwise correlation between the two series is within 0.015 of the desired value of $\rho$. The null pairs often had correlation generated spuriously through the simulation process. This was particularly problematic for generating small sample data, but setting $\beta = min(0.5,100t)$ reduced spurious correlation to manageable levels.
 For particularly large time series, the AR(1) model can create particularly 'jagged' lines that may be unrealistic for many actual applications. To counter this, additional sets of data were created with a Hodrick-Prescott filter to capture the trend of the model and remove the noise in the cycle component. This filter creates a trend by penalising both errors in smoothness and in fit. The trend of the series, $\tau_{t}$ is defined by the equation:
 
 \begin{equation}
@@ -383,7 +400,15 @@ Additionally, there was a fourth factor for $t = \{48, 96\}$:
 Each combination of factors was replicated in three different lineups, giving a total of 288 lineups (3 replications x 2 plots x 8 correlations x 6 sample size and smoothness combinations). 
 The position of the actual data plot in the lineup was randomized. The order that the factors are presented to a subject were also randomized, and each subject saw 5 scatter plots and 5 overlaid lines at a range of all absolute correlation levels. Each subject did not see the same data more than once. Subjects were asked to pick the plot in the lineup that has the strongest association, with basic examples of negatively and positively correlated plots. They also answered with reasons for choosing the plot, and the confidence that they have that this really is the plot showing the strongest correlation. Each subject evaluated 10 lineups, plus a further two trials to eliminate people attempted to game the system. If a trial was not answered correctly, the subject could not evaluate the remaining lineups. If it was answered correctly, the trial data was discarded and the subject moved onto the rest of the lineups. Earlier work by \citet{Majumder:2014} has found that repeated evaluations from a subject does not increase their ability to detect the true plot from a lineup, justifying our treatment of the results as independent evaluations. We recruited subjects from Amazon's Mechanical Turk service and ensured that each lineup was viewed by multiple subjects. In total there were 2088 lineup evaluations, however to better control each subject’s individual visual ability we removed data from subjects with less than ten individual evaluations leaving us with 1684 lineup evaluations for the analysis.  
 
-Subjects were allowed to make multiple selections, which is handled by probability weighting in the model. This increases our data from 1684 to 1849 evaluations.
+Subjects were allowed to make multiple selections from each lineup evaluated, additional selections on lineup $i$ by subject $j$ are penalised according to a score defined by:
+\begin{equation}
+\label{score}
+{score}_{ij} =\frac{m-s_{ij}}{m-1} \mathbbm{I}_{ij}
+\end{equation}
+
+where $\mathbbm{I}_{ij} = 1$ if the true plot is detected, $0$ otherwise, $s_{ij}$ is the number of selections made and $m = 20$ is the number of plots in the lineup.
+
+However, for the model fit to power, multiple selections are seperated and given a weighting equal to to inverse of the number of selections made in that lineup evaluation. This increases our data from 1684 to 1849 evaluations.
 
 \begin{figure}[htbp]
   \centering
@@ -451,17 +476,17 @@ Performance between the two plot designs appears to be similar for positive corr
 \begin{figure}[htbp]
   \centering
 <<powerdiff, dependson='setup', fig.width=6, fig.height=8, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
-#prop <- bylineup[order(bylineup$r, bylineup$n, bylineup$smoothed),c("smoothed", "n", "evals", "total", "r", #"design")]
-#prop <- summarise(group_by(prop, smoothed, n, r), l.attempt=sum(ifelse(design=="Overlaid Lines", total, 0)),
-#                                                  l.correct=sum(ifelse(design=="Overlaid Lines", score, 0)),
-#                                                  s.attempt=sum(ifelse(design=="Scatterplot", total, 0)),
-#                                                  s.correct=sum(ifelse(design=="Scatterplot", score, 0)))
-#prop <- mutate(prop, l.adj = (l.correct+1)/(l.attempt+1), s.adj = (s.correct+1)/(s.attempt+1),
-#               df = s.attempt + l.attempt - 1, difference=s.adj-l.adj, t = qt(0.975, df),
-#               upper = difference + t*sqrt(s.adj*(1-s.adj)/s.attempt+l.adj*(1-l.adj)/l.attempt),
-##               lower = difference - t*sqrt(s.adj*(1-s.adj)/s.attempt+l.adj*(1-l.adj)/l.attempt))
-#ggplot(data=prop) + geom_errorbar(aes(x=r, ymax=upper, ymin=lower)) + geom_point(aes(x=r, y=difference)) +
-#        geom_hline(aes(yint=0, colour="red")) + labs(x="Correlation", y="Scatterplot power minus Overlaid Lines") + facet_grid(n~smoothed)
+prop <- select(bylineup, smoothed, n, evals, total, r, design)
+prop <- summarise(group_by(prop, smoothed, n, r), l.attempt=sum(ifelse(design=="Overlaid Lines", evals, 0)),
+                                                  l.correct=sum(ifelse(design=="Overlaid Lines", total, 0)),
+                                                  s.attempt=sum(ifelse(design=="Scatterplot", evals, 0)),
+                                                  s.correct=sum(ifelse(design=="Scatterplot", total, 0)))
+prop <- mutate(prop, l.adj = (l.correct+1)/(l.attempt+1), s.adj = (s.correct+1)/(s.attempt+1),
+               df = s.attempt + l.attempt - 1, difference=s.adj-l.adj, t = qt(0.975, df),
+               upper = difference + t*sqrt(s.adj*(1-s.adj)/s.attempt+l.adj*(1-l.adj)/l.attempt),
+               lower = difference - t*sqrt(s.adj*(1-s.adj)/s.attempt+l.adj*(1-l.adj)/l.attempt))
+ggplot(data=prop) + geom_errorbar(aes(x=r, ymax=upper, ymin=lower)) + geom_point(aes(x=r, y=difference)) +
+        geom_hline(aes(yint=0, colour="red")) + labs(x="Correlation", y="Scatterplot power minus Overlaid Lines") + facet_grid(n~smoothed)
 @
  \caption{The difference in estimated power (scatter plot power minus overlaid line power) to reveal the true plot by smoothness and sample size with a 95\% confidence interval. The red line indicates the point where both plot designs are equally powerful while values above this line indicate that the scatter plot is more powerful than the overlaid line graph. The largest differences appear in negative correlation, where the scatter plot is more powerful.}
  \label{powerdiff}
@@ -478,7 +503,7 @@ ggplot(data=subset(bylineup, smoothed==0), aes(x=r, y=percent, colour=factor(n))
 \end{figure}
 
 Figure~\ref{samplesize} demonstrates the effects of changing sample size for unsmoothed data. The scatter plot has increased power to detect correlation almost universally for any increase. Sample size influences the overlaid lines differently, they appears to benefit for positively correlated true plots, but it does not improve the weak performance in negative correlation.
-Figure~\ref{time} and Figure~\ref{confidence} give a breakdown of the interactions between the response variables: plot detection, time and confidence. Figure~\ref{time} is the histogram of the time taken to record a response, split by plot design and sign of correlation and true plot detection. The time data was highly positively skewed with a maximum of 1760 seconds so the variable was log-transformed. We found that the subject could identify the true plot out of the overlaid line graph 33.6\% of the time and it took on average $e^{3.442}$ = 31.2 seconds to make a choice. Successful detections were slightly faster than unsuccessful decision, taking on average 28.7 seconds to pick the true plot and 32.6 seconds if a null was selected. The scatter plots performed much better, with the true plot picked 52.9\% of the time, with an average of 22.7 seconds required to make a decision. If the true plot was detected it took only 18.6 seconds, and 29.3 seconds for a null plot selection.
+Figure~\ref{time} and figure~\ref{confidence} give a breakdown of the interactions between the response variables: plot detection, time and confidence. Figure~\ref{time} is the histogram of the time taken to record a response, split by plot design and sign of correlation and true plot detection. The time data was highly positively skewed with a maximum of 1760 seconds so the variable was log-transformed. We found that the subject could identify the true plot out of the overlaid line graph 33.6\% of the time and it took on average $e^{3.442}$ = 31.2 seconds to make a choice. Successful detections were slightly faster than unsuccessful decision, taking on average 28.7 seconds to pick the true plot and 32.6 seconds if a null was selected. The scatter plots performed much better, with the true plot picked 52.9\% of the time, with an average of 22.7 seconds required to make a decision. If the true plot was detected it took only 18.6 seconds, and 29.3 seconds for a null plot selection.
 
 \begin{figure}[htbp]
   \centering
@@ -545,13 +570,12 @@ qplot(r, 6-conf_level, data=conf2, alpha=I(0.1)) +
 
 \subsection{Selection Analysis}
 
-There are two major reasons why a subject may fail to detect the true plot out of a lineup. Either the plot design was unable to display correlation for that particular combination of factors (and the analyst would commit a Type II error by not rejecting the null hypothesis), or a null plot that had a greater correlation than the true plot was selected instead (and the analyst would commit a Type I error by rejecting the null hypothesis). We next can analyse these kinds of errors with the pin plots found in Figure~\ref{pins}. The frequency of selection of each plot in each lineup, either true or null, is represented by a pin, placed at the value of the correlation between the two variables shown in that plot. The correlation of the selected plot is on the x-axis and the frequency of selection is plotted on the y axis. The correlation of the simulated (true) data ($\rho = \pm \{0.3, 0.5, 0.7, 0.9\}$ in the plot, the sample size ($t= \{12, 24, 48, 96\}$), and the plot design (unsmoothed/smoothed, scatterplot/lineplot) is used to facet the plots. The blue pins indicate the true plots and the red pins indicate the null plots. If the plot design has the power to display correlation, we would expect the highest correlation plot to be selected, leading to a Type I error where a plot from the null distribution spuriously had high correlation. We find that this is generally not the case. The selections appear to have a wide range of correlations, indicating that if a subject selected a null plot it was typically not due to excess spurious correlation. Instead the failure to select the highest correlated plot indicates that a Type II error was committed rather than Type I as the plot designs did not have the power to differentiate between medium and low correlation plots. However, for the scatter plot, whenever there was a plot with a very strong correlation, usually in the form of the true plot, it was overwhelmingly selected. For the overlaid lines this mostly occurred only for plots with strong positive correlation, which is consistent with its general lack of power to reveal negative relationships in data. 
+There are two major reasons why a subject may fail to detect the true plot out of a lineup. Either the plot design was unable to display correlation for that particular combination of factors (and the analyst would commit a Type II error by not rejecting the null hypothesis), or a null plot that had a greater correlation than the true plot was selected instead (and the analyst would commit a Type I error by rejecting the null hypothesis). We next can analyse these kinds of errors with the pin plots found in Figure~\ref{pins}. The frequency of selection of each plot in each lineup, either true or null, is represented by a pin, placed at the value of the correlation between the two variables shown in that plot. The correlation of the selected plot is on the x-axis and the frequency of selection is plotted on the y axis. The correlation of the simulated (true) data ($\rho \in \pm \{0.3, 0.5, 0.7, 0.9\}$ in the plot, the sample size ($t \in \{12, 24, 48, 96\}$), and the plot design (unsmoothed/smoothed, scatterplot/lineplot) is used to facet the plots. The blue pins indicate the true plots and the red pins indicate the null plots. If the plot design has the power to display correlation, we would expect the highest correlation plot to be selected, leading to a Type I error where a plot from the null distribution spuriously had high correlation. We find that this is generally not the case. The selections appear to have a wide range of correlations, indicating that if a subject selected a null plot it was typically not due to excess spurious correlation. Instead the failure to select the highest correlated plot indicates that a Type II error was committed rather than Type I as the plot designs did not have the power to differentiate between medium and low correlation plots. However, for the scatter plot, whenever there was a plot with a very strong correlation, usually in the form of the true plot, it was overwhelmingly selected. For the overlaid lines this mostly occurred only for plots with strong positive correlation, which is consistent with its general lack of power to reveal negative relationships in data. 
 
 \begin{figure}[htbp]
   \centering
 <<pins, dependson='setup', fig.width=6, fig.height=10, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
-count.setup <- select(full, pic_id, response_0, actual_location, 
-              design, smoothed, n)
+count.setup <- select(full, pic_id, response_0, actual_location, design, smoothed, n)
 count.setup$response_0 <- as.character(count.setup$response_0)
 counts <- data.frame(table(count.setup$pic_id, count.setup$response_0))
 counts$Var1 <- as.numeric(as.character(counts$Var1))
@@ -559,21 +583,30 @@ counts$Var2 <- as.numeric(as.character(counts$Var2))
 colnames(counts) <- c("lineup", "plot", "count")
 pin <- merge(counts, bylineup, by.x="lineup", by.y="pic_id")
 pin <- select(pin, lineup, plot, count, smoothed, actual_location, n, design, r, evals)
-pin$r <- factor(pin$r)
-pin$base <- 0
-pin$Correlation <- diag(as.matrix(correl[pin$lineup, (pin$plot+2)]))
-pin <- mutate(pin, true = ifelse(plot==actual_location, "True plot", "Null plot"), percent = count/evals)
-pin.a <- ggplot(data=filter(pin, smoothed==0 & design == "Scatterplot")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
-       geom_point(aes(x=Correlation, y=percent, colour=true)) + coord_fixed() + facet_grid(n~r) + labs(title="Unsmoothed Scatterplot", y="Percent Chosen") + theme(legend.position="none")
-pin.b <- ggplot(data=subset(pin, smoothed==1 & design == "Scatterplot")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
-  geom_point(aes(x=Correlation, y=percent, colour=true)) + coord_fixed()  + facet_grid(n~r) + labs(title="Smoothed Scatterplot", y="Percent Chosen") + theme(legend.position="none")
-pin.c <- ggplot(data=subset(pin, smoothed==0 & design == "Overlaid Lines")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
-  geom_point(aes(x=Correlation, y=percent, colour=true)) + coord_fixed()  + facet_grid(n~r) + labs(title="Unsmoothed Overlaid Lines", y="Percent Chosen") + theme(legend.position="none")
-pin.d <- ggplot(data=subset(pin, smoothed==1 & design == "Overlaid Lines")) + geom_errorbar(aes(x=Correlation, ymin=base, ymax=percent, colour=true)) +
-  geom_point(aes(x=Correlation, y=percent, colour=true)) + coord_fixed()  + facet_grid(n~r) + labs(title="Smoothed Overlaid Lines", y="Percent Chosen") + theme(legend.position="none")
+pin <- mutate(pin, r = factor(r),
+              true = ifelse(plot==actual_location, "True plot", "Null plot"), 
+              percent = count/evals,
+              base = 0,
+              correlation = diag(as.matrix(correl[pin$lineup, (pin$plot+2)])))
+pin.a <- ggplot(data=filter(pin, smoothed==0 & design == "Scatterplot")) + 
+         geom_errorbar(aes(x=correlation, ymin=base, ymax=percent, colour=true)) +
+         geom_point(aes(x=correlation, y=percent, colour=true)) + coord_fixed() + facet_grid(n~r) + 
+         labs(title ="Unsmoothed Scatterplot", y="Percent Chosen") + theme(legend.position="none")
+pin.b <- ggplot(data=subset(pin, smoothed==1 & design == "Scatterplot")) + 
+         geom_errorbar(aes(x=correlation, ymin=base, ymax=percent, colour=true)) +
+         geom_point(aes(x=correlation, y=percent, colour=true)) + coord_fixed()  + facet_grid(n~r) + 
+         labs(title="Smoothed Scatterplot", y="Percent Chosen") + theme(legend.position="none")
+pin.c <- ggplot(data=subset(pin, smoothed==0 & design == "Overlaid Lines")) +
+         geom_errorbar(aes(x=correlation, ymin=base, ymax=percent, colour=true)) +
+         geom_point(aes(x=correlation, y=percent, colour=true)) + coord_fixed()  + facet_grid(n~r) +
+         labs(title="Unsmoothed Overlaid Lines", y="Percent Chosen") + theme(legend.position="none")
+pin.d <- ggplot(data=subset(pin, smoothed==1 & design == "Overlaid Lines")) + 
+         geom_errorbar(aes(x=correlation, ymin=base, ymax=percent, colour=true)) +
+         geom_point(aes(x=correlation, y=percent, colour=true)) + coord_fixed()  + facet_grid(n~r) + 
+         labs(title="Smoothed Overlaid Lines", y="Percent Chosen") + theme(legend.position="none")
 grid.arrange(pin.a, pin.b, pin.c, pin.d, ncol=1)
 @
-  \caption{Pin plots of the subject selections of each lineup, by design, smoothness, true plot correlaition and sample size. On the x-axis is the correlation of the plot (there is potentially spurious correlation in the null plots), and on the y-axis is the proportion a plot was chosen. Each plot contains data from the three lineups with the requisite characteristics. Red pins indicate null plots and blue indicates the true plot, occasionally the true plot does not seem to appear as it has a proportion of zero and is visually blocked by the red pins. Strongly correlated plot seem to be selected regardless of if the relationship is real or spurious.}
+  \caption{Pin plots of the subject selections of each lineup, by design, smoothness, true plot correlaition and sample size. On the x-axis is the correlation of the plot (there typically is spurious correlation in the null plots), and on the y-axis is the proportion of times a plot was chosen. Each plot contains data from the three lineups with the requisite factor combination. Red pins indicate null plots and blue indicates the true plot, occasionally the true plot does not seem to appear as it has a proportion of zero and is visually blocked by the red pins. Strongly correlated plot seem to be selected regardless of if the relationship is real or spurious.}
   \label{pins}
 \end{figure}
 
@@ -595,7 +628,7 @@ Occasionally there was an anomaly where a single null plot was selected with a h
 
 Figures~\ref{anom1} and \ref{anom2} show lineups where a null plot with a strong pattern led to its selection over the data plot.  Mostly, when a null plot was chosen over the data plot it was because the correlation was stronger, but in a few lineups a null plot with small correlation was selected by many subjects. In Figure~\ref{anom1}, the true data plot is in position 4, but 9 out of 11 subjects chose plot 6. Plot 6 is unusual, most of the points are scattered around the vertical median, but there are two outlying points, one with a high y-value and one with a low y-value.  Other concurrent work has suggested that outliers are pre-attentive patterns and this plot selection by the observers is consistent with that. Figure~\ref{anom2} above is another example of where subjects chose a null plot that had smaller correlation than the data plot. Four out of five evaluations selected the null plot in position 13,  instead of the data plot in position 8. Plot 13 has a correlation of 0.225, smaller (in absolute value) than the -0.707 of plot 8.  This selection is in-line with Wertheimer’s gestalt law of common fate. It appears to be strongly correlated in the beginning of the series but breaks apart towards the end. The selection implies that subjects selecting this plot focused on the joint path of the two series early in the plot and ignored the contradictory evidence of no relationship as they diverged later in the plot.  It also confounded by the seeming preference to find positive correlation over negative correlation, and we suspect that if one of the series in plot 8 had the values flipped, then the strong positive correlation would have been noticed.
 
-\subsection{Modelling Subject Responses}
+\subsection{Modelling Graphical Power}
 
 A mixed effects logit model is used separately for scatter plot and overlaid line evaluations. The tested model is:
 
@@ -626,38 +659,28 @@ If a subject made multiple selections from the same lineup, each selection is tr
 \label{tab1}
 \centering
 <<powerfit, dependson='setup', results='asis', echo=FALSE, message=FALSE, error=FALSE, warning=FALSE>>=
-sasdata <- select(full.sub, rabs, n, alpha, rsgn, smoothed, design, subj_id, weights, correct, log_time)
-sasdata$rabs <- as.numeric(sasdata$rabs)
-sasdata$subj_id <- as.numeric(sasdata$subj_id)
-sasadata <- mutate(sasdata, design = ifelse(design=="Scatterplot", 1, 0))
-#write.csv(subsetted, "sas/choices.csv", row.names = FALSE)
 powercoef <- powercoef[,-1]
 rownames(powercoef) <- c("Intercept", "abs(r)", "sign(r)", "abs(r)*sign(r)", "smoothed", "t", "design", "design*abs(r)", "design*sign(r)", "design*abs(r)*sign(r)", "design*smoothed", "design*t")
-colnames(powercoef) <- c("Estimate", "standard error", "df", "t-value", "p-value")
+colnames(powercoef) <- c("Estimate", "Standard Error", "df", "t-value", "p-value")
 kable(powercoef, format="latex", digits=2)
 @
 \end{table}
 
-Table \ref{tab1} summarises the model estimates. It can be confusing the interpret the model estimates, and at first glance it appears the negative plot coefficient implies that overlaid lines are substantially more powerful than the scatter plot, but this is misleading and interpreting the full model involves combining the estimates for the different interactions with $\rho$. $\beta_{2}$ and $\beta_{8}$ model the power difference between low and high correlations, while $\beta_{3}, \beta_{4}, beta_{9}$ and $\beta_{10}$ model any increase in power appearing only in positive correlation. 
+Table \ref{tab1} summarises the model estimates. It can be confusing the interpret the model estimates, and at first glance it appears the negative plot coefficient implies that overlaid lines are substantially more powerful than the scatter plot, but this is misleading and interpreting the full model involves combining the estimates for the different interactions with $\rho$. $\beta_{2}$ and $\beta_{8}$ model the power difference between low and high correlations, while $\beta_{3}, \beta_{4}, \beta_{9}$ and $\beta_{10}$ model any increase in power appearing only in positive correlation. 
 Taking these into account, the scatter plot shows superior performance relative to the overlaid lines at higher values of abs($\rho$). It needs to be restated that we only tested correlations at  $0.3, 0.5, 0.7$ and $0.9$, so the results below an absolute value of $0.3$ are unreliable and may be artifacts of regression smoothing methods.
 
 %The correlation:sign interaction shows that the scatter plot has close to symmetric performance for positive (correlation:sign + correlation) and negative (-correlation) correlation while the overlaid line graph is substantially weaker for negative values of correlation.
-Smoothing out the excess 'noise' from a time series had a minimal effect on scatter plots(...), it did have a significant positive impact on the power of overlaid line graphs as smoothing induces a large visual difference (Figure~\ref{smoothing}. Increasing the sample size, $t$, improved the power of the scatter plot but it was not statistically significant for the overlaid line graph.
+Smoothing out the excess 'noise' from a time series had a minimal effect on scatter plots, it did have a significant positive impact on the power of overlaid line graphs as smoothing induces a large visual difference (Figure~\ref{smoothing}. Increasing the sample size, $t$, improved the power of the scatter plot but it was not statistically significant for the overlaid line graph.
 
 Figure~\ref{powermodel} shows the fitted unrestricted model, with power predictions (y axis) plotted against correlation (x axis) for each of the four sample sizes tested. The thicker lines represent the fixed effect fit, or the average performance across all tested individuals whilst the thinner lines represent the random effects fit, the variation in power that can be attributed to an individual's visual skill. \citet{Majumder:2014} show that this random visual skill is not impacted by demographics such as age and gender; whilst education increases the power of a graphic display by only approximately one percent, not a practically significant amount. We did not include these characteristics of the individual in the modelling due to this lack of significance. Figure~\ref{powermodel} especially highlights the weak performance of the overlaid lines and the benefits of smoothing.
 
 \begin{figure}[htbp]
  \centering
 <<powermodel, dependson='setup', fig.height=8, fig.width=8, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
-# data.frame(expand.grid(rabs=rabs, t=t, alpha=log(.05/0.95), rsgn=c(0,1),
-#                                      smoothed=c(0,1), design=c(0,1),
-#                                      subj_id=full.sub$subj_id))
-#pred <- subset(pred, smoothed==0 | smoothed == 1 & t ==48 | smoothed ==1 & t ==96)
-#write.csv(pred, "sas/predgrid.csv", row.names=FALSE) # these lines are done, but its a large file so commented out for knitr
-#Code exported to sas, see sas/model\ fit.sas
-#all values of diff are identical for a given subject, max chosen just as a function to select one of them
 predplot <- select(prediction, r, t, rsgn, smoothed, design, subj_id, RandomEf, FixedEf)
-predplot <- mutate(prediction, RandomEf = exp(RandomEf)/(1+exp(RandomEf)), FixedEf = exp(FixedEf)/(1+exp(FixedEf)))
+predplot <- mutate(prediction, RandomEf = exp(RandomEf)/(1+exp(RandomEf)), 
+                   FixedEf = exp(FixedEf)/(1+exp(FixedEf)))
+##Logit link function transform
  
 qplot(r, RandomEf, data=predplot, color=design, 
       group=interaction(subj_id, design), geom="line", alpha=I(0.1)) + 
@@ -692,13 +715,32 @@ ggplot(data=randomeffects) + geom_histogram(aes(x=re, y=..density..), binwidth=0
 \end{figure}
 
 In Figure~\ref{random}, the level two residuals, $\hat{\gamma}$, generated appear to be normally distributed validating the assumptions of the modelling process.
-For each lineup, we rate the difficulty by the proportion of true plot detections to evaluations. Then, for each subject the difficulty of each lineup they evaluated is summed to give a measure of the expected number of detections. The visual ability of a subject is defined as the difference between the actual and expected number of detections, and is compared to the random effects in Figure~\ref{random2} to further validate the model.
+
+The scores of each subject given by equation~\ref{score} can be summed to give a total score per subject $j$:
+
+$${score}_{j} = \sum_{i}\{{score}_{ij} | i \in L_{j}\}$$
+
+where $L_{j}$ is the set of lineups evaluated by subject $j$.
+
+The lineup $i$ with $K$ evaluations has an expected score:
+
+$${E[score]}_{i} = \frac{1}{K}\sum_{j}{score}_{ij}$$
+
+summing these per subject gives an expected total score per subject:
+
+$${E[score]}_{j} = \sum_{i}\{{E[score]}_{i} | i \in L_{j}\}$$
+
+Finally, we measure visual ability by:
+
+$${Visual Ability}_{j} = {score}_{j}-{E[score]}_{j}$$.
+
+Comparing these to the estimated random effects $\hat\gamma$ in Figure~\ref{random2} shows that there is a strong correlation between visual ability and the random effects, further validating the model.
 
 \begin{figure}[htbp]
 \centering
 <<random2, dependson='setup', fig.height=6, fig.width=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
-ability <- merge(full.sub[,c("subj_id", "pic_id", "correct", "score")], bylineup[c("pic_id", "percent")], by="pic_id")
-ability <- summarise(group_by(ability, subj_id), actual=sum(score), estimated=sum(percent))
+ability <- merge(full.sub[,c("subj_id", "pic_id", "score", "weights")], bylineup.sub[c("pic_id", "percent")], by="pic_id")
+ability <- summarise(group_by(ability, subj_id), actual=sum(score), estimated=sum(percent*weights))
 ability$diff <- ability$actual - ability$estimated
 ability.re <- merge(ability, randomeffects, by="subj_id")
 ggplot(data=ability.re, aes(x=diff, y=re)) + geom_point() + labs(x="Visual Ability", y="Random Effects")
@@ -727,11 +769,13 @@ The unrestricted model has a log-likelihood value of -346.9, where the restricte
 A similar setup rejects the symmetric performance of the overlaid line graphs with a log likelihood ratio test statistic of 105.30 (p-value < 0.001). Such an extreme result is due to a systematic difference in the overlaid line graph and cannot be attributed simply to bias.
 \fi
 
-A linear mixed model is used to model the time to make a selection. 
+\subsection{Modelling time taken}
+
+The time taken to evaluate a lineup is recorded and log transformed to reduce the impact of several large ($> 500$ seconds) outliers.
 
 \begin{eqnarray} 
 \label{timemodel}
-Time_{ijklmt} &=& \beta_{0} + \beta_{1} x_{1,i}  + \beta_{2} x_{2,j}  + \beta_{3} x_{3,k} + \beta_{4} x_{4,t} + \\
+ln(time_{ijklmt}) &=& \beta_{0} + \beta_{1} x_{1,i}  + \beta_{2} x_{2,j}  + \beta_{3} x_{3,k} + \beta_{4} x_{4,t} + \\
  & & \beta_{5} x_{1,i} \* x_{2,j} + \beta_{6} x_{5,l}\*(\beta_{7} + \beta_{8} x_{1,i}  + \beta_{9} x_{2,j}  + \beta_{10} x_{3,k} + \nonumber\\
  & & \beta_{11} x_{4,t} + \beta_{12} x_{1,i} \* x_{2,j}) + \beta_{13} x_{6,m} + \beta_{14} x_{5_l} \* x_{6,m} \gamma z_{s} + \epsilon_{ijklmt} \nonumber 
 \end{eqnarray}
@@ -743,7 +787,8 @@ The structure of the model ~\ref{timemodel} is similar to that in Equation~\ref{
 \label{tab2}
 \centering
 <<timefit, dependson='setup', results='asis', echo=FALSE, message=FALSE, error=FALSE, warning=FALSE>>=
-time.fit <- time.fit[c(1, 5, 6, 2, 3, 4, 7, 8, 12, 13, 9, 10, 11, 14),] #separate into main effects then interaction effects in same order
+time.fit <- time.fit[c(1, 5, 6, 2, 3, 4, 7, 8, 12, 13, 9, 10, 11, 14),] 
+##separate into main effects then interaction effects in same order
 rownames(time.fit) <- c("Intercept", "Smoothed", "t", "abs(r)", "sign(r)", "abs(r)*sign(r)", "detected", "design", "design*Smoothed", "design*t", "design*abs(r)", "design*sign(r)", "design*abs(r)*sign(r)", "design*detected")
 time.fit$Effect <- NULL
 colnames(time.fit) <- c("Estimate", "standard error", "df", "t-value", "p-value")
@@ -765,8 +810,8 @@ If a data analyst is required to use overlaid line graphs in their work, substan
 
 \section{Appendix}
 
-\begin{table}[htbp]
-\caption{The true plot detections / attempts for each lineup in the data collection. Results ignore multiple selection weighting. True plot correlation is on the x axis and t is on the y axis. }
+\begin{table}[htp]
+\caption{The true plot detections / attempts for each lineup in the data collection. Results ignore multiple selection weighting. True plot correlation is on the x axis and t is on the y axis.}
 \label{tab3}
 \centering
 <<answertables, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
@@ -777,14 +822,29 @@ scatter.uns <- data.frame(c(12, "", "", 24, "", "", 48, "", "", 96, "", ""), mat
 scatter.sm <- data.frame(c(12, "", "", 24, "", "", 48, "", "", 96, "", ""), matrix(subset(turk.tbl, smoothed==1 & design=="Scatterplot")$result, ncol=8))
 line.uns <- data.frame(c(12, "", "", 24, "", "", 48, "", "", 96, "", ""), matrix(subset(turk.tbl, smoothed==0 & design=="Overlaid Lines")$result, ncol=8))
 line.sm <- data.frame(c(12, "", "", 24, "", "", 48, "", "", 96, "", ""), matrix(subset(turk.tbl, smoothed==1 & design=="Overlaid Lines")$result, ncol=8))
-colnames(scatter.uns) <- c("", "-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
-colnames(scatter.sm) <- c("","-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
-colnames(line.uns) <- c("","-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
-colnames(line.sm) <- c("","-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
-kable(scatter.uns, format="latex", caption="Unsmoothed scatter plot results")
-kable(scatter.sm, format="latex", caption="Smoothed scatter plot results")
-kable(line.uns, format="latex", caption="Unsmoothed overlaid line results")
-kable(line.sm, format="latex", caption="Smoothed overlaid line results")
+colnames(scatter.uns) <- c("Unsmoothed Scatterplot", "-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
+colnames(scatter.sm) <- c("Smoothed Scatterplot","-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
+colnames(line.uns) <- c("Unsmoothed Overlaid Lines","-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
+colnames(line.sm) <- c("Smoothed Overlaid Lines","-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
+kable(scatter.uns, format="latex")
+@
+\end{table}
+\begin{table}
+\centering
+<<answertables2, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
+kable(scatter.sm, format="latex")
+@
+\end{table}
+\begin{table}
+\centering
+<<answertables3, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
+kable(line.uns, format="latex")
+@
+\end{table}
+\begin{table}
+\centering
+<<answertables4, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
+kable(line.sm, format="latex")
 @
 \end{table}
 
@@ -796,7 +856,7 @@ map.dat <- map_data("world")
 ggplot() + geom_polygon(aes(long,lat, group=group), fill="grey65", data=map.dat) + theme_bw() +
   geom_point(data=location, aes(x=lon, y=lat, colour= "blue")) +scale_colour_manual(values=c("#FF5500", "#00FFFF")) + theme(aspect.ratio = 0.67, axis.text=element_blank(), axis.title=element_blank(), legend.position="none")
 @
-\caption{The location of the recruited subjects. The majority reside in the United States but some are spread around other countries in Europe and Asia.}
+\caption{The location of the recruited subjects. The majority reside in North America but some are spread around other countries in Central America, Europe and Asia.}
 \label{map}
 \end{figure}
 

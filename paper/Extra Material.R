@@ -24,15 +24,13 @@ ggplot(data=subjplot, aes(x=byeval)) + geom_histogram(binwidth=0.05) + ylim(0,30
 #mean 0.40
 
 #Choice plots#
-full.subs$choice_reason <-sapply(strsplit(as.character(unlist(full.subs$choice_reason)), "[^0-9]+"), "[[", 1)
-ggplot(data=full.subs) + geom_bar(aes(x=choice_reason))
-choice <- full.subs %>% transform(choice_reason= strsplit(as.character(choice_reason), "")) %>% unnest(choice_reason)
+full.sub$choice_reason <-sapply(strsplit(as.character(unlist(full.sub$choice_reason)), "[^0-9]+"), "[[", 1)
+ggplot(data=full.sub) + geom_bar(aes(x=choice_reason))
+choice <- full.sub %>% transform(choice_reason= strsplit(as.character(choice_reason), "")) %>% unnest(choice_reason)
 choice$rsgn <- factor(choice$rsgn, labels=c("r -","r +"))
-c1 <- ggplot(data=subset(choice, correct==0), aes(x=choice_reason)) + geom_bar() + 
-  facet_grid(plot~rsgn) + labs(title="Did not detect", x=element_blank(), y=element_blank())  
-c2 <- ggplot(data=subset(choice, correct==1), aes(x=choice_reason)) + geom_bar() + 
-  facet_grid(plot~rsgn) + labs(title="Detected", x=element_blank, y=element_blank())  
-grid.arrange(c1, c2, ncol=2, top = "Choice by plot design, true plot correlation and detection")
+choice$correct <- factor(choice$correct, labels=c("Did not detect", "Detected"))
+ggplot(data=choice, aes(x=choice_reason, fill=correct)) + geom_bar() + facet_grid(design~rsgn) +
+  theme(legend.position="bottom", axis.title=element_blank()) + scale_fill_discrete(name="True Plot")
 
 #Multiple selections#
 m.select <- summarise(group_by(subset(full.sub, attempts>1), subj_id, pic_id), attempts=max(attempts))
@@ -63,3 +61,9 @@ ggplot(data=ability.re, aes(x=diff, y=re)) + geom_point()
 attempts <- summarise(group_by(full.sub, subj_id, pic_id), attempts = max(attempts))
 ggplot(data=attempts) + geom_bar(aes(x=as.factor(attempts))) + labs(x="Number of selections", y=NULL)
 summary(as.factor(attempts$attempts))
+
+users <- read.csv("turk18_users.csv")
+users$gender <- ifelse(users$gender==1, "Male", "Female")
+ggplot(data=users, aes(x=factor(age), fill=factor(academic_study))) + geom_bar() + facet_wrap(~gender) +
+  scale_fill_manual(values=c("#550000", "#883388", "#1133FF", "#FF9933", "#555555"))
+

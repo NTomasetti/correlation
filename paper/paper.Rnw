@@ -79,7 +79,6 @@ Visual inference in EDA is prone to type 1 errors from the over-interpretation o
 \tableofcontents
 
 <<setup, echo=FALSE, results='hide', message=FALSE, error=FALSE, warning=FALSE>>=
-library(lme4)
 library(ggplot2)
 library(mnormt)
 library(tidyr)
@@ -213,7 +212,7 @@ On its own, with a single plot, because of random sampling in collecting data, i
   \label{cny}
 \end{figure}
 
-In this research we utilise the methods in visual inference to study plot design to investigate the relationship between two temporal variables. There is a substantial literature suggesting that scatter plots are the appropriate display to read association \citep{Cleveland, Harrison, Li}, however, when the two variables are temporal it is common to display them as time series, drawn on the same plot. Temporal dependence is present in many macroeconomic variables \citep{Nelson, Perron} and there is a strong argument for its presence in financial data \citep{Sher, Turtle}. It is a common, but untested, belief that the inclusion of time in the graphics will increase the detail of information displayed and allow relationships to be examined more comprehensively, so many analysts utilise the overlaid line graph to examine their data.
+In this paper we utilised the methods in visual inference to study plot design to investigate the relationship between two temporal variables. There is a substantial literature suggesting that scatter plots are the appropriate display to read association \citep{Cleveland, Harrison, Li}, however, when the two variables are temporal it is common to display them as time series, drawn on the same plot. Temporal dependence is present in many macroeconomic variables \citep{Nelson, Perron} and there is a strong argument for its presence in financial data \citep{Sher, Turtle}. It is a common, but untested, belief that the inclusion of time in the graphics will increase the detail of information displayed and allow relationships to be examined more comprehensively, so many analysts utilise the overlaid line graph to examine their data.
 
 \begin{figure}[htbp]
   \centering
@@ -232,7 +231,7 @@ To decide on an appropriate display requires awareness of cognitive principles i
   \label{murder}
 \end{figure}
 
-There has been other research on the perception of  temporal displays, such as in \citet{Javed}, but they do not examine perception of association. Javed et al.  examined optimal ways to visualise local features, such as, which variable had the highest value at a given point in time, and global features, such as, comparing the size of the overall slope of many different variables. The finding was that a different graphical layout is optimal for each type of task. However, they did not test for the perception of correlation, which can be treated as both a local and a global feature within the graph. The slope of each variable must be compared at a point in time, and they must have a persistent relationship across at least the majority of the series. However there is a quandary, the visual features that improve local tasks are unsuited to global tasks and vice versa; so we must now find a form that is well suited to assess both types of tasks simultaneously. This paper addresses this deficiency. Section 2 describes the lineup method utilised to rigorously compare plot designs. Section 3 explains the experimental design.  Section 4 contains the results of the experiment and Section 5 discusses the implications of the findings.
+There has been other research on the perception of temporal displays, such as in \citet{Javed}, but they do not examine perception of association. Javed et al.  examined optimal ways to visualise local features, such as, which variable had the highest value at a given point in time, and global features, such as, comparing the size of the overall slope of many different variables. The finding was that a different graphical layout is optimal for each type of task. However, they did not test for the perception of correlation, which can be treated as both a local and a global feature within the graph. The slope of each variable must be compared at a point in time, and they must have a persistent relationship across at least the majority of the series. However there is a quandary, the visual features that improve local tasks are unsuited to global tasks and vice versa; so we must now find a form that is well suited to assess both types of tasks simultaneously. This paper addresses this deficiency. Section 2 describes the lineup method utilised to rigorously compare plot designs. Section 3 explains the experimental design.  Section 4 contains the results of the experiment and Section 5 discusses the implications of the findings.
 
 \section{The Lineup Protocol}
 
@@ -252,7 +251,7 @@ To control our error rate, it is initially obvious that we can simply change $m$
   p-value = P(X \geq x | H_{0}) = 1 - B_{n, 1/m}(x-1)
 \end{equation}
 
-If all $K$ observers pick the same plot out of a lineup of twenty, we result in a p-value as small as $1/m^K$ . This research used $m= 20$, giving us a significance level (and Type 1 error rate) of $\alpha = 0.05$. The plot of 'true' data is placed randomly amongst 19 null plots to form the lineup.
+If all $K$ observers pick the same plot out of a lineup of twenty, we result in a p-value as small as $1/m^K$ . We used $m= 20$, giving us a significance level (and Type 1 error rate) of $\alpha = 0.05$. The plot of 'true' data is placed randomly amongst 19 null plots to form the lineup.
 
 If a subject selects multiple plots from the lineup, the p-value has a Bernoulli distribution with a probability $p_{j} = s/m$, where that observer made $s$ selections out of a lineup with $m$ plots \citep{Follett}. In the event that a lineup has observers making different numbers of selections, we have a binomial distribution with different success probabilities, and a Poisson Binomial distribution must be used to calculate the p-value. The probability mass function of a Poisson Binomial distribution can be written as:
 
@@ -306,10 +305,8 @@ We can them estimate the power difference of competing lineups, $\hat\pi_{1} - \
 
 \begin{equation} \label{propci}
   \centering
-  \hat\pi_{1} - \hat\pi_{2}\pm t_{1-\alpha,2n-1}\sqrt{\hat\pi_{1} (1-\hat\pi_{1}) /n_{1} + \hat\pi_{2} (1-\hat\pi_{2}) /n_{2} }
-\end{equation}
-
-Where $\hat\pi_{i} = (x_{i}+1)/(n_{i}+1)$, $x$ is the number of times a true lineup was correctly identified and $n$ is the Welch-Satterwaite estimate for the degrees of freedom.
+  \hat\pi_{1} - \hat\pi_{2}\pm t_{1-\alpha,2K-1}\sqrt{\hat\pi_{1} (1-\hat\pi_{1}) /K_{1} + \hat\pi_{2} (1-\hat\pi_{2}) /K_{2} }
+\end{equation}  
 
 Some individuals may have a better natural ability at detecting the correct correlation pattern in the graphics, but by having each participant viewing multiple lineups and each lineup being viewed by multiple different participants, this can be controlled via a random effect variable in the model. We recruited participants through Amazon's Mechanical Turk, where the lineup protocol has been applied to a number of problems in prior papers \citep{Heer, Majumder:2013, Wickham}. Amazon’s Mechanical Turk \citep{MTurk} is a labour crowd-sourcing platform developed to give easy access to workers with basic tasks paid in line with the United States minimum wage. MTurk can be used to recruit subjects to read a variety of graphics and report on particular visual tasks. The time taken to decide, confidence in the decision and the reason for that decision can also be recorded. \citet{Heer} use MTurk to replicate previous findings in graphical perception from \citet{Cleveland} and find that it is a valid method of data collection, once controls to eliminate anyone 'gaming' the system by randomly selecting answers to minimise time spent working are implemented. Further details of our use of Amazons’ Mechanical Turk is included in Section 3. The protocol has successfully been used to measure statistical power as a means to determine plot type superiority in \citet{Hofmann:2012}, and this work follows that approach.
 
@@ -469,29 +466,33 @@ ggplot(data=bylineup, aes(x=r, y=percent, colour=design)) + geom_smooth(se=F) + 
     \label{results}
 \end{figure}
 
-Figure~\ref{results} shows the raw results of the survey and Figure~\ref{powerdiff} shows the difference in power with a $95\%$ confidence interval calculated according to  formula~\ref{propci}. Values above zero indicate that the scatter plot had more power to detect the true plot than the overlaid lines.
+Figure~\ref{results} shows the raw results of the survey and Figure~\ref{powerdiff} shows the difference in power with a joint $95\%$ confidence interval calculated according to  formula~\ref{propci}. Values above zero indicate that the scatter plot had more power to detect the true plot than the overlaid lines.
 Performance between the two plot designs appears to be similar for positive correlation, with the scatter plot power gradually improving relative to the overlaid lines as sample size increases. The scatter plot appears to be the superior choice as it retains its power with negative correlation, where the overlaid lines performance suffered. This is not surprising, as positive and negative correlation appear as symmetric graphs in the scatter plot but the two characteristics appear very differently in the overlaid line graph (Figure~\ref{designs}). The right side shows the performance benefits of smoothing overlaid line time series data. Much of the 'noise' in the time series is removed and studying the overall trend shows a greatly improved ability to successfully detect the true data plot when it is negatively correlated. The scatter plot still appears to be the superior plot, but much of the gap between the two is reduced for positive correlation. 
 
-\iffalse
 \begin{figure}[htbp]
   \centering
 <<powerdiff, dependson='setup', fig.width=6, fig.height=8, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
 prop <- select(bylineup, smoothed, n, evals, total, r, design)
 prop <- summarise(group_by(prop, smoothed, n, r), l.attempt=sum(ifelse(design=="Overlaid Lines", evals, 0)),
-                                                  l.correct=sum(ifelse(design=="Overlaid Lines", total, 0)),
+                                                  l.detect=sum(ifelse(design=="Overlaid Lines", total, 0)),
                                                   s.attempt=sum(ifelse(design=="Scatterplot", evals, 0)),
-                                                  s.correct=sum(ifelse(design=="Scatterplot", total, 0)))
-prop <- mutate(prop, l.adj = (l.correct+1)/(l.attempt+1), s.adj = (s.correct+1)/(s.attempt+1),
-               df = s.attempt + l.attempt - 1, difference=s.adj-l.adj, t = qt(0.975, df),
-               upper = difference + t*sqrt(s.adj*(1-s.adj)/s.attempt+l.adj*(1-l.adj)/l.attempt),
-               lower = difference - t*sqrt(s.adj*(1-s.adj)/s.attempt+l.adj*(1-l.adj)/l.attempt))
+                                                  s.detect=sum(ifelse(design=="Scatterplot", total, 0)))
+alpha <- 1-(1-0.95^(1/48))/2 
+##8 correlations * 6 design = 48 boxplots, so this the students t quantile for the joint 95% CI
+prop <- mutate(prop, l.power = l.detect/l.attempt, 
+               s.power = s.detect/s.attempt,
+               df = s.attempt + l.attempt - 1, 
+               difference=s.power-l.power, 
+               t = qt(alpha, df),
+               se = sqrt(s.power*(1-s.power)/s.attempt+l.power*(1-l.power)/l.attempt),
+               upper = difference + t*se,
+               lower = difference - t*se)
 ggplot(data=prop) + geom_errorbar(aes(x=r, ymax=upper, ymin=lower)) + geom_point(aes(x=r, y=difference)) +
         geom_hline(aes(yint=0, colour="red")) + labs(x="Correlation", y="Scatterplot power minus Overlaid Lines") + facet_grid(n~smoothed)
 @
- \caption{The difference in estimated power (scatter plot power minus overlaid line power) to reveal the true plot by smoothness and sample size with a 95\% confidence interval. The red line indicates the point where both plot designs are equally powerful while values above this line indicate that the scatter plot is more powerful than the overlaid line graph. The largest differences appear in negative correlation, where the scatter plot is more powerful.}
+ \caption{The difference in estimated power (scatter plot power minus overlaid line power) to reveal the true plot by smoothness and sample size with a joint 95\% confidence interval. The red line indicates the point where both plot designs are equally powerful The largest differences appear in negative correlation, where the overlaid lines power drops substantially.}
  \label{powerdiff}
 \end{figure}
-\fi
 
 \begin{figure}[htbp]
   \centering
@@ -707,7 +708,7 @@ Analysing the level one residuals, $\hat{\epsilon_{i}}$ and level two residuals,
 \begin{figure}[htbp]
   \centering
 <<random, dependson='powermodel', fig.height=4, fig.width=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
-randomeffects <- summarise(group_by(prediction, subj_id), re=max(diff))
+randomeffects <- summarise(group_by(prediction, subj_id), re=unique(diff))
 ggplot(data=randomeffects) + geom_histogram(aes(x=re, y=..density..), binwidth=0.08) + xlab("Random Effects") + ylab(NULL)
 @
     \caption{Histograms of estimated subject random effects, $\hat{\gamma}$. They appear to be normally distributed with mean zero.}
@@ -738,7 +739,7 @@ Comparing these to the estimated random effects $\hat\gamma$ in Figure~\ref{rand
 
 \begin{figure}[htbp]
 \centering
-<<random2, dependson='setup', fig.height=6, fig.width=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
+<<random2, dependson='random', fig.height=6, fig.width=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
 ability <- merge(full.sub[,c("subj_id", "pic_id", "score", "weights")], bylineup.sub[c("pic_id", "percent")], by="pic_id")
 ability <- summarise(group_by(ability, subj_id), actual=sum(score), estimated=sum(percent*weights))
 ability$diff <- ability$actual - ability$estimated
@@ -801,7 +802,7 @@ Table~\ref{tab2} shows a similar story for time as Table~\ref{tab1} did for powe
 
 \section{Conclusion}
 
-This research showed that the scatterplot is better than the overlaid lines for displaying two time series when the purpose is to examine the association between the two series. This is especially true if correlation between the series is negative. This comparison was made possible by the use of the lineup protocol for comparing plot designs. The power of two plot designs for reading correlation between variables was modelled using a logistic regression incorporating subject’s individual visual ability as a random effect. We found that the scatterplot, in most situations is both more powerful and quicker to process than the overlaid line graph. The overlaid line graph appeared to have stronger performance at extremely low correlations, but this work did not test absolute values of correlation below 0.3. Other non-linear associations may exist in data that are not measured by correlation, and it may be of interest to compare plot power with a broader range of true plot features.
+This paper showed that the scatterplot is better than the overlaid lines for displaying two time series when the purpose is to examine the association between the two series. This is especially true if correlation between the series is negative. This comparison was made possible by the use of the lineup protocol for comparing plot designs. The power of two plot designs for reading correlation between variables was modelled using a logistic regression incorporating subject’s individual visual ability as a random effect. We found that the scatterplot, in most situations is both more powerful and quicker to process than the overlaid line graph. The overlaid line graph appeared to have stronger performance at extremely low correlations, but this work did not test absolute values of correlation below 0.3. Other non-linear associations may exist in data that are not measured by correlation, and it may be of interest to compare plot power with a broader range of true plot features.
 Investigation of the individual selections of the lineup evaluations finds some results in-line with Wertheimer’s Gestalt Law of common fate, as demonstrated in Figure 15. The law suggested that people would find relationships between two lines that briefly move together, regardless of whether the relationship actually existed. Whilst this is shown, the overlaid line graph did not have a corresponding increase in confidence compared to the scatter plot; so research into similar confidence-boosting visual anomalies that can occur in scatter plots would be necessary to further investigate the law. Diaconis's Magical Thinking was supported by the finding on the relationships between time, confidence and correctness. A more difficult true plot may be picked rarely and require a longer to make a decision; resulting in decreased subject confidence. However, we found that time increases confidence but reduces correctness. Highly confident, but incorrect decisions, suggests subjects may have been distracted by strong, spurious patterns in the null plots.
 If a data analyst is required to use overlaid line graphs in their work, substantial improvements to power and hence readability can be made by smoothing time series data if the sample size is long enough for these techniques to become feasible.
 

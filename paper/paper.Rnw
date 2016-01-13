@@ -137,14 +137,14 @@ bylineup.sub <- mutate(bylineup.sub, percent = total/evals)
 
 #sasdata <- select(full.sub, rabs, n, alpha, rsgn, smoothed, design, subj_id, weights, correct, log_time)
 #sasadata <- mutate(sasdata, rabs = as.numeric(rabs),
-#                   subj_id = as.numeric(subj_id)
+#                   subj_id = as.numeric(subj_id),
 #                   design = ifelse(design=="Scatterplot", 1, 0))
-#write.csv(subsetted, "sas/sasdata.csv", row.names = FALSE)
-##The code that is exported to fit the model into SAS, see sas/model fit.sas
+#write.csv(sasdata, "sas/sasdata.csv", row.names = FALSE)
+#The code that is exported to fit the model into SAS, see sas/model fit.sas
 
-# data.frame(expand.grid(rabs=rabs, t=t, alpha=log(.05/0.95), rsgn=c(0,1),
+#pred <- data.frame(expand.grid(rabs=seq(0, 0.9, 0.01), t=c(12, 24, 48, 96), alpha=log(.05/0.95), rsgn=c(0,1),
 #                                      smoothed=c(0,1), design=c(0,1),
-#                                      subj_id=full.sub$subj_id))
+#                                      subj_id=1:160))
 #pred <- subset(pred, smoothed==0 | smoothed == 1 & t ==48 | smoothed ==1 & t ==96)
 #write.csv(pred, "sas/predgrid.csv", row.names=FALSE) # these lines are done, but its a large file so commented out for knitr
 #Code exported to SAS to predict new values

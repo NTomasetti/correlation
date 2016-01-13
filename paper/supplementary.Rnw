@@ -40,7 +40,7 @@
 \def\spacingset#1{\renewcommand{\baselinestretch}%
 {#1}\small\normalsize} \spacingset{1}
 
-\title{\bf Supplementary Material: Comparing the Power of Plot Designs to Reveal Correlation
+\title{\bf Supplementary Material: Comparing the Power of Plot Designs to Reveal Correlation}
 
 \if0\blind
 {
@@ -117,7 +117,7 @@ prediction <- mutate(prediction, r = ifelse(rsgn==1, rabs, -rabs),
 
 \begin{figure}[htbp]
 \centering
-<<map, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
+<<map, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE, fig.height=3>>=
 location <- read.csv("location.csv")
 map.dat <- map_data("world")
 ggplot() + geom_polygon(aes(long,lat, group=group), fill="grey65", data=map.dat) + theme_bw() +
@@ -185,7 +185,6 @@ kable(line.sm, format="latex")
 \centering
 <<choices, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
 full$choice_reason <-sapply(strsplit(as.character(unlist(full$choice_reason)), "[^0-9]+"), "[[", 1)
-ggplot(data=full.sub) + geom_bar(aes(x=choice_reason))
 choice <- full %>% transform(choice_reason= strsplit(as.character(choice_reason), "")) %>% unnest(choice_reason)
 choice$rsgn <- factor(choice$rsgn, labels=c("r -","r +"))
 choice$correct <- factor(choice$correct, labels=c("Did not detect", "Detected"))
@@ -219,9 +218,9 @@ ggplot(data=m.lineup) + geom_bar(aes(x=factor(r), fill=design), binwidth=0.2) + 
 \label{lineupmulti}
 \end{figure}
 
-\begin{table}[htp]
+\begin{table}[htbp]
 \caption{Number of selections per lineup evaluation. The subject with the most selections is reported.}
-\label{tabattempts}
+\label{table}
 <<tabattempts, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
 attempts <- summarise(group_by(full.sub, subj_id, pic_id), attempts = max(attempts))
 attempts.table <- data.frame(table(attempts$attempts))
@@ -237,7 +236,7 @@ kable(attempts.table, format="latex")
 <<multiattempts, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
 ggplot(data=attempts) + geom_bar(aes(x=as.factor(attempts))) + labs(x="Number of selections", y=NULL)
 @
-\caption{Histogram of table~\ref{tabattempts}}
+\caption{Histogram of table~\ref{table}}
 \label{attemptshist}
 \end{figure}
 
@@ -258,7 +257,7 @@ Analysing the level one residuals, $\hat{\epsilon_{i}}$ and level two residuals,
 
 \begin{figure}[htbp]
   \centering
-<<random, dependson='powermodel', fig.height=4, fig.width=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
+<<random, dependson='setup', fig.height=4, fig.width=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
 randomeffects <- summarise(group_by(prediction, subj_id), re=unique(diff))
 ggplot(data=randomeffects) + geom_histogram(aes(x=re, y=..density..), binwidth=0.08) + xlab("Random Effects") + ylab(NULL)
 @
@@ -300,5 +299,8 @@ ggplot(data=ability.re, aes(x=diff, y=re)) + geom_point() + labs(x="Visual Abili
 \caption{Visual ability plotted against random effects. The diagonal pattern suggests a strong positive relationship, indicating that the random effects in the model are a suitable measure of visual ability.}
 \label{random2}
 \end{figure}
+
+\bibliographystyle{asa}
+\bibliography{references}
 
 \end{document}

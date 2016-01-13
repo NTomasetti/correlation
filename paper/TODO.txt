@@ -3,6 +3,11 @@
 *- calculate using weighting by number of selections
 - check model fits with R
 *- check confidence interval calculations, bootstrap and/or permutation
+*- code cleanup
+- "select" replace for pick and choice
+- "evaluations" replace "attempts"
+- subjects with more than 10, only use the first 10. 
+- conclusions: bullet point main findings
 
 5/01/2016
 *-redo residual diagnostics

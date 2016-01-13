@@ -2,7 +2,7 @@
 
 *- calculate using weighting by number of selections
 - check model fits with R
-- check confidence interval calculations, bootstrap and/or permutation
+*- check confidence interval calculations, bootstrap and/or permutation
 
 5/01/2016
 *-redo residual diagnostics

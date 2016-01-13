@@ -253,7 +253,7 @@ ggplot(data=glmm.resid) + geom_histogram(aes(y=..density.., x=residual), binwidt
     \label{residuals}
 \end{figure}
 
-Analysing the level one residuals, $\hat{\epsilon_{i}}$ and level two residuals, $\hat{\gamma_{i}}$ allows us to test the model fit as described \citet{Loy}. There are some negative extreme outliers but the distributional assumption appears to hold.
+Analysing the level one residuals, $\hat{\epsilon_{i}}$, and level two residuals, $\hat{\gamma_{i}}$, allows us to test the model fit as described \citet{Loy}. There are some negative extreme outliers but the distributional assumption appears to hold.
 
 \begin{figure}[htbp]
   \centering

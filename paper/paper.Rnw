@@ -94,7 +94,7 @@ library(stringr)
 # Convert these to read_csv at some point
 correl <- read.csv("correlations.csv", stringsAsFactors = FALSE) ##Correlations of every plot in every lineup
 full <- read.csv("full.csv", row.names=1, stringsAsFactors = FALSE) ##MTurk evaluations
-prediction <- read.csv("sas/predfit.csv") ##Large file, very slow, fitted data from SAS
+prediction <- read.csv("sas/predfit.csv") ##fitted data from SAS
 time.fit <- read.csv("sas/time.csv") ##coefficients for time model from SAS
 powercoef <- read.csv("sas/PowerEstimates.csv") ##coefficients for power model from SAS
 
@@ -136,17 +136,17 @@ bylineup.sub <- mutate(bylineup.sub, percent = total/evals)
 ##Summarise data by lineup
 
 #sasdata <- select(full.sub, rabs, n, alpha, rsgn, smoothed, design, subj_id, weights, correct, log_time)
-#sasadata <- mutate(sasdata, rabs = as.numeric(rabs),
+#sasdata <- mutate(sasdata, rabs = as.numeric(rabs),
 #                   subj_id = as.numeric(subj_id),
 #                   design = ifelse(design=="Scatterplot", 1, 0))
 #write.csv(sasdata, "sas/sasdata.csv", row.names = FALSE)
 #The code that is exported to fit the model into SAS, see sas/model fit.sas
 
 #pred <- data.frame(expand.grid(rabs=seq(0, 0.9, 0.01), t=c(12, 24, 48, 96), alpha=log(.05/0.95), rsgn=c(0,1),
-#                                      smoothed=c(0,1), design=c(0,1),
-#                                      subj_id=1:160))
+#                                    smoothed=c(0,1), design=c(0,1),
+#                                      subj_id = as.numeric(as.character(unique(full.sub$subj_id)))))
 #pred <- subset(pred, smoothed==0 | smoothed == 1 & t ==48 | smoothed ==1 & t ==96)
-#write.csv(pred, "sas/predgrid.csv", row.names=FALSE) # these lines are done, but its a large file so commented out for knitr
+#write.csv(pred, "sas/predgrid.csv", row.names=FALSE)
 #Code exported to SAS to predict new values
 
 colnames(prediction) <- c("rabs", "t", "alpha", "rsgn", "smoothed", "design", "subj_id", "weights", "detected", "log_time", "RandomEf", "FixedEf", "residual")
@@ -685,8 +685,9 @@ Figure~\ref{powermodel} shows the fitted unrestricted model, with power predicti
 \begin{figure}[htbp]
  \centering
 <<powermodel, dependson='setup', fig.height=8, fig.width=8, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
-predplot <- select(prediction, r, t, rsgn, smoothed, design, subj_id, RandomEf, FixedEf)
-predplot <- mutate(prediction, RandomEf = exp(RandomEf)/(1+exp(RandomEf)), 
+predplot <- prediction %>% filter(is.na(detected)) %>%
+            select(r, t, rsgn, smoothed, design, subj_id, RandomEf, FixedEf) %>%
+            mutate(RandomEf = exp(RandomEf)/(1+exp(RandomEf)), 
                    FixedEf = exp(FixedEf)/(1+exp(FixedEf)))
 ##Logit link function transform
  
@@ -730,10 +731,10 @@ The time taken to evaluate a lineup is recorded and log transformed to reduce th
 \label{timemodel}
 ln(time_{ijklmt}) &=& \beta_{0} + \beta_{1} x_{1,i}  + \beta_{2} x_{2,j}  + \beta_{3} x_{3,k} + \beta_{4} x_{4,t} + \\
  & & \beta_{5} x_{1,i} \* x_{2,j} + \beta_{6} x_{5,l}\*(\beta_{7} + \beta_{8} x_{1,i}  + \beta_{9} x_{2,j}  + \beta_{10} x_{3,k} + \nonumber\\
- & & \beta_{11} x_{4,t} + \beta_{12} x_{1,i} \* x_{2,j}) + \beta_{13} x_{6,m} + \beta_{14} x_{5_l} \* x_{6,m} \gamma z_{s} + \epsilon_{ijklmt} \nonumber 
+ & & \beta_{11} x_{4,t} + \beta_{12} x_{1,i} \* x_{2,j}) + \gamma z_{s} + \epsilon_{ijklt} \nonumber 
 \end{eqnarray}
 
-The structure of the model ~\ref{timemodel} is similar to that in Equation~\ref{modelpower} except the link function is replace with the identity function, $\psi(x) = x$, and a new variable, $x_{6,m}$, is introduced with $m = \{0,1\}$ indicating if the subject detected the true plot, where $m = 0$ is a failure to detect the true plot.
+The structure of the model ~\ref{timemodel} is similar to that in Equation~\ref{modelpower} except the link function is replace with the identity function, $\psi(x) = x$.
 
 \begin{table}[htp]
 \caption{Linear mixed model fit for time taken to make a selection, default plot style is overlaid lines. Fitted with the MIXED procedure in SAS.}

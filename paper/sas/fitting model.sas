@@ -1,5 +1,5 @@
 data choices;
-	infile "/folders/myshortcuts/sas/choices.csv" delimiter=',' firstobs=2;
+	infile "/folders/myshortcuts/sas/sasdata.csv" delimiter=',' firstobs=2;
 	input rabs samplesize offsetalpha rsgn smoothed plotstyle subjid weights detected logtime;
 run;
 data predgrid;
@@ -23,7 +23,7 @@ ods trace on;
 ods output SolutionF=timemodel;
 proc mixed data=choices;
 	class subjid;
-	model logtime = rabs rsgn rabs*rsgn smoothed samplesize detected plotstyle plotstyle*rabs plotstyle*rsgn plotstyle*rabs*rsgn plotstyle*smoothed plotstyle*samplesize plotstyle*detected/ solution;
+	model logtime = rabs rsgn rabs*rsgn smoothed samplesize plotstyle plotstyle*rabs plotstyle*rsgn plotstyle*rabs*rsgn plotstyle*smoothed plotstyle*samplesize/ solution;
 	random subjid;
 	weight weights;
 run;

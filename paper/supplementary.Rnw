@@ -40,6 +40,8 @@
 \def\spacingset#1{\renewcommand{\baselinestretch}%
 {#1}\small\normalsize} \spacingset{1}
 
+\title{\bf Supplementary Material: Comparing the Power of Plot Designs to Reveal Correlation
+
 \if0\blind
 {
 \author{Nathaniel Tomasetti and Dianne Cook\\
@@ -70,11 +72,6 @@ prediction <- read.csv("sas/predfit.csv") ##Large file, very slow, fitted data f
 time.fit <- read.csv("sas/time.csv") ##coefficients for time model from SAS
 powercoef <- read.csv("sas/PowerEstimates.csv") ##coefficients for power model from SAS
 
-full$subj_id <- factor(full$ip_address, labels=1:207)
-y <- data.frame(table(full$subj_id))
-keep <- y$Var1[y$Freq>9]
-##Recording who evaluated at least ten lineups. Done prior to splitting multiple selections
-
 full <- full %>% mutate(design = ifelse(test_param ==1, "Overlaid Lines", "Scatterplot"),
                          r = round(correlation, 1),
                          rsgn = ifelse(r >= 0, 1, 0),
@@ -82,16 +79,27 @@ full <- full %>% mutate(design = ifelse(test_param ==1, "Overlaid Lines", "Scatt
                          alpha = log(0.05/0.95),
                          attempts = sapply(strsplit(as.character(full$response_0), ","), length), 
                          ##count number of selections in response_0 column
-                         weights = 1/attempts) %>%
-  transform(response_0= strsplit(as.character(response_0), ",")) %>% unnest(response_0) %>%
+                         weights = 1/attempts)
+
+full$subj_id <- factor(full$nick_name, labels=1:212)
+y <- data.frame(table(full$subj_id))
+keep <- y$Var1[y$Freq>9]
+full.sub <- filter(full, subj_id %in% keep) 
+full.sub <- Reduce(rbind, by(full.sub, full.sub$subj_id, head, n=10))
+##Remove subjects with less than 10 evaluations. If more than 10, keep only first 10.
+
+full <- full %>%  transform(response_0= strsplit(as.character(response_0), ",")) %>% unnest(response_0) %>%
   ##split multiple selections in response_0 into different rows
   mutate(correct = ifelse(response_0 == actual_location, 1, 0), 
          score = ifelse(correct==1, (20-attempts)/19, 0)) %>%
   select(subj_id, correct, score, r, rsgn, rabs, smoothed, n, design, log_time, response_0,
          actual_location, pic_id, choice_reason, attempts, weights, alpha, conf_level)
 
-full.sub <- filter(full, subj_id %in% keep) 
-##keeping only subjects with >0 evaluations in actual modelling to better estimate random effects
+full.sub <- full.sub %>% transform(response_0= strsplit(as.character(response_0), ",")) %>% unnest(response_0) %>%
+  mutate(correct = ifelse(response_0 == actual_location, 1, 0), 
+         score = ifelse(correct==1, (20-attempts)/19, 0)) %>%
+  select(subj_id, correct, score, r, rsgn, rabs, smoothed, n, design, log_time, response_0,
+         actual_location, pic_id, choice_reason, attempts, weights, alpha, conf_level)
 
 bylineup <- summarise(group_by(full, pic_id, n, smoothed, design, r, actual_location), total=sum(score), correct=sum(correct), evals=sum(weights))
 bylineup <- mutate(bylineup, percent = total/evals)
@@ -132,19 +140,61 @@ ggplot(data=users, aes(x=factor(age), fill=factor(academic_study))) + geom_bar()
 \end{figure}
 
 
-\section{Descriptive Statistics for Individuals}
+\section{Descriptive Statistics of Evaluations}
+
+\begin{table}[htp]
+\caption{The true plot detections / evaluations for each lineup in the data collection. Lineups with the same factor combination are seperated by row. Results ignore multiple selection and any removed evaluations. True plot correlation is on the x axis and t is on the y axis.}
+\label{tabeval}
+\centering
+<<answertables, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
+turk.tbl <- select(bylineup, design, smoothed, r, n, correct, evals)
+turk.tbl$result <- paste(round(turk.tbl$correct, 0), turk.tbl$evals, sep="/")
+turk.tbl <- turk.tbl[order(turk.tbl$r, turk.tbl$n),]
+scatter.uns <- data.frame(c(12, "", "", 24, "", "", 48, "", "", 96, "", ""), matrix(subset(turk.tbl, smoothed==0 & design=="Scatterplot")$result, ncol=8))
+scatter.sm <- data.frame(c(12, "", "", 24, "", "", 48, "", "", 96, "", ""), matrix(subset(turk.tbl, smoothed==1 & design=="Scatterplot")$result, ncol=8))
+line.uns <- data.frame(c(12, "", "", 24, "", "", 48, "", "", 96, "", ""), matrix(subset(turk.tbl, smoothed==0 & design=="Overlaid Lines")$result, ncol=8))
+line.sm <- data.frame(c(12, "", "", 24, "", "", 48, "", "", 96, "", ""), matrix(subset(turk.tbl, smoothed==1 & design=="Overlaid Lines")$result, ncol=8))
+colnames(scatter.uns) <- c("Unsmoothed Scatterplot", "-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
+colnames(scatter.sm) <- c("Smoothed Scatterplot","-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
+colnames(line.uns) <- c("Unsmoothed Overlaid Lines","-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
+colnames(line.sm) <- c("Smoothed Overlaid Lines","-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
+kable(scatter.uns, format="latex")
+@
+\end{table}
+\begin{table}
+\centering
+<<answertables2, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
+kable(scatter.sm, format="latex")
+@
+\end{table}
+\begin{table}
+\centering
+<<answertables3, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
+kable(line.uns, format="latex")
+@
+\end{table}
+\begin{table}
+\centering
+<<answertables4, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
+kable(line.sm, format="latex")
+@
+\end{table}
+
 
 \begin{figure}[htbp]
 \centering
 <<choices, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
-full.sub$choice_reason <-sapply(strsplit(as.character(unlist(full.sub$choice_reason)), "[^0-9]+"), "[[", 1)
+full$choice_reason <-sapply(strsplit(as.character(unlist(full$choice_reason)), "[^0-9]+"), "[[", 1)
 ggplot(data=full.sub) + geom_bar(aes(x=choice_reason))
-choice <- full.sub %>% transform(choice_reason= strsplit(as.character(choice_reason), "")) %>% unnest(choice_reason)
+choice <- full %>% transform(choice_reason= strsplit(as.character(choice_reason), "")) %>% unnest(choice_reason)
 choice$rsgn <- factor(choice$rsgn, labels=c("r -","r +"))
 choice$correct <- factor(choice$correct, labels=c("Did not detect", "Detected"))
 ggplot(data=choice, aes(x=choice_reason, fill=correct)) + geom_bar() + facet_grid(design~rsgn) +
   theme(legend.position="bottom", axis.title=element_blank()) + scale_fill_discrete(name="True Plot")
 @
+\caption{Reasons given for plot selection}
+\label{reasons}
+\end{figure}
 
 \begin{figure}[htbp]
 \centering 
@@ -153,6 +203,9 @@ subjplot <- summarise(group_by(full.sub, subj_id), eval=sum(weights), total = su
 subjplot <- mutate(subjplot, avscore= total/eval)
 ggplot(data=subjplot, aes(x=avscore)) + geom_histogram(binwidth=0.05)
 @
+\caption{Average score of subjects included in modelling}
+\label{avscore}
+\end{figure}
 
 \begin{figure}[htbp]
 \centering
@@ -160,11 +213,13 @@ ggplot(data=subjplot, aes(x=avscore)) + geom_histogram(binwidth=0.05)
 m.select <- summarise(group_by(subset(full.sub, attempts>1), subj_id, pic_id), attempts=max(attempts))
 m.freq <- data.frame(table(m.select$pic_id))
 m.lineup <- merge(m.freq, bylineup, by.x="Var1", by.y="pic_id")
-ggplot(data=m.lineup) + geom_bar(aes(x=r, fill=plot), binwidth=0.2) + facet_grid(n~smoothed) + labs(y="Count", x="True plot correlation")
-ggplot(data=subset(m.lineup, smoothed==1)) + geom_bar(aes(x=r, fill=plot), binwidth=0.2) + facet_wrap(~n)
+ggplot(data=m.lineup) + geom_bar(aes(x=factor(r), fill=design), binwidth=0.2) + facet_grid(n~smoothed) + labs(y="Count", x="True plot correlation")
 @
+\caption{Characteristics of lineups with at least one subject making multiple selections}
+\label{lineupmulti}
+\end{figure}
 
-\begin{table}
+\begin{table}[htp]
 \caption{Number of selections per lineup evaluation. The subject with the most selections is reported.}
 \label{tabattempts}
 <<tabattempts, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
@@ -182,14 +237,14 @@ kable(attempts.table, format="latex")
 <<multiattempts, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
 ggplot(data=attempts) + geom_bar(aes(x=as.factor(attempts))) + labs(x="Number of selections", y=NULL)
 @
-\caption{Histogram of table~\ref{attempts}}
-\label{attempts}
+\caption{Histogram of table~\ref{tabattempts}}
+\label{attemptshist}
 \end{figure}
 
 
 \section{Model Validation}
 
-\begin{figure}
+\begin{figure}[htbp]
   \centering
 <<residuals, dependson='setup', fig.height=4, fig.width=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
 glmm.resid <- subset(prediction, detected==0 | detected==1)

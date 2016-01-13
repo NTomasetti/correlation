@@ -65,7 +65,7 @@ Department of Econometrics and Business Statistics, Monash University\\
 \bigskip
 
 \begin{abstract}
-Visual inference in EDA is prone to type 1 errors from the over-interpretation of randomness \citep{Daniel, Diaconis}. Two competing plot designs, the scatter plot and overlaid line graph are both popular in the analysis of time series data. Lineups \citep{Majumder:2013, Wickham} allow the visual inference power of a graphic display to be evaluated, and were used to compare the plot designs. We collected data on the detection rate of correlated pairs of AR(1) simulations, the time required and the confidence of the decision for 2089 lineup evaluations. The results show that the scatter plot is both the faster and more powerful plot design, despite its inability to display the time dimension. 
+Visual inference in EDA is prone to type 1 errors from the over-interpretation of randomness \citep{Daniel, Diaconis}. Two competing plot designs, the scatter plot and overlaid line graph are both popular in the analysis of time series data. Lineups \citep{Majumder:2013, Wickham} allow the visual inference power of a graphic display to be evaluated, and were used to compare the plot designs. We collected data on the detection rate of correlated pairs of AR(1) simulations, the time required and the confidence of the selection for 1600 lineup evaluations. The results show that the scatter plot is both the faster and more powerful plot design, despite its inability to display the time dimension. 
 \end{abstract}
 
 \noindent
@@ -98,10 +98,6 @@ prediction <- read.csv("sas/predfit.csv") ##Large file, very slow, fitted data f
 time.fit <- read.csv("sas/time.csv") ##coefficients for time model from SAS
 powercoef <- read.csv("sas/PowerEstimates.csv") ##coefficients for power model from SAS
 
-full$subj_id <- factor(full$ip_address, labels=1:207)
-y <- data.frame(table(full$subj_id))
-keep <- y$Var1[y$Freq>9]
-##Recording who evaluated at least ten lineups. Done prior to splitting multiple selections
 
 full <- full %>% mutate(design = ifelse(test_param ==1, "Overlaid Lines", "Scatterplot"),
                          r = round(correlation, 1),
@@ -110,16 +106,27 @@ full <- full %>% mutate(design = ifelse(test_param ==1, "Overlaid Lines", "Scatt
                          alpha = log(0.05/0.95),
                          attempts = sapply(strsplit(as.character(full$response_0), ","), length), 
                          ##count number of selections in response_0 column
-                         weights = 1/attempts) %>%
-  transform(response_0= strsplit(as.character(response_0), ",")) %>% unnest(response_0) %>%
+                         weights = 1/attempts)
+
+full$subj_id <- factor(full$nick_name, labels=1:212)
+y <- data.frame(table(full$subj_id))
+keep <- y$Var1[y$Freq>9]
+full.sub <- filter(full, subj_id %in% keep) 
+full.sub <- Reduce(rbind, by(full.sub, full.sub$subj_id, head, n=10))
+##Remove subjects with less than 10 evaluations. If more than 10, keep only first 10.
+
+full <- full %>%  transform(response_0= strsplit(as.character(response_0), ",")) %>% unnest(response_0) %>%
   ##split multiple selections in response_0 into different rows
   mutate(correct = ifelse(response_0 == actual_location, 1, 0), 
          score = ifelse(correct==1, (20-attempts)/19, 0)) %>%
   select(subj_id, correct, score, r, rsgn, rabs, smoothed, n, design, log_time, response_0,
          actual_location, pic_id, choice_reason, attempts, weights, alpha, conf_level)
 
-full.sub <- filter(full, subj_id %in% keep) 
-##keeping only subjects with >0 evaluations in actual modelling to better estimate random effects
+full.sub <- full.sub %>% transform(response_0= strsplit(as.character(response_0), ",")) %>% unnest(response_0) %>%
+  mutate(correct = ifelse(response_0 == actual_location, 1, 0), 
+         score = ifelse(correct==1, (20-attempts)/19, 0)) %>%
+  select(subj_id, correct, score, r, rsgn, rabs, smoothed, n, design, log_time, response_0,
+         actual_location, pic_id, choice_reason, attempts, weights, alpha, conf_level)
 
 bylineup <- summarise(group_by(full, pic_id, n, smoothed, design, r, actual_location), total=sum(score), correct=sum(correct), evals=sum(weights))
 bylineup <- mutate(bylineup, percent = total/evals)
@@ -200,7 +207,7 @@ EDA is also related to the field of model diagnostics (MD), where a model can be
 It has long been thought that EDA and statistical inference were worlds apart, but recent work in \citet{Buja} and \citet{Majumder:2013} bridges this chasm. Framing a data plot as a test statistic, which when compared to plots of null data, places EDA into the statistical inference recipe. 
 The null hypothesis underlying a particular plot, is generically that there is no pattern, and particular types of plots implicitly regulate what “no  pattern” means. For example, a scatter plot of two variables is used to explore for some sort of association, so the implicit hypothesis is that there is no association between the two variables.
 The alternative hypothesis is that there is some association, although it is not required to specify precisely the type of association. 
-The plot of the data is placed in a lineup of plots of null data, data generated assuming that the null hypothesis is true. If an impartial observer asked to pick the plot that is different from the rest, picks the data plot this suggests there exists a pattern that is not the result of chance, and the null hypothesis is rejected. 
+The plot of the data is placed in a lineup of plots of null data, data generated assuming that the null hypothesis is true. If an impartial observer asked to select the plot that is most different from the rest, does select the data plot this suggests there exists a pattern that is not the result of chance, and the null hypothesis is rejected. 
 For a scatter plot, this departure from the null, might be a single outlier, or few outliers, a non-linear pattern, or clusters, which the human eye detects as more different in this data plot than in any of the nulls. This is the reason why visualisation remains important today, human eyes can detect patterns which would not be detected mathematically.  But eyes need calibration, which the lineup protocol provides.
 On its own, with a single plot, because of random sampling in collecting data, it is easy for the analyst to imagine a pattern when no real structure exists in the population. Visual skills of an observer in EDA is prone to Type I error, where the null hypothesis is rejected when it is actually true, caused by the inherently random formation of patterns when visualised which are attributed to structure rather than chance. \citet{Daniel} warns against this, by providing 40 pages of plots from the null distribution, he encourages data analysts to understand the patterns that can be created from data without inherent structure. (This is what \citet{Buja} call the Rorschach protocol.) By being aware of what can appear in this type of data, the analyst should be more wary of claiming any visual feature they find is a true relationship. But this is not enough, even seasoned data analysts can be misled.  \citet{Diaconis} introduced the notion of 'magical thinking' which argues that people commonly suffer from the over-interpretation of randomness, particularly if it matches a pre-conception. If it suits their particular bias, an analyst may make false discoveries of structure and false rejections of the null hypothesis. Whilst using both can complement each other, the treatment of Type I error has led EDA and inferential statistics to be considered as very disparate pursuits. The mathematical rigor that governs classical inference relies on a framework that acknowledges and controls for the rate of Type I error.  Section 2 describes the visual inference protocols which put EDA more firmly into the rigorous framework of statistical inference. 
 
@@ -241,8 +248,8 @@ The lineup protocol is inspired in part by the police lineup \citep{Wickham}. We
 This constitutes a rejection of the null hypothesis. If one of the null plots is chosen instead then either the plot design did not have the sufficient power to display the true relationship (A Type 2 error in EDA), or the null plot exhibited a strong relationship that was generated randomly and an analyst that saw this plot and decided that the data had some structure would’ve committed a Type 1 error. 
 $p_{i}$, the probability that plot $i$ is chosen in the lineup depends not only on the plot design $d$, but also the signal strength, $q_{i}$, of that plot and of every other competing plot in the lineup. It can be defined as some unknown function $f_{i,d} (q_{1},\dots,q_{20})$ \citep{Hofmann:2014}. 
 If the true plot is detected, it indicates that the plot design could convey the desired information about the underlying structure and that the true plot has a greater signal strength than those generated under the null distribution. The plot design that has a human observer selecting the true plot the most often will thus minimise both Type 1 error and Type 2 error in EDA hypothesis testing.
-However, there is the possibility that the true plot was picked by chance, that we have committed a Type 1 error in the lineup test. For a lineup of $m$ plots, the probability of selecting any plot when they are all generated by the null distribution is $1/m$, setting the Type 1 error rate, $\alpha$, of a lineup hypothesis test to equal $1/m$. 
-To control our error rate, it is initially obvious that we can simply change $m$, with an increase in null lineups having an inverse reduction in $\alpha$. We recruit human observers to judge the lineups, but this can quickly lead to a large cognitive burden to sort through more and more null plots. A much more powerful option is to have multiple different viewers of each lineup, with $K$ observers; the probability that at a particular plot was picked at least $x$ times under the null hypothesis is binomially distributed \citep{Buja, Hofmann:2014} with:
+However, there is the possibility that the true plot was selected by chance, that we have committed a Type 1 error in the lineup test. For a lineup of $m$ plots, the probability of selecting any plot when they are all generated by the null distribution is $1/m$, setting the Type 1 error rate, $\alpha$, of a lineup hypothesis test to equal $1/m$. 
+To control our error rate, it is initially obvious that we can simply change $m$, with an increase in null lineups having an inverse reduction in $\alpha$. We recruit human observers to judge the lineups, but this can quickly lead to a large cognitive burden to sort through more and more null plots. A much more powerful option is to have multiple different viewers of each lineup, with $K$ observers; the probability that at a particular plot was selected at least $x$ times under the null hypothesis is binomially distributed \citep{Buja, Hofmann:2014} with:
 
 \begin{equation}
 \label{pvalue}
@@ -250,7 +257,7 @@ To control our error rate, it is initially obvious that we can simply change $m$
   p-value = P(X \geq x | H_{0}) = 1 - B_{n, 1/m}(x-1)
 \end{equation}
 
-If all $K$ observers pick the same plot out of a lineup of twenty, we result in a p-value as small as $1/m^K$ . We used $m= 20$, giving us a significance level (and Type 1 error rate) of $\alpha = 0.05$. The plot of 'true' data is placed randomly amongst 19 null plots to form the lineup.
+If all $K$ observers select the same plot out of a lineup of twenty, we result in a p-value as small as $1/m^K$ . We used $m= 20$, giving us a significance level (and Type 1 error rate) of $\alpha = 0.05$. The plot of 'true' data is placed randomly amongst 19 null plots to form the lineup.
 
 If a subject selects multiple plots from the lineup, the p-value has a Bernoulli distribution with a probability $p_{j} = s/m$, where that observer made $s$ selections out of a lineup with $m$ plots \citep{Follett}. In the event that a lineup has observers making different numbers of selections, we have a binomial distribution with different success probabilities, and a Poisson Binomial distribution must be used to calculate the p-value. The probability mass function of a Poisson Binomial distribution can be written as:
 
@@ -292,14 +299,14 @@ ggplot(data=d, aes(x=t, y=value, colour=variable)) + geom_line() + facet_wrap(~.
   \label{lineup:example}
 \end{figure}
 
-Essentially, the more time our subjects pick the correct plot out of the lineup, the more confident we are that the real plot was visually significantly different to the nulls; and that the type of graphic involved has the power to display association. The lineup effectively allows us to conduct a hypothesis test on visual features, with the competing hypotheses:
+Essentially, the more time our subjects select the true plot out of the lineup, the more confident we are that that plot was visually significantly different to the nulls; and that the type of graphic involved has the power to display association. The lineup effectively allows us to conduct a hypothesis test on visual features, with the competing hypotheses:
 
 \begin{itemize}
   \item $H_{0}$ : There is no association between the two series (evidence for $H_{0}$: the associated data is indistinguishable from the nulls).
   \item $H_{1}$: There is an association between the two series (evidence against $H_{0}$: the associated data can be distinguished from the nulls).
 \end{itemize}
 
-As the power of a statistical test is defined as the probability of rejecting $H_{0}$ when it is false, the power of a lineup test is viewed as the probability of detecting the true plot. We approximate the power as $\hat\pi = x/K$, where $x$ observers out of $K$ correctly detected the true plot out of the lineup.
+As the power of a statistical test is defined as the probability of rejecting $H_{0}$ when it is false, the power of a lineup test is viewed as the probability of detecting the true plot. We approximate the power as $\hat\pi = x/K$, where $x$ observers out of $K$ detected the true plot out of the lineup.
 We can them estimate the power difference of competing lineups, $\hat\pi_{1} - \hat\pi_{2}$. An $\alpha \times 100\%$ confidence interval is calculated as \citep{Hofmann:2012}:
 
 \begin{equation} \label{propci}
@@ -307,7 +314,7 @@ We can them estimate the power difference of competing lineups, $\hat\pi_{1} - \
   \hat\pi_{1} - \hat\pi_{2}\pm t_{1-\alpha,2K-1}\sqrt{\hat\pi_{1} (1-\hat\pi_{1}) /K_{1} + \hat\pi_{2} (1-\hat\pi_{2}) /K_{2} }
 \end{equation}  
 
-Some individuals may have a better natural ability at detecting the correct correlation pattern in the graphics, but by having each participant viewing multiple lineups and each lineup being viewed by multiple different participants, this can be controlled via a random effect variable in the model. We recruited participants through Amazon's Mechanical Turk, where the lineup protocol has been applied to a number of problems in prior papers \citep{Heer, Majumder:2013, Wickham}. Amazon’s Mechanical Turk \citep{MTurk} is a labour crowd-sourcing platform developed to give easy access to workers with basic tasks paid in line with the United States minimum wage. MTurk can be used to recruit subjects to read a variety of graphics and report on particular visual tasks. The time taken to decide, confidence in the decision and the reason for that decision can also be recorded. \citet{Heer} use MTurk to replicate previous findings in graphical perception from \citet{Cleveland} and find that it is a valid method of data collection, once controls to eliminate anyone 'gaming' the system by randomly selecting answers to minimise time spent working are implemented. Further details of our use of Amazons’ Mechanical Turk is included in Section 3. The protocol has successfully been used to measure statistical power as a means to determine plot type superiority in \citet{Hofmann:2012}, and this work follows that approach.
+Some individuals may have a better natural ability at detecting a correlation pattern in the graphics, but by having each participant viewing multiple lineups and each lineup being viewed by multiple different participants, this can be controlled via a random effect variable in the model. We recruited participants through Amazon's Mechanical Turk, where the lineup protocol has been applied to a number of problems in prior papers \citep{Heer, Majumder:2013, Wickham}. Amazon’s Mechanical Turk \citep{MTurk} is a labour crowd-sourcing platform developed to give easy access to workers with basic tasks paid in line with the United States minimum wage. MTurk can be used to recruit subjects to read a variety of graphics and report on particular visual tasks. The time taken to decide, confidence in the decision and the reason for that decision can also be recorded. \citet{Heer} use MTurk to replicate previous findings in graphical perception from \citet{Cleveland} and find that it is a valid method of data collection, once controls to eliminate anyone 'gaming' the system by randomly selecting answers to minimise time spent working are implemented. Further details of our use of Amazons’ Mechanical Turk is included in Section 3. The protocol has successfully been used to measure statistical power as a means to determine plot type superiority in \citet{Hofmann:2012}, and this work follows that approach.
 
 \section{Experimental Design}
 
@@ -321,7 +328,7 @@ With $t \in \left\{12, 24, 48, 96\right\}$ and $e_{t}$ being generated with from
 
 $$e_{t} \sim \mathcal{N} \left( \mu = \left| \begin{array}{c}0 \\ 0 \end{array} \right| , \hspace{4mm} \Sigma = \left| \begin{array}{cc}1 & \rho \\ \rho & 1\end{array} \right| \right)$$
 
-The variation in the covariance parameter allows for control in the correlation in the pairs of data. The null data has no structure, so uncorrelated pairs are produced by setting $\rho = 0$. True data pairs are generated with $\rho \in \pm \{0.3, 0.5, 0.7, 0.9\}$. Pilot testing found that the rate of picking the true data plot fell to approximately $5\%$, the $1/m$ rate of randomly picking the true plot, for pairs with correlation below $\rho = 0.3$. Further to this, relationships weaker than this point are often of little interest to analysts. Hence we found it unnecessary to test a more full range of correlations. Simulating data does not produce correlations exactly equal to $\rho$, so simulated data pairs were accepted as real data if pairwise correlation between the two series is within 0.015 of the desired value of $\rho$. The null pairs often had correlation generated spuriously through the simulation process. This was particularly problematic for generating small sample data, but setting $\beta = min(0.5,100t)$ reduced spurious correlation to manageable levels.
+The variation in the covariance parameter allows for control in the correlation in the pairs of data. The null data has no structure, so uncorrelated pairs are produced by setting $\rho = 0$. True data pairs are generated with $\rho \in \pm \{0.3, 0.5, 0.7, 0.9\}$. Pilot testing found that the rate of selecting the true data plot fell to approximately $5\%$, the $1/m$ rate of randomly selecting the true plot, for pairs with correlation below $\rho = 0.3$. Further to this, relationships weaker than this point are often of little interest to analysts. Hence we found it unnecessary to test a more full range of correlations. Simulating data does not produce correlations exactly equal to $\rho$, so simulated data pairs were accepted as real data if pairwise correlation between the two series is within 0.015 of the desired value of $\rho$. The null pairs often had correlation generated spuriously through the simulation process. This was particularly problematic for generating small sample data, but setting $\beta = min(0.5,100t)$ reduced spurious correlation to manageable levels.
 For particularly large time series, the AR(1) model can create particularly 'jagged' lines that may be unrealistic for many actual applications. To counter this, additional sets of data were created with a Hodrick-Prescott filter to capture the trend of the model and remove the noise in the cycle component. This filter creates a trend by penalising both errors in smoothness and in fit. The trend of the series, $\tau_{t}$ is defined by the equation:
 
 \begin{equation}
@@ -394,9 +401,10 @@ Additionally, there was a fourth factor for $t = \{48, 96\}$:
 \end{itemize}
 
 Each combination of factors was replicated in three different lineups, giving a total of 288 lineups (3 replications x 2 plots x 8 correlations x 6 sample size and smoothness combinations). 
-The position of the actual data plot in the lineup was randomized. The order that the factors are presented to a subject were also randomized, and each subject saw 5 scatter plots and 5 overlaid lines at a range of all absolute correlation levels. Each subject did not see the same data more than once. Subjects were asked to pick the plot in the lineup that has the strongest association, with basic examples of negatively and positively correlated plots. They also answered with reasons for choosing the plot, and the confidence that they have that this really is the plot showing the strongest correlation. Each subject evaluated 10 lineups, plus a further two trials to eliminate people attempted to game the system. If a trial was not answered correctly, the subject could not evaluate the remaining lineups. If it was answered correctly, the trial data was discarded and the subject moved onto the rest of the lineups. Earlier work by \citet{Majumder:2014} has found that repeated evaluations from a subject does not increase their ability to detect the true plot from a lineup, justifying our treatment of the results as independent evaluations. We recruited subjects from Amazon's Mechanical Turk service and ensured that each lineup was viewed by multiple subjects. In total there were 2088 lineup evaluations, however to better control each subject’s individual visual ability we removed data from subjects with less than ten individual evaluations leaving us with 1684 lineup evaluations for the analysis.  
+The position of the actual data plot in the lineup was randomized. The order that the factors are presented to a subject were also randomized, and each subject saw 5 scatter plots and 5 overlaid lines at a range of all absolute correlation levels. Each subject did not see the same data more than once. Subjects were asked to select the plot in the lineup that has the strongest association, with basic examples of negatively and positively correlated plots. They also answered with reasons for choosing the plot, and the confidence that they have that this really is the plot showing the strongest correlation. Each subject evaluated 10 lineups, plus a further two simple trials to eliminate people attempted to game the system. If the true plot was not detected in the trial, the subject could not evaluate the remaining lineups. If it was detected, the trial data was discarded and the subject moved onto the rest of the lineups. Earlier work by \citet{Majumder:2014} has found that repeated evaluations from a subject does not increase their ability to detect the true plot from a lineup, justifying our treatment of the results as independent evaluations. We recruited subjects from Amazon's Mechanical Turk service and ensured that each lineup was viewed by multiple subjects. In total there were 2091 lineup evaluations, however to better control each subject’s individual visual ability we removed data from subjects with less than ten individual evaluations. Some subjects chose to participate in the experiment more than once, so we removed all data from repeated trials by these subjects. We were left with 1600 evaluations by 160 subjects.
 
-Subjects were allowed to make multiple selections from each lineup evaluated, additional selections on lineup $i$ by subject $j$ are penalised according to a score defined by:
+Subjects were allowed to make multiple plot selections from each lineup evaluated, additional selections on lineup $i$ by subject $j$ are penalised according to a score defined by:
+
 \begin{equation}
 \label{score}
 {score}_{ij} =\frac{m-s_{ij}}{m-1} \mathbbm{I}_{ij}
@@ -404,7 +412,7 @@ Subjects were allowed to make multiple selections from each lineup evaluated, ad
 
 where $\mathbbm{I}_{ij} = 1$ if the true plot is detected, $0$ otherwise, $s_{ij}$ is the number of selections made and $m = 20$ is the number of plots in the lineup.
 
-However, for the model fit to power, multiple selections are seperated and given a weighting equal to to inverse of the number of selections made in that lineup evaluation. This increases our data from 1684 to 1849 evaluations.
+However, for the model fit to power, multiple selections are seperated and given a weighting equal to to inverse of the number of selections made in that lineup evaluation. This increases our data from 1600 to 1762 evaluations.
 
 \begin{figure}[htbp]
   \centering
@@ -496,14 +504,14 @@ ggplot(data=prop) + geom_errorbar(aes(x=r, ymax=upper, ymin=lower)) + geom_point
 \begin{figure}[htbp]
   \centering
 <<samplesize, dependson='setup', fig.width=6, fig.height=8, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
-ggplot(data=subset(bylineup, smoothed==0), aes(x=r, y=percent, colour=factor(n))) + geom_smooth(se=F) + geom_point() + facet_grid(design~.) + scale_colour_discrete(name = "Sample size") +  labs(y="Percent Correct", x="Correlation") + theme(legend.position="bottom")
+ggplot(data=subset(bylineup, smoothed==0), aes(x=r, y=percent, colour=factor(n))) + geom_smooth(se=F) + geom_point() + facet_grid(design~.) + scale_colour_discrete(name = "Sample size") +  labs(y="Percent Detected", x="Correlation") + theme(legend.position="bottom")
 @
  \caption{Replotting figure~\ref{results} to highlight the effects of changes in sample size of unsmoothed data. The scatter plot appears to universally benefit from increased sample sizes but the overlaid lines only see a benefit in positive correlation.}
  \label{samplesize}
 \end{figure}
 
 Figure~\ref{samplesize} demonstrates the effects of changing sample size for unsmoothed data. The scatter plot has increased power to detect correlation almost universally for any increase. Sample size influences the overlaid lines differently, they appears to benefit for positively correlated true plots, but it does not improve the weak performance in negative correlation.
-Figure~\ref{time} and figure~\ref{confidence} give a breakdown of the interactions between the response variables: plot detection, time and confidence. Figure~\ref{time} is the histogram of the time taken to record a response, split by plot design and sign of correlation and true plot detection. The time data was highly positively skewed with a maximum of 1760 seconds so the variable was log-transformed. We found that the subject could identify the true plot out of the overlaid line graph 33.6\% of the time and it took on average $e^{3.442}$ = 31.2 seconds to make a choice. Successful detections were slightly faster than unsuccessful decision, taking on average 28.7 seconds to pick the true plot and 32.6 seconds if a null was selected. The scatter plots performed much better, with the true plot picked 52.9\% of the time, with an average of 22.7 seconds required to make a decision. If the true plot was detected it took only 18.6 seconds, and 29.3 seconds for a null plot selection.
+Figure~\ref{time} and figure~\ref{confidence} give a breakdown of the interactions between the response variables: plot detection, time and confidence. Figure~\ref{time} is the histogram of the time taken to record a response, split by plot design and sign of correlation and true plot detection. The time data was highly positively skewed with a maximum of 1760 seconds so the variable was log-transformed. We found that the subject could identify the true plot out of the overlaid line graph 33.6\% of the time and it took on average $e^{3.442}$ = 31.2 seconds to make a selection. Successful detections were slightly faster than unsuccessful decision, taking on average 28.7 seconds to select the true plot and 32.6 seconds if a null was selected. The scatter plots performed much better, with the true plot selected 52.9\% of the time, with an average of 22.7 seconds required to make a decision. If the true plot was detected it took only 18.6 seconds, and 29.3 seconds for a null plot selection.
 
 \begin{figure}[htbp]
   \centering
@@ -523,12 +531,12 @@ grid.arrange(t1, t2, ncol=2)
     \label{time} 
 \end{figure}
 
-Subjects were asked to give a number from 1 to 5 to rate how confident they were in there choice (1 - most confident, 5 - least confident, average = 3.34). There were no statistically significant differences between plot designs, however subjects were slightly less confident on true plot detections (by $0.25 \pm  0.16, p=0.002$) and every one percent extra time required to make a decision increased confidence (by $0.19 \pm 0.07, p<0.001$). One possible explanation is that subjects often focused on a null plot and picked it confidently. This would suggest that the null plots often produced visually interesting features subjects assumed were caused by the association between plots.
+Subjects were asked to give a number from 1 to 5 to rate how confident they were in their selection (1 - most confident, 5 - least confident, average = 3.34). There were no statistically significant differences between plot designs, however subjects were slightly less confident on true plot detections (by $0.25 \pm  0.16, p=0.002$) and every one percent extra time required to make a decision increased confidence (by $0.19 \pm 0.07, p<0.001$). One possible explanation is that subjects often focused on a null plot and selected it confidently. This would suggest that the null plots often produced visually interesting features subjects assumed were caused by the association between plots.
 Subjects spending longer on a plot immediately draws two hypotheses:
 
 \begin{enumerate}
   \item The lineup was more difficult and it took longer to determine which plot was best, reducing confidence.
-  \item The subject picked a plot relatively easily but spent extra time going over its details and making comparisons to alternative plots, increasing confidence.
+  \item The subject selected a plot relatively easily but spent extra time going over its details and making comparisons to alternative plots, increasing confidence.
 \end{enumerate}
 
 The result suggests that the latter hypothesis is more likely to be correct. We also found a negative relationship between plot detection and time spent on a lineup, supporting the major relationship found: quick decisions are less confident but more likely to successfully detect the true plot.
@@ -647,7 +655,7 @@ Where $\psi$ is the logit link function, $\psi(x) = \frac{e^{x}}{1+e^{x}}$. Addi
 \item $x_{3,k}$ is a dummy variable for the smoothing procedure, with $k = 0$ for unsmoothed data, 
 \item $x_{4,t}$ is the sample size, with $t \in \{12, 24, 48, 96\}$ ,
 \item $x_{5,l}$ denotes the plot design, with $l =0$ for the overlaid lines type,
-\item $z_{s}$ is an observer specific random effect, with $s = 1, 2, \dots , 157$.
+\item $z_{s}$ is an observer specific random effect, with $s = 1, 2, \dots , 160$.
 \end{itemize}
 
 It is assumed that $\epsilon_{ijkt} \sim \mathcal{N} (0, \Sigma_{ijkt})$ and $\gamma \sim \mathcal{N} (0, \delta)$.
@@ -655,7 +663,7 @@ It is assumed that $\epsilon_{ijkt} \sim \mathcal{N} (0, \Sigma_{ijkt})$ and $\g
 If a subject made multiple selections from the same lineup, each selection is treated as a separate data point with a probability weighting equal to the inverse of the number of selections.
 
 \begin{table}[htp]
-\caption{Weighted Mixed Effects Logit Model for the predicted power of plot design. Sample size for scatter plot evaluations: 900, overlaid lines: 949, total: 1849. Default plot design is overlaid lines. The model is fitted using the GLIMMIX procedure in SAS.}
+\caption{Weighted Mixed Effects Logit Model for the predicted power of plot design. Sample size for scatter plot evaluations: 859, overlaid lines: 903, total: 1762. Default plot design is overlaid lines. The model is fitted using the GLIMMIX procedure in SAS.}
 \label{tab1}
 \centering
 <<powerfit, dependson='setup', results='asis', echo=FALSE, message=FALSE, error=FALSE, warning=FALSE>>=
@@ -714,7 +722,7 @@ The unrestricted model has a log-likelihood value of -346.9, where the restricte
 A similar setup rejects the symmetric performance of the overlaid line graphs with a log likelihood ratio test statistic of 105.30 (p-value < 0.001). Such an extreme result is due to a systematic difference in the overlaid line graph and cannot be attributed simply to bias.
 \fi
 
-\subsection{Modelling time taken}
+\subsection{Modelling Time Taken}
 
 The time taken to evaluate a lineup is recorded and log transformed to reduce the impact of several large ($> 500$ seconds) outliers.
 
@@ -747,54 +755,10 @@ Table~\ref{tab2} shows a similar story for time as Table~\ref{tab1} did for powe
 \section{Conclusion}
 
 This paper showed that the scatterplot is better than the overlaid lines for displaying two time series when the purpose is to examine the association between the two series. This is especially true if correlation between the series is negative. This comparison was made possible by the use of the lineup protocol for comparing plot designs. The power of two plot designs for reading correlation between variables was modelled using a logistic regression incorporating subject’s individual visual ability as a random effect. We found that the scatterplot, in most situations is both more powerful and quicker to process than the overlaid line graph. The overlaid line graph appeared to have stronger performance at extremely low correlations, but this work did not test absolute values of correlation below 0.3. Other non-linear associations may exist in data that are not measured by correlation, and it may be of interest to compare plot power with a broader range of true plot features.
-Investigation of the individual selections of the lineup evaluations finds some results in-line with Wertheimer’s Gestalt Law of common fate, as demonstrated in Figure 15. The law suggested that people would find relationships between two lines that briefly move together, regardless of whether the relationship actually existed. Whilst this is shown, the overlaid line graph did not have a corresponding increase in confidence compared to the scatter plot; so research into similar confidence-boosting visual anomalies that can occur in scatter plots would be necessary to further investigate the law. Diaconis's Magical Thinking was supported by the finding on the relationships between time, confidence and correctness. A more difficult true plot may be picked rarely and require a longer to make a decision; resulting in decreased subject confidence. However, we found that time increases confidence but reduces correctness. Highly confident, but incorrect decisions, suggests subjects may have been distracted by strong, spurious patterns in the null plots.
+Investigation of the individual selections of the lineup evaluations finds some results in-line with Wertheimer’s Gestalt Law of common fate, as demonstrated in Figure 15. The law suggested that people would find relationships between two lines that briefly move together, regardless of whether the relationship actually existed. Whilst this is shown, the overlaid line graph did not have a corresponding increase in confidence compared to the scatter plot; so research into similar confidence-boosting visual anomalies that can occur in scatter plots would be necessary to further investigate the law. Diaconis's Magical Thinking was supported by the finding on the relationships between time, confidence and true plot detection. A more difficult true plot may be selected rarely and require a longer to make a decision; resulting in decreased subject confidence. However, we found that time increases confidence but reduces the detection rate. Highly confident null selections suggests that subjects may have been distracted by strong, spurious patterns in the null plots.
 If a data analyst is required to use overlaid line graphs in their work, substantial improvements to power and hence readability can be made by smoothing time series data if the sample size is long enough for these techniques to become feasible.
 
 \bibliographystyle{asa}
 \bibliography{references}
-
-\section{Appendix}
-
-\begin{table}[htp]
-\caption{The true plot detections / attempts for each lineup in the data collection. Results ignore multiple selection weighting. True plot correlation is on the x axis and t is on the y axis.}
-\label{tab3}
-\centering
-<<answertables, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
-turk.tbl <- select(bylineup, design, smoothed, r, n, correct, evals)
-turk.tbl$result <- paste(round(turk.tbl$correct, 0), turk.tbl$evals, sep="/")
-turk.tbl <- turk.tbl[order(turk.tbl$r, turk.tbl$n),]
-scatter.uns <- data.frame(c(12, "", "", 24, "", "", 48, "", "", 96, "", ""), matrix(subset(turk.tbl, smoothed==0 & design=="Scatterplot")$result, ncol=8))
-scatter.sm <- data.frame(c(12, "", "", 24, "", "", 48, "", "", 96, "", ""), matrix(subset(turk.tbl, smoothed==1 & design=="Scatterplot")$result, ncol=8))
-line.uns <- data.frame(c(12, "", "", 24, "", "", 48, "", "", 96, "", ""), matrix(subset(turk.tbl, smoothed==0 & design=="Overlaid Lines")$result, ncol=8))
-line.sm <- data.frame(c(12, "", "", 24, "", "", 48, "", "", 96, "", ""), matrix(subset(turk.tbl, smoothed==1 & design=="Overlaid Lines")$result, ncol=8))
-colnames(scatter.uns) <- c("Unsmoothed Scatterplot", "-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
-colnames(scatter.sm) <- c("Smoothed Scatterplot","-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
-colnames(line.uns) <- c("Unsmoothed Overlaid Lines","-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
-colnames(line.sm) <- c("Smoothed Overlaid Lines","-0.9", "-0.7", "-0.5", "-0.3", "0.3", "0.5", "0.7", "0.9")
-kable(scatter.uns, format="latex")
-@
-\end{table}
-\begin{table}
-\centering
-<<answertables2, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
-kable(scatter.sm, format="latex")
-@
-\end{table}
-\begin{table}
-\centering
-<<answertables3, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
-kable(line.uns, format="latex")
-@
-\end{table}
-\begin{table}
-\centering
-<<answertables4, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
-kable(line.sm, format="latex")
-@
-\end{table}
-
-
-
-
 
 \end{document}

@@ -267,7 +267,7 @@ ggplot(data=randomeffects) + geom_histogram(aes(x=re, y=..density..), binwidth=0
 
 In Figure~\ref{random}, the level two residuals, $\hat{\gamma}$, generated appear to be normally distributed validating the assumptions of the modelling process.
 
-The scores of each subject given by equation~\ref{score} can be summed to give a total score per subject $j$:
+The scores of each subject given by equation 5 of the main paper can be summed to give a total score per subject $j$:
 
 $${score}_{j} = \sum_{i}\{{score}_{ij} | i \in L_{j}\}$$
 

@@ -734,7 +734,7 @@ ln(time_{ijklmt}) &=& \beta_{0} + \beta_{1} x_{1,i}  + \beta_{2} x_{2,j}  + \bet
  & & \beta_{11} x_{4,t} + \beta_{12} x_{1,i} \* x_{2,j}) + \gamma z_{s} + \epsilon_{ijklt} \nonumber 
 \end{eqnarray}
 
-The structure of the model ~\ref{timemodel} is similar to that in Equation~\ref{modelpower} except the link function is replace with the identity function, $\psi(x) = x$.
+Other than the removal of the link functon, the structure of the model identical to that in Equation~\ref{modelpower}.
 
 \begin{table}[htp]
 \caption{Linear mixed model fit for time taken to make a selection, default plot style is overlaid lines. Fitted with the MIXED procedure in SAS.}
@@ -755,9 +755,31 @@ Table~\ref{tab2} shows a similar story for time as Table~\ref{tab1} did for powe
 
 \section{Conclusion}
 
+Power
+-In low sample sizes, both designs have similarly weak performance - 
+-Relationships between t=12 is dubious at best, requires $\rho$ > 0.7 to have more than 50\% power
+-In higher sample sizes, the scatterplot improves dramatically while the line plot remains unchanged
+-The line plot has much weaker performance in negative correlation than positive
+-If possible, smooth the lines to improve performance
+-If negative association is expected, flip one line to make it positive
+
+Time
+-The scatterplot is faster than the lines at high correlation
+-Smoothing and sample size have no real effect
+
+Confidence
+-People could be distracted by spurious patterns in the null plots
+-These were very confident selections
+-The data analyst needs to understand what kinds of patterns can be generated randomly
+
+Overall
+-Despite hiding trends etc., the simplistic scatter plot seems to be best suited to these tasks.
+
+\iffalse
 This paper showed that the scatterplot is better than the overlaid lines for displaying two time series when the purpose is to examine the association between the two series. This is especially true if correlation between the series is negative. This comparison was made possible by the use of the lineup protocol for comparing plot designs. The power of two plot designs for reading correlation between variables was modelled using a logistic regression incorporating subject’s individual visual ability as a random effect. We found that the scatterplot, in most situations is both more powerful and quicker to process than the overlaid line graph. The overlaid line graph appeared to have stronger performance at extremely low correlations, but this work did not test absolute values of correlation below 0.3. Other non-linear associations may exist in data that are not measured by correlation, and it may be of interest to compare plot power with a broader range of true plot features.
 Investigation of the individual selections of the lineup evaluations finds some results in-line with Wertheimer’s Gestalt Law of common fate, as demonstrated in Figure 15. The law suggested that people would find relationships between two lines that briefly move together, regardless of whether the relationship actually existed. Whilst this is shown, the overlaid line graph did not have a corresponding increase in confidence compared to the scatter plot; so research into similar confidence-boosting visual anomalies that can occur in scatter plots would be necessary to further investigate the law. Diaconis's Magical Thinking was supported by the finding on the relationships between time, confidence and true plot detection. A more difficult true plot may be selected rarely and require a longer to make a decision; resulting in decreased subject confidence. However, we found that time increases confidence but reduces the detection rate. Highly confident null selections suggests that subjects may have been distracted by strong, spurious patterns in the null plots.
 If a data analyst is required to use overlaid line graphs in their work, substantial improvements to power and hence readability can be made by smoothing time series data if the sample size is long enough for these techniques to become feasible.
+\fi
 
 \bibliographystyle{asa}
 \bibliography{references}

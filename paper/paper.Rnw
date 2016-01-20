@@ -42,7 +42,7 @@
 \def\spacingset#1{\renewcommand{\baselinestretch}%
 {#1}\small\normalsize} \spacingset{1}
 
-\title{\bf Comparing the Power of Plot Designs to Reveal Correlation}
+\title{\bf What is the Best Way to Display Two Time Series to Read Association?}
 
 \if0\blind
 {
@@ -234,7 +234,7 @@ The law then, has two effects. If positive correlation exists in temporal data, 
 
 In practice we have lots of choices in how to present information in exploratory analyses or to communicate information. If linear correlation is the only aspect of the data of interest, we might only calculate the correlation between two series. However, if correlation is not the appropriate statistic, because the association is more complex, or if there are outliers, we can typically only discover this by making pictures. Learning how people read plots of data is an important component of data analysis. If information is to be communicated in graphical form it is good to know what we can confidently expect the audience to infer. 
 
-There have been a few studies related to plotting temporal data.  \citet{Robbins} writes a blog and consults on plotting financial data. She is critical of the overlaid line graph, because it is misleading if the purpose is to read the difference between the two series. Her arguments date back a long time to \citet{playfair,tufte,friendly}. It is well-established that we cannot read differences between two series accurately, that the difference should be plotted separately if that is the information of interest. \citet{Vanderplas} examines a related problem, dubbed the ``sine illusion'', where the human eye is is fooled into erroroneously thinking that variation is larger at the peaks and troughs of seasonal time series. \citet{Vanderplas} developed a mathematical correction to the illusion. 
+There have been a few studies related to plotting temporal data.  \citet{Robbins} writes a blog and consults on plotting financial data. She is critical of the overlaid line graph, because it is misleading if the purpose is to read the difference between the two series. Her arguments date back a long time to Pfari, as reported in \citet{Tufte:1986} and \citet{friendly}. It is well-established that we cannot read differences between two series accurately, that the difference should be plotted separately if that is the information of interest. \citet{Vanderplas} examines a related problem, dubbed the ``sine illusion'', where the human eye is is fooled into erroroneously thinking that variation is larger at the peaks and troughs of seasonal time series. \citet{Vanderplas} developed a mathematical correction to the illusion.  \citet{Javed} examined the perception of many different sorts of features in multiple time series, and found that there was no optimal plot design for reading all of the different features tested. They did not examine perception of association between two series, though.
 
 Reading correlation between two sets of non-temporal context numbers has been examined in many papers. In \citet{harrison2014ranking} different graphical displays of two sets of numbers are ranked of their effectiveness by Weber's Law \citep{webers} which provides a relationship between perception and the ``effect size'' in the data. For example, two series with correlation 0.9 should be proportionately easier to distinguish from noise than two series with correlation 0.3. The visual display should reflect this difference is ease. Early papers \citep{Cleveland1982,lane1985} showed that people read association from a scatterplot differently than they would linearly interpret a correlation coefficient. 
 
@@ -247,11 +247,11 @@ Reading correlation between two sets of non-temporal context numbers has been ex
 %  \label{murder}
 %\end{figure}
 
-There has been other research on the perception of temporal displays, such as in \citet{Javed}, but they do not examine perception of association. Javed et al.  examined optimal ways to visualise local features, such as, which variable had the highest value at a given point in time, and global features, such as, comparing the size of the overall slope of many different variables. The finding was that a different graphical layout is optimal for each type of task. However, they did not test for the perception of correlation, which can be treated as both a local and a global feature within the graph. The slope of each variable must be compared at a point in time, and they must have a persistent relationship across at least the majority of the series. However there is a quandary, the visual features that improve local tasks are unsuited to global tasks and vice versa; so we must now find a form that is well suited to assess both types of tasks simultaneously. This paper addresses this deficiency. Section 2 describes the lineup method utilised to rigorously compare plot designs. Section 3 explains the experimental design.  Section 4 contains the results of the experiment and Section 5 discusses the implications of the findings.
+%There has been other research on the perception of temporal displays, such as in \citet{Javed}, but they do not examine perception of association. Javed et al.  examined optimal ways to visualise local features, such as, which variable had the highest value at a given point in time, and global features, such as, comparing the size of the overall slope of many different variables. The finding was that a different graphical layout is optimal for each type of task. However, they did not test for the perception of correlation, which can be treated as both a local and a global feature within the graph. The slope of each variable must be compared at a point in time, and they must have a persistent relationship across at least the majority of the series. However there is a quandary, the visual features that improve local tasks are unsuited to global tasks and vice versa; so we must now find a form that is well suited to assess both types of tasks simultaneously. 
 
-Visual Inference background next
+This paper rigorously examines the perception of association between two time series in two different displays, and with an additional inquiry into whether smoothing of series affects the perception, using the lineup protocol. Section 2 describes the lineup protocol, and the background to its use for comparing the power of plot designs for different purposes. Section 3 explains the experimental design.  Section 4 contains the results of the experiment and Section 5 discusses the implications of the findings.
 
-\section{The Lineup Protocol}
+\section{The lineup protocol for comparing plot designs}
 
 With the general lack of inference present in exploratory data analysis, how do we attempt to control error in hypothesis testing? In order to use visualisation effectively, we will get the most benefit if the type of graphic display chosen is best suited to the task at hand, be it EDA, MD, or even the presentation of results.
 We then need to find the statistical power of graphics, the ability of a graphical display to convey information on the structure of the data within. This can be found by using the lineup protocol developed in 2009 by \citet{Buja}, which is easily implemented with the nullabor R package.
@@ -328,7 +328,7 @@ We can them estimate the power difference of competing lineups, $\hat\pi_{1} - \
 
 Some individuals may have a better natural ability at detecting a correlation pattern in the graphics, but by having each participant viewing multiple lineups and each lineup being viewed by multiple different participants, this can be controlled via a random effect variable in the model. We recruited participants through Amazon's Mechanical Turk, where the lineup protocol has been applied to a number of problems in prior papers \citep{Heer, Majumder:2013, Wickham}. Amazon’s Mechanical Turk \citep{MTurk} is a labour crowd-sourcing platform developed to give easy access to workers with basic tasks paid in line with the United States minimum wage. MTurk can be used to recruit subjects to read a variety of graphics and report on particular visual tasks. The time taken to decide, confidence in the decision and the reason for that decision can also be recorded. \citet{Heer} use MTurk to replicate previous findings in graphical perception from \citet{Cleveland} and find that it is a valid method of data collection, once controls to eliminate anyone 'gaming' the system by randomly selecting answers to minimise time spent working are implemented. Further details of our use of Amazons’ Mechanical Turk is included in Section 3. The protocol has successfully been used to measure statistical power as a means to determine plot type superiority in \citet{Hofmann:2012}, and this work follows that approach.
 
-\section{Experimental Design}
+\section{Experimental design}
 
 To allow for a greater control of distributions of the data in the lineups, we use simulated data. The data must contain autocorrelation for there to be meaningful information in the time dimension. To fulfil this requirement, each plot has a standardised pair of AR(1) models defined by:
 
@@ -472,7 +472,7 @@ The web site that the Turk workers accessed to complete the task can be seen at 
 
 \section{Results}
 
-\subsection{Detection, Time and Confidence}
+\subsection{Detection, time and confidence}
 
 \begin{figure}[htbp]
  \centering
@@ -588,7 +588,7 @@ qplot(r, 6-conf_level, data=conf2, alpha=I(0.1)) +
  \label{confidence2}
 \end{figure}
 
-\subsection{Selection Analysis}
+\subsection{Selection analysis}
 
 There are two major reasons why a subject may fail to detect the true plot out of a lineup. Either the plot design was unable to display correlation for that particular combination of factors (and the analyst would commit a Type II error by not rejecting the null hypothesis), or a null plot that had a greater correlation than the true plot was selected instead (and the analyst would commit a Type I error by rejecting the null hypothesis). We next can analyse these kinds of errors with the pin plots found in Figure~\ref{pins}. The frequency of selection of each plot in each lineup, either true or null, is represented by a pin, placed at the value of the correlation between the two variables shown in that plot. The correlation of the selected plot is on the x-axis and the frequency of selection is plotted on the y axis. The correlation of the simulated (true) data ($\rho \in \pm \{0.3, 0.5, 0.7, 0.9\}$ in the plot, the sample size ($t \in \{12, 24, 48, 96\}$), and the plot design (unsmoothed/smoothed, scatterplot/lineplot) is used to facet the plots. The blue pins indicate the true plots and the red pins indicate the null plots. If the plot design has the power to display correlation, we would expect the highest correlation plot to be selected, leading to a Type I error where a plot from the null distribution spuriously had high correlation. We find that this is generally not the case. The selections appear to have a wide range of correlations, indicating that if a subject selected a null plot it was typically not due to excess spurious correlation. Instead the failure to select the highest correlated plot indicates that a Type II error was committed rather than Type I as the plot designs did not have the power to differentiate between medium and low correlation plots. However, for the scatter plot, whenever there was a plot with a very strong correlation, usually in the form of the true plot, it was overwhelmingly selected. For the overlaid lines this mostly occurred only for plots with strong positive correlation, which is consistent with its general lack of power to reveal negative relationships in data. 
 
@@ -648,7 +648,7 @@ Occasionally there was an anomaly where a single null plot was selected with a h
 
 Figures~\ref{anom1} and \ref{anom2} show lineups where a null plot with a strong pattern led to its selection over the data plot.  Mostly, when a null plot was chosen over the data plot it was because the correlation was stronger, but in a few lineups a null plot with small correlation was selected by many subjects. In Figure~\ref{anom1}, the true data plot is in position 4, but 9 out of 11 subjects chose plot 6. Plot 6 is unusual, most of the points are scattered around the vertical median, but there are two outlying points, one with a high y-value and one with a low y-value.  Other concurrent work has suggested that outliers are pre-attentive patterns and this plot selection by the observers is consistent with that. Figure~\ref{anom2} above is another example of where subjects chose a null plot that had smaller correlation than the data plot. Four out of five evaluations selected the null plot in position 13,  instead of the data plot in position 8. Plot 13 has a correlation of 0.225, smaller (in absolute value) than the -0.707 of plot 8.  This selection is in-line with Wertheimer’s gestalt law of common fate. It appears to be strongly correlated in the beginning of the series but breaks apart towards the end. The selection implies that subjects selecting this plot focused on the joint path of the two series early in the plot and ignored the contradictory evidence of no relationship as they diverged later in the plot.  It also confounded by the seeming preference to find positive correlation over negative correlation, and we suspect that if one of the series in plot 8 had the values flipped, then the strong positive correlation would have been noticed.
 
-\subsection{Modelling Graphical Power}
+\subsection{Modelling graphical power}
 
 A mixed effects logit model is used separately for scatter plot and overlaid line evaluations. The tested model is:
 
@@ -735,7 +735,7 @@ The unrestricted model has a log-likelihood value of -346.9, where the restricte
 A similar setup rejects the symmetric performance of the overlaid line graphs with a log likelihood ratio test statistic of 105.30 (p-value < 0.001). Such an extreme result is due to a systematic difference in the overlaid line graph and cannot be attributed simply to bias.
 \fi
 
-\subsection{Modelling Time Taken}
+\subsection{Modelling time taken}
 
 The time taken to evaluate a lineup is recorded and log transformed to reduce the impact of several large ($> 500$ seconds) outliers.
 

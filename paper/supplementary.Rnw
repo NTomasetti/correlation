@@ -40,7 +40,7 @@
 \def\spacingset#1{\renewcommand{\baselinestretch}%
 {#1}\small\normalsize} \spacingset{1}
 
-\title{\bf Supplementary Material: Comparing the Power of Plot Designs to Reveal Correlation}
+\title{\bf Supplementary Material: What is the Best Way to Display Two Time Series to Read Association?}
 
 \if0\blind
 {
@@ -55,7 +55,7 @@ Department of Econometrics and Business Statistics, Monash University\\
   \bigskip
   \bigskip
   \begin{center}
-    {\LARGE\bf Supplementary Material: Comparing the Power of Plot Designs to Reveal Correlation}
+    {\LARGE\bf Supplementary Material: What is the Best Way to Display Two Time Series to Read Association?}
 \end{center}
   \medskip
 } \fi

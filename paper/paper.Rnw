@@ -297,7 +297,7 @@ Where $T_{x}$ is all possible sets of $x$ trials out of $K$ resulting in a succe
 
 \begin{figure}[htbp]
   \centering
-<<lineup.example, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
+<<lineup.example, dependson='setup', fig.width=6, fig.height=6, out.width='0.9\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
 set.seed(1234)
 a <- gen_true_data(24, 0.95)
 td <- gather(a, variable, value, c(X1, X2))
@@ -321,7 +321,7 @@ ggplot(data=d, aes(x=t, y=value, colour=variable)) + geom_line() + facet_wrap(~.
                        axis.ticks = element_blank(),
                        legend.position="none")
 @
-  \caption{A lineup ($m = 20$) of line graphs. Which plot shows the series with the strongest correlation?}
+  \caption{Lineup of overlaid line graphs of size $m = 20$. In which plot are the two series most strongly associated?}
   \label{lineup:example}
 \end{figure}
 
@@ -369,7 +369,8 @@ Setting $\lambda = 1$ produced a smoothing that is more consistent with real wor
 \begin{figure}[htbp]
   \centering
   \begin{subfigure}[t]{0.24\textwidth}
-<<smoothing, dependson='setup', fig.width=4, fig.height=4, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
+\subcaption{}\label{smootha}
+<<smoothing, dependson='setup', fig.width=4, fig.height=4, out.width='0.9\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
 set.seed(123)
 uns <- gen_true_data(96, 0.8)
 uns_l <- gather(uns, variable, value, -t)
@@ -379,30 +380,29 @@ sm_l <- gather(sm, variable, value, -t)
 ggplot(data=uns_l, aes(x=t, y=value, colour=variable)) + geom_line() + theme(aspect.ratio=1, axis.title.x = element_blank(), axis.title.y = element_blank(),
           axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank(), legend.position="none")
 @
-\subcaption{}\label{smootha}
 \end{subfigure}
 \begin{subfigure}[t]{0.24\textwidth}
-<<smoothing2, dependson='smoothing', fig.width=4, fig.height=4, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
+\subcaption{}\label{smoothb}
+<<smoothing2, dependson='smoothing', fig.width=4, fig.height=4, out.width='0.9\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
 ggplot(data=uns, aes(x=X1, y=X2)) + geom_point() + theme(aspect.ratio=1, axis.title.x = element_blank(), axis.title.y = element_blank(),
           axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank(), legend.position="none")
 @
-\subcaption{}\label{smoothb}
 \end{subfigure}
 \begin{subfigure}[t]{0.24\textwidth}
-<<smoothing3, dependson='smoothing', fig.width=4, fig.height=4, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
+\subcaption{}\label{smoothc}
+<<smoothing3, dependson='smoothing', fig.width=4, fig.height=4, out.width='0.9\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
 ggplot(data=sm_l, aes(x=t, y=value, colour=variable)) + geom_line() + theme(aspect.ratio=1, axis.title.x = element_blank(), axis.title.y = element_blank(),
           axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank(), legend.position="none")
 @
-\subcaption{}\label{smoothc}
 \end{subfigure}
 \begin{subfigure}[t]{0.24\textwidth}
-<<smoothing4, dependson='smoothing', fig.width=4, fig.height=4, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
+\subcaption{}\label{smoothd}
+<<smoothing4, dependson='smoothing', fig.width=4, fig.height=4, out.width='0.9\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
 ggplot(data=sm, aes(x=X1, y=X2)) + geom_point() + theme(aspect.ratio=1, axis.title.x = element_blank(), axis.title.y = element_blank(),
           axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank(), legend.position="none")
 @
-\subcaption{}\label{smoothd}
 \end{subfigure}
-  \caption{The same AR(1) data both unsmoothed (\subref{smootha} and \subref{smoothb}) and smoothed (\subref{smoothc} and \subref{smoothd}) for both plot designs. t = 96, correlation = 0.86}
+  \caption{Plots illustrating the experimental design. The same AR(1) data both unsmoothed (\subref{smootha} and \subref{smoothb}) and smoothed (\subref{smoothc} and \subref{smoothd}) for both plot designs, with t = 96 and correlation = 0.86}
   \label{smoothing}
 \end{figure}
 
@@ -437,7 +437,8 @@ However, for the model fit to power, multiple selections are seperated and given
 \begin{figure}[htbp]
   \centering
   \begin{subfigure}[t]{0.24\textwidth}
-<<designs, dependson='setup', fig.width=4, fig.height=4, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
+\subcaption{}\label{designa}
+<<designs, dependson='setup', fig.width=4, fig.height=4, out.width='0.9\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
 set.seed(101)
 a <- gen_true_data(24, 0.95)
 b <- gen_true_data(24, -0.95)
@@ -446,30 +447,29 @@ b_l <- gather(b, variable, value, -t)
 ggplot(data=a_l, aes(x=t, y=value, colour=variable)) + geom_line() + theme(aspect.ratio=1, axis.title.x = element_blank(), axis.title.y = element_blank(),
           axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank(), legend.position="none")
 @
-\subcaption{}\label{designa}
 \end{subfigure}
 \begin{subfigure}[t]{0.24\textwidth}
-<<designs2, dependson='designs', fig.width=4, fig.height=4, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
+\subcaption{}\label{designb}
+<<designs2, dependson='designs', fig.width=4, fig.height=4, out.width='0.9\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
 ggplot(data=b_l, aes(x=t, y=value, colour=variable)) + geom_line() + theme(aspect.ratio=1, axis.title.x = element_blank(), axis.title.y = element_blank(),
           axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank(), legend.position="none")
 @
-\subcaption{}\label{designb}
 \end{subfigure}
 \begin{subfigure}[t]{0.24\textwidth}
-<<designs3, dependson='designs', fig.width=4, fig.height=4, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
+\subcaption{}\label{designc}
+<<designs3, dependson='designs', fig.width=4, fig.height=4, out.width='0.9\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
 ggplot(data=a, aes(x=X1, y=X2)) + geom_point() + theme(aspect.ratio=1, axis.title.x = element_blank(), axis.title.y = element_blank(),
           axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank(), legend.position="none")
 @
-\subcaption{}\label{designc}
 \end{subfigure}
 \begin{subfigure}[t]{0.24\textwidth}
-<<designs4, dependson='designs', fig.width=4, fig.height=4, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
+\subcaption{}\label{designd}
+<<designs4, dependson='designs', fig.width=4, fig.height=4, out.width='0.9\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
 ggplot(data=b, aes(x=X1, y=X2)) + geom_point() + theme(aspect.ratio=1, axis.title.x = element_blank(), axis.title.y = element_blank(),
           axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank(), legend.position="none")
 @
-\subcaption{}\label{designd}
 \end{subfigure}
-\caption{The same two data sets in both plot designs. t=24, correlation (\subref{designa} and \subref{designc}) = 0.946, correlation (\subref{designb} and \subref{designd})  = -0.943}
+\caption{Plots illustrating the experimental design: the two different plot types of the same data with $t=24$, $r= 0.946$ (\subref{designa} and \subref{designc}), $r= -0.943$ (\subref{designb} and \subref{designd}).}
 \label{designs}
 \end{figure}
 
@@ -483,7 +483,7 @@ The web site that the Turk workers accessed to complete the task can be seen at 
  \centering
 <<results, dependson='setup', fig.width=6, fig.height=8, out.width='0.7\\textwidth', echo=FALSE, warning=FALSE, error=FALSE, message=FALSE>>=
 ggplot(data=bylineup, aes(x=r, y=percent, colour=design)) + geom_smooth(se=F) + geom_point() + facet_grid(n~smoothed) + 
-  scale_colour_discrete(name = "Plot Design") + labs(y="True plot detection rate", x="Correlation") +
+  scale_colour_discrete(name = "Plot Design") + labs(y="Detection rate", x="Correlation") +
   theme(legend.position="bottom")
 @
   \caption{Response accuracy for unsmoothed data, broken by unsmoothed (left), smoothed (right) and sample size. The dots are data points, the lines represent a naive model average fit. Both plot designs have similar performance for positively correlated data, however the overlaid line graphs are much weaker at revealing negative correlation.}
@@ -512,7 +512,7 @@ prop <- mutate(prop, l.power = l.detect/l.attempt,
                upper = difference + t*se,
                lower = difference - t*se)
 ggplot(data=prop) + geom_errorbar(aes(x=r, ymax=upper, ymin=lower)) + geom_point(aes(x=r, y=difference)) +
-        geom_hline(aes(yintercept=0, colour="red")) + labs(x="Correlation", y="Difference between plot designs") + facet_grid(n~smoothed)
+        geom_hline(aes(yintercept=0, colour="red")) + labs(x="Correlation", y="Power difference") + facet_grid(n~smoothed)
 @
  \caption{The difference in estimated power (scatter plot power minus overlaid line power) to reveal the true plot by smoothness and sample size with a joint 95\% confidence interval. The red line indicates the point where both plot designs are equally powerful The largest differences appear in negative correlation, where the overlaid lines power drops substantially.}
  \label{powerdiff}
@@ -521,7 +521,7 @@ ggplot(data=prop) + geom_errorbar(aes(x=r, ymax=upper, ymin=lower)) + geom_point
 \begin{figure}[htbp]
   \centering
 <<samplesize, dependson='setup', fig.width=6, fig.height=8, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
-ggplot(data=subset(bylineup, smoothed==0), aes(x=r, y=percent, colour=factor(n))) + geom_smooth(se=F) + geom_point() + facet_grid(design~.) + scale_colour_discrete(name = "Sample size") +  labs(y="True plot detected rate", x="Correlation") + theme(legend.position="bottom")
+ggplot(data=subset(bylineup, smoothed==0), aes(x=r, y=percent, colour=factor(n))) + geom_smooth(se=F) + geom_point() + facet_grid(design~.) + scale_colour_discrete(name = "Sample size") +  labs(y="Detection rate", x="Correlation") + theme(legend.position="bottom")
 @
  \caption{Replotting figure~\ref{results} to highlight the effects of changes in sample size of unsmoothed data. The scatter plot appears to universally benefit from increased sample sizes but the overlaid lines only see a benefit in positive correlation.}
  \label{samplesize}
@@ -582,7 +582,7 @@ Figure~\ref{confidence2} compares the reported confidence for each selection aga
 
 \begin{figure}[htbp]
   \centering
-<<confidence2, dependson='setup', fig.width=6, fig.height=6, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
+<<confidence2, dependson='setup', fig.width=6, fig.height=6, out.width='0.9\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
 conf2 <- select(full, conf_level, r, smoothed, n, design) #c(7, 15
 qplot(r, 6-conf_level, data=conf2, alpha=I(0.1)) + 
   geom_smooth(method="loess") + 
@@ -599,8 +599,9 @@ There are two major reasons why a subject may fail to detect the true plot out o
 
 \begin{figure}[htbp]
   \centering
-  \begin{subfigure}[htbp]{1\textwidth}
-<<pins, dependson='setup', out.width='1\\linewidth',  out.height='0.2\\textheight', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
+%  \begin{subfigure}[htbp]{1\textwidth}
+%\subcaption{}\label{pin1}
+<<pins, dependson='setup', fig.height=4, fig.width=7, out.width='0.9\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
 count.setup <- select(full, pic_id, response_0, actual_location, design, smoothed, n)
 count.setup$response_0 <- as.character(count.setup$response_0)
 counts <- data.frame(table(count.setup$pic_id, count.setup$response_0))
@@ -614,41 +615,58 @@ pin <- mutate(pin, r = factor(r),
               percent = count/evals,
               base = 0,
               correlation = diag(as.matrix(correl[pin$lineup, (pin$plot+2)])))
-ggplot(data=filter(pin, smoothed==0 & design == "Scatterplot")) + 
-         geom_errorbar(aes(x=correlation, ymin=base, ymax=percent, colour=true)) +
-         geom_point(aes(x=correlation, y=percent, colour=true)) + coord_fixed() + facet_grid(n~r) + 
-         labs(y="Percent Chosen") + theme(legend.position="none")
+pin$design <- factor(pin$design, levels=c("Scatterplot", "Overlaid Lines"), labels=c("scat","lines"))
+pin$smoothed <- factor(pin$smoothed, levels=c("0", "1"), labels=c("N","Y"))
+#ggplot(data=filter(pin, smoothed==0 & design == "Scatterplot")) + 
+#         geom_errorbar(aes(x=correlation, ymin=base, ymax=percent, colour=true)) +
+#         geom_point(aes(x=correlation, y=percent, colour=true))  + facet_grid(n~r) +
+#         scale_x_continuous(breaks=c(-1,0,1)) + scale_y_continuous(breaks=c(0,0.5,1)) +
+#         labs(y="Proportion",x="") + theme(legend.position="none")
 @
-\subcaption{}\label{pin1}
-\end{subfigure}
-\begin{subfigure}[htbp]{1\textwidth}
-<<pin2, dependson='pins', out.width='1\\linewidth', out.height='0.2\\textheight', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
-ggplot(data=subset(pin, smoothed==1 & design == "Scatterplot")) + 
+%\end{subfigure}
+%\begin{subfigure}[htbp]{1\textwidth}
+%\subcaption{Scatterplots}\label{pin2}
+<<pin2, dependson='pins', fig.height=8, fig.width=7, out.width='0.9\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
+ggplot(data=subset(pin)) + 
          geom_errorbar(aes(x=correlation, ymin=base, ymax=percent, colour=true)) +
-         geom_point(aes(x=correlation, y=percent, colour=true)) + coord_fixed()  + facet_grid(n~r) + 
-         labs(y="Percent Chosen") + theme(legend.position="none")
+         geom_point(aes(x=correlation, y=percent, colour=true)) + facet_grid(design+n+smoothed~r) + 
+         scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels=c("1","-","0","+","1")) + 
+         scale_y_continuous(breaks=c(0,0.5,1)) +
+         labs(y="Proportion",x="Correlation between series") + theme(legend.position="none")
+#ggplot(data=subset(pin, design == "Scatterplot")) + 
+#         geom_errorbar(aes(x=correlation, ymin=base, ymax=percent, colour=true)) +
+#         geom_point(aes(x=correlation, y=percent, colour=true)) + facet_grid(n+smoothed~r) + 
+#         scale_x_continuous(breaks=c(-1,0,1)) + scale_y_continuous(breaks=c(0,0.5,1)) +
+#         labs(y="Proportion",x="Correlation") + theme(legend.position="none")
+#ggplot(data=subset(pin, smoothed==1 & design == "Scatterplot")) + 
+#         geom_errorbar(aes(x=correlation, ymin=base, ymax=percent, colour=true)) +
+#         geom_point(aes(x=correlation, y=percent, colour=true)) + facet_grid(n~r) + 
+#         scale_x_continuous(breaks=c(-1,0,1)) + scale_y_continuous(breaks=c(0,0.5,1)) +
+#         labs(y="Proportion",x="") + theme(legend.position="none")
 @
-\subcaption{}\label{pin2}
-\end{subfigure}
-\begin{subfigure}[htbp]{1\textwidth}
-<<pin3, dependson='pin', out.width='1\\linewidth', out.height='0.2\\textheight', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
-ggplot(data=subset(pin, smoothed==0 & design == "Overlaid Lines")) +
-         geom_errorbar(aes(x=correlation, ymin=base, ymax=percent, colour=true)) +
-         geom_point(aes(x=correlation, y=percent, colour=true)) + coord_fixed()  + facet_grid(n~r) +
-         labs(y="Percent Chosen") + theme(legend.position="none")
+%\end{subfigure}
+%\begin{subfigure}[htbp]{1\textwidth}
+%\subcaption{}\label{pin3}
+<<pin3, dependson='pin', fig.height=5, fig.width=7, out.width='0.9\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
+#ggplot(data=subset(pin, smoothed==0 & design == "Overlaid Lines")) +
+#         geom_errorbar(aes(x=correlation, ymin=base, ymax=percent, colour=true)) +
+#         geom_point(aes(x=correlation, y=percent, colour=true)) + facet_grid(n~r) +         
+#         scale_x_continuous(breaks=c(-1,0,1)) + scale_y_continuous(breaks=c(0,0.5,1)) +
+#         labs(y="Proportion",x="") + theme(legend.position="none")
 @
-\subcaption{}\label{pin3}
-\end{subfigure}
-\begin{subfigure}[htbp]{1\textwidth}
-<<pin4, dependson='smoothing', out.width='1\\linewidth', out.height='0.2\\textheight', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
-ggplot(data=subset(pin, smoothed==1 & design == "Overlaid Lines")) + 
-         geom_errorbar(aes(x=correlation, ymin=base, ymax=percent, colour=true)) +
-         geom_point(aes(x=correlation, y=percent, colour=true)) + coord_fixed()  + facet_grid(n~r) + 
-         labs(y="Percent Chosen") + theme(legend.position="none")
+%\end{subfigure}
+%\begin{subfigure}[htbp]{1\textwidth}
+%\subcaption{Overlaid line graphs}\label{pin4}
+<<pin4, dependson='smoothing', fig.height=5, fig.width=7, out.width='0.9\\textwidth', echo=FALSE, warning=FALSE, message=FALSE, error=FALSE>>=
+#ggplot(data=subset(pin, design == "Overlaid Lines")) + 
+#         geom_errorbar(aes(x=correlation, ymin=base, ymax=percent, colour=true)) +
+#         geom_point(aes(x=correlation, y=percent, colour=true)) + facet_grid(n+smoothed~r) + 
+#         scale_x_continuous(breaks=c(-1,0,1)) + scale_y_continuous(breaks=c(0,0.5,1))+
+#         labs(y="Proportion",x="Correlation") + theme(legend.position="none")
 @
-\subcaption{}\label{pin4}
-\end{subfigure}
-  \caption{Pin plots of the subject selections: (\subref{pin1}) unsmoothed scatterplots, (\subref{pin2}) smoothed scatterplots, (\subref{pin3}) unsmoothed overlaid lines, (\subref{pin4}) smoothed overlaid lines. On the x-axis is the correlation of the plot (there typically is spurious correlation in the null plots), and on the y-axis is the proportion of times a plot was chosen. Each plot contains data from the three lineups with the requisite factor combination. Red pins indicate null plots and blue indicates the true plot, occasionally the true plot does not seem to appear as it has a proportion of zero and is visually blocked by the red pins. Strongly correlated plot seem to be selected regardless of if the relationship is real or spurious.}
+%\end{subfigure}
+  \caption{Pin plots showing subject selections for each plot in all lineups for all factor levels in the experiment. Proportion of times plot selected plotted by correlation between series in each plot. Blue indicates data plot. Longer pins indicate more people selected that plot in the lineup. Results for the three replicate lineups for each treatment are  plotted together. Generally, subjects selected the plot from the lineup with the strongest association. With small sample size this is less obvious. For overlaid lines, subjects tended to more often pick the plot showing the strongest positive association, particularly if the correlation between series in the data plot was low. }   
+    %: (\subref{pin1}) unsmoothed scatterplots, (\subref{pin2}) smoothed scatterplots, (\subref{pin3}) unsmoothed overlaid lines, (\subref{pin4}) smoothed overlaid lines. On the x-axis is the correlation of the plot (there typically is spurious correlation in the null plots), and on the y-axis is the proportion of times a plot was chosen. Each plot contains data from the three lineups with the requisite factor combination. Red pins indicate null plots and blue indicates the true plot, occasionally the true plot does not seem to appear as it has a proportion of zero and is visually blocked by the red pins. Strongly correlated plot seem to be selected regardless of if the relationship is real or spurious.}
   \label{pins}
 \end{figure}
 
@@ -656,14 +674,14 @@ Occasionally there was an anomaly where a single null plot was selected with a h
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.5\textwidth]{anom1}
+  \includegraphics[width=0.9\textwidth]{anom1}
   \caption{A lineup of unsmoothed scatter plots with a sample size of 24. The true plot is located in position 4 with a correlation of -0.491, and was selected by one out of eleven observers (p = 0.33). The plot in position 6 was selected by nine of these eleven observers (p < 0.001) despite having a correlation of -0.037. Subjects most often cited the clustering effect shown as the reason for their selection, an example of the over-interpretation of randomness.}
     \label{anom1}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.5\textwidth]{anom2}
+  \includegraphics[width=0.9\textwidth]{anom2}
   \caption{A lineup of unsmoothed overlaid lines with a sample size of 12 and true correlation of -0.707. The true plot in position 8 was not detected in five evaluations. However, the null plot in position 13 was selected four times, (p –value < 0.001) despite having a correlation of only 0.225. When asked for a reason of their selections, subjects typically answered that the lines were close together, another misleading visual artefact of the random data.} 
   \label{anom2}
 \end{figure}
@@ -718,7 +736,7 @@ Figure~\ref{powermodel} shows the fitted unrestricted model, with power predicti
 
 \begin{figure}[htbp]
  \centering
-<<powermodel, dependson='setup', fig.height=8, fig.width=8, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
+<<powermodel, dependson='setup', fig.height=8, fig.width=8, out.width='0.9\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
 predplot <- prediction %>% filter(is.na(detected)) %>%
             select(r, t, rsgn, smoothed, design, subj_id, RandomEf, FixedEf) %>%
             mutate(RandomEf = exp(RandomEf)/(1+exp(RandomEf)), 

@@ -1,3 +1,9 @@
+25/01/2016
+- journals: jcgs, tvgs, comp. stats, econometrics
+- subfigured
+- titles of graphics
+- supplementary
+
 11/01/2016
 
 *- calculate using weighting by number of selections

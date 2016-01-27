@@ -179,17 +179,39 @@ levels(users$age) <- c("18-25", "26-30", "31-35", "36-40", "41-45", "46-50", "51
 ggplot(data=users, aes(x=age, fill=academic_study)) + geom_bar() + facet_wrap(~gender) +
   scale_fill_manual(name = element_blank(), values=c("#550000", "#883388", "#1133FF", "#FF9933", "#555555")) + labs(x="Age", y=element_blank()) + theme(axis.text.x = element_text(angle = 270))
 @
-\caption{Age and education by gender. Most subjects are in the younger brackets and there are more males than females}
+\caption{Age and education by gender. Younger age brackets and males are over-represented in the sample, but these factors caused no significant impact on results.}
 \label{ageed}
 \end{figure}
 
-This section describes the demographics of the subjects in the experiment recruited through Amazon's Mechanical Turk. Age, gender, education and location all did not have a statistically significant effect on the selections made.
+Despite there being a wide range of subject demographics in the experiment recruited through Amazon's Mechanical Turk, age, gender, education and location all did not have a statistically significant effect on power of either plot design. 
 
-\section{Descriptive Statistics of Evaluations}
+Subjects are allowed to make multiple selections on each lineup evaluation, with a score for each evaluation defined by: 
+
+\begin{equation}
+\label{score}
+{score}_{ij} =\frac{m-s_{ij}}{m-1} \mathbbm{I}_{ij}
+\end{equation}
+
+Where $m = 20$, the number of plots in a linup, $s_{ij}$ is the number of selections made by subject $i$ on lineup $j$ and $\mathbbm{I}_{ij} = 1$ if the true plot is detected, $0$ otherwise. The most selections made on any lineup evaluation is 8.
+
+\begin{figure}[htbp]
+\centering 
+<<avscore, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE, fig.height=4>>= 
+subjplot <- summarise(group_by(full.sub, subj_id), eval=sum(weights), total = sum(score))
+subjplot <- mutate(subjplot, avscore= total/eval)
+ggplot(data=subjplot, aes(x=avscore)) + geom_histogram(binwidth=0.1)
+@
+\caption{The average score of our subjects, according to formula \ref{score}. There is a wide range of visual ability to be controlled with random effects in the modelling}
+\label{avscore}
+\end{figure}
+
+
+
+\section{Evaluation Descriptive Statistics}
 
 \begin{figure}[h]
 \centering
-<<choices, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
+<<choices, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE, fig.height=4>>=
 full$choice_reason <-sapply(strsplit(as.character(unlist(full$choice_reason)), "[^0-9]+"), "[[", 1)
 choice <- full %>% transform(choice_reason= strsplit(as.character(choice_reason), "")) %>% unnest(choice_reason)
 choice$rsgn <- factor(choice$rsgn, labels=c("r -","r +"))
@@ -199,24 +221,25 @@ levels(choice$choice_reason) <- c("Close Together", "Matching Peaks", "Pattern F
 ggplot(data=choice, aes(x=choice_reason, fill=correct)) + geom_bar() + facet_grid(design~rsgn) +
   theme(legend.position="bottom", axis.title=element_blank()) + scale_fill_discrete(name="True Plot")
 @
-\caption{Reasons given for plot selection. After controlling for lineup factors, any explanatory power of the reason is removed.}
+\caption{Reasons given for plot selection. After controlling for lineup factors, there is no explanatory power.}
 \label{reasons}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
-<<multiselect, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
+<<multiselect, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE, fig.height=4>>=
 m.select <- summarise(group_by(subset(full.sub, attempts>1), subj_id, pic_id), attempts=max(attempts))
 m.freq <- data.frame(table(m.select$pic_id))
 m.lineup <- merge(m.freq, bylineup, by.x="Var1", by.y="pic_id")
 ggplot(data=m.lineup) + geom_bar(aes(x=factor(r), fill=design)) + facet_grid(n~smoothed) + labs(y="Count", x="True plot correlation")
 @
-\caption{Characteristics of lineups with at least one subject making multiple selections. Overlaid lines lineups have multiple selections more often, and true plot correlation does not appear to have an impact except at large sample sizes.}
+\caption{Characteristics of lineups with at least one subject making multiple selections. Overlaid line lineups have multiple selections more often, and true plot correlation does not appear to have an impact except at large sample sizes.}
 \label{lineupmulti}
 \end{figure}
 
 \begin{table}[h]
-\caption{Number of selections for each lineup evaluation. The subject with the most selections is additionally reported.}
+\centering
+\caption{Number of times $n$ selections from a lineup evaluation were made. The subject who made the most selections is additionally reported. There is no relationship between a subject's demographics and a likelihood to make multiple selections.}
 \label{table}
 <<tabattempts, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
 attempts <- summarise(group_by(full.sub, subj_id, pic_id), attempts = max(attempts))
@@ -230,36 +253,13 @@ kable(attempts.table, format="latex")
 \iffalse
 \begin{figure}[htbp]
 \centering
-<<multiattempts, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
+<<multiattempts, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE, fig.height=4>>=
 ggplot(data=attempts) + geom_bar(aes(x=as.factor(attempts))) + labs(x="Number of selections", y=NULL)
 @
 \caption{Histogram of table~\ref{table}}
 \label{attemptshist}
 \end{figure}
 \fi
-
-Subjects are allowed to make multiple selections on each lineup evaluation, with a score for each evaluation defined by: 
-
-\begin{equation}
-\label{score}
-{score}_{ij} =\frac{m-s_{ij}}{m-1} \mathbbm{I}_{ij}
-\end{equation}
-
-Where $m = 20$, the number of plots in a linup, $s_{ij}$ is the number of selections made by subject $i$ on lineup $j$ and $\mathbbm{I}_{ij} = 1$ if the true plot is detected, $0$ otherwise. The most selections made on any lineup evaluation is 8.
-
-\begin{figure}[htbp]
-\centering 
-<<avscore, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>= 
-subjplot <- summarise(group_by(full.sub, subj_id), eval=sum(weights), total = sum(score))
-subjplot <- mutate(subjplot, avscore= total/eval)
-ggplot(data=subjplot, aes(x=avscore)) + geom_histogram(binwidth=0.1)
-@
-\caption{The average score of our subjects, according to formula \ref{score}. There is a wide range of visual ability to be controlled with random effects in the modelling}
-\label{avscore}
-\end{figure}
-
-
-
 
 \section{Model Validation}
 

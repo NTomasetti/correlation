@@ -113,34 +113,7 @@ prediction <- mutate(prediction, r = ifelse(rsgn==1, rabs, -rabs),
                      diff = round(RandomEf - FixedEf,5))
 @
 
-\section{Subject Demographics}
-
-\begin{figure}[htbp]
-\centering
-<<map, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE, fig.height=3>>=
-location <- read.csv("location.csv")
-map.dat <- map_data("world")
-ggplot() + geom_polygon(aes(long,lat, group=group), fill="grey65", data=map.dat) + theme_bw() +
-  geom_point(data=location, aes(x=lon, y=lat, colour= "blue")) +scale_colour_manual(values=c("#FF5500", "#00FFFF")) + theme(aspect.ratio = 0.67, axis.text=element_blank(), axis.title=element_blank(), legend.position="none")
-@
-\caption{The location of the recruited subjects. The majority reside in North America but some are spread around other countries in Central America, Europe and Asia.}
-\label{map}
-\end{figure}
-
-\begin{figure}[htbp]
-\centering
-<<users, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
-users <- read.csv("turk18_users.csv")
-users$gender <- ifelse(users$gender==1, "Male", "Female")
-ggplot(data=users, aes(x=factor(age), fill=factor(academic_study))) + geom_bar() + facet_wrap(~gender) +
-  scale_fill_manual(values=c("#550000", "#883388", "#1133FF", "#FF9933", "#555555"))
-@
-\caption{Age and education by gender. Most subjects are in the younger brackets and there are more males than females}
-\label{ageed}
-\end{figure}
-
-
-\section{Descriptive Statistics of Evaluations}
+\section{Lineup Results}
 
 \begin{table}[htp]
 \caption{The true plot detections / evaluations for each lineup in the data collection. Lineups with the same factor combination are seperated by row. Results ignore multiple selection and any removed evaluations. True plot correlation is on the x axis and t is on the y axis.}
@@ -181,29 +154,53 @@ kable(line.sm, format="latex")
 \end{table}
 
 
+\section{Subject Demographics}
+
 \begin{figure}[htbp]
+\centering
+<<map, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE, fig.height=3>>=
+location <- read.csv("location.csv")
+map.dat <- map_data("world")
+ggplot() + geom_polygon(aes(long,lat, group=group), fill="grey65", data=map.dat) + theme_bw() +
+  geom_point(data=location, aes(x=lon, y=lat, colour= "blue")) +scale_colour_manual(values=c("#FF5500", "#00FFFF")) + theme(aspect.ratio = 0.67, axis.text=element_blank(), axis.title=element_blank(), legend.position="none")
+@
+\caption{The location of the recruited subjects. The majority reside in North America but some are spread around other countries in Central America, Europe and Asia.}
+\label{map}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+<<users, dependson='setup', echo=FALSE, results='asis', fig.height=3, message=FALSE, error=FALSE, warning=FALSE>>=
+users <- read.csv("turk18_users.csv")
+users$academic_study <- factor(users$academic_study)
+levels(users$academic_study) <- c("At Most High School", "Some Undergraduate", "Undergraduate Degree", "Some Postgraduate", "Postgraduate Degree")
+users$age <- factor(users$age)
+levels(users$age) <- c("18-25", "26-30", "31-35", "36-40", "41-45", "46-50", "51-55", "56-60", "61+")
+ggplot(data=users, aes(x=age, fill=academic_study)) + geom_bar() + facet_wrap(~gender) +
+  scale_fill_manual(name = element_blank(), values=c("#550000", "#883388", "#1133FF", "#FF9933", "#555555")) + labs(x="Age", y=element_blank()) + theme(axis.text.x = element_text(angle = 270))
+@
+\caption{Age and education by gender. Most subjects are in the younger brackets and there are more males than females}
+\label{ageed}
+\end{figure}
+
+This section describes the demographics of the subjects in the experiment recruited through Amazon's Mechanical Turk. Age, gender, education and location all did not have a statistically significant effect on the selections made.
+
+\section{Descriptive Statistics of Evaluations}
+
+\begin{figure}[h]
 \centering
 <<choices, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
 full$choice_reason <-sapply(strsplit(as.character(unlist(full$choice_reason)), "[^0-9]+"), "[[", 1)
 choice <- full %>% transform(choice_reason= strsplit(as.character(choice_reason), "")) %>% unnest(choice_reason)
 choice$rsgn <- factor(choice$rsgn, labels=c("r -","r +"))
 choice$correct <- factor(choice$correct, labels=c("Did not detect", "Detected"))
+choice$choice_reason <- factor(choice$choice_reason)
+levels(choice$choice_reason) <- c("Close Together", "Matching Peaks", "Pattern Formed", "Formed a line", "Other")
 ggplot(data=choice, aes(x=choice_reason, fill=correct)) + geom_bar() + facet_grid(design~rsgn) +
   theme(legend.position="bottom", axis.title=element_blank()) + scale_fill_discrete(name="True Plot")
 @
-\caption{Reasons given for plot selection}
+\caption{Reasons given for plot selection. After controlling for lineup factors, any explanatory power of the reason is removed.}
 \label{reasons}
-\end{figure}
-
-\begin{figure}[htbp]
-\centering 
-<<avscore, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>= 
-subjplot <- summarise(group_by(full.sub, subj_id), eval=sum(weights), total = sum(score))
-subjplot <- mutate(subjplot, avscore= total/eval)
-ggplot(data=subjplot, aes(x=avscore)) + geom_histogram(binwidth=0.05)
-@
-\caption{Average score of subjects included in modelling}
-\label{avscore}
 \end{figure}
 
 \begin{figure}[htbp]
@@ -212,14 +209,14 @@ ggplot(data=subjplot, aes(x=avscore)) + geom_histogram(binwidth=0.05)
 m.select <- summarise(group_by(subset(full.sub, attempts>1), subj_id, pic_id), attempts=max(attempts))
 m.freq <- data.frame(table(m.select$pic_id))
 m.lineup <- merge(m.freq, bylineup, by.x="Var1", by.y="pic_id")
-ggplot(data=m.lineup) + geom_bar(aes(x=factor(r), fill=design), binwidth=0.2) + facet_grid(n~smoothed) + labs(y="Count", x="True plot correlation")
+ggplot(data=m.lineup) + geom_bar(aes(x=factor(r), fill=design)) + facet_grid(n~smoothed) + labs(y="Count", x="True plot correlation")
 @
-\caption{Characteristics of lineups with at least one subject making multiple selections}
+\caption{Characteristics of lineups with at least one subject making multiple selections. Overlaid lines lineups have multiple selections more often, and true plot correlation does not appear to have an impact except at large sample sizes.}
 \label{lineupmulti}
 \end{figure}
 
-\begin{table}[htbp]
-\caption{Number of selections per lineup evaluation. The subject with the most selections is reported.}
+\begin{table}[h]
+\caption{Number of selections for each lineup evaluation. The subject with the most selections is additionally reported.}
 \label{table}
 <<tabattempts, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
 attempts <- summarise(group_by(full.sub, subj_id, pic_id), attempts = max(attempts))
@@ -230,7 +227,7 @@ kable(attempts.table, format="latex")
 @
 \end{table}
 
-
+\iffalse
 \begin{figure}[htbp]
 \centering
 <<multiattempts, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
@@ -239,6 +236,29 @@ ggplot(data=attempts) + geom_bar(aes(x=as.factor(attempts))) + labs(x="Number of
 \caption{Histogram of table~\ref{table}}
 \label{attemptshist}
 \end{figure}
+\fi
+
+Subjects are allowed to make multiple selections on each lineup evaluation, with a score for each evaluation defined by: 
+
+\begin{equation}
+\label{score}
+{score}_{ij} =\frac{m-s_{ij}}{m-1} \mathbbm{I}_{ij}
+\end{equation}
+
+Where $m = 20$, the number of plots in a linup, $s_{ij}$ is the number of selections made by subject $i$ on lineup $j$ and $\mathbbm{I}_{ij} = 1$ if the true plot is detected, $0$ otherwise. The most selections made on any lineup evaluation is 8.
+
+\begin{figure}[htbp]
+\centering 
+<<avscore, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>= 
+subjplot <- summarise(group_by(full.sub, subj_id), eval=sum(weights), total = sum(score))
+subjplot <- mutate(subjplot, avscore= total/eval)
+ggplot(data=subjplot, aes(x=avscore)) + geom_histogram(binwidth=0.1)
+@
+\caption{The average score of our subjects, according to formula \ref{score}. There is a wide range of visual ability to be controlled with random effects in the modelling}
+\label{avscore}
+\end{figure}
+
+
 
 
 \section{Model Validation}
@@ -253,7 +273,7 @@ ggplot(data=glmm.resid) + geom_histogram(aes(y=..density.., x=residual), binwidt
     \label{residuals}
 \end{figure}
 
-Analysing the level one residuals, $\hat{\epsilon_{i}}$, and level two residuals, $\hat{\gamma_{i}}$, allows us to test the model fit as described \citet{Loy}. There are some negative extreme outliers but the distributional assumption appears to hold.
+Analysing the level one residuals, $\hat{\epsilon_{i}}$, and level two residuals, $\hat{\gamma_{i}}$, allows us to test the model fit as described \citet{Loy}. There are some negative extreme outliers but the distributional assumptions appear to hold.
 
 \begin{figure}[htbp]
   \centering
@@ -267,7 +287,7 @@ ggplot(data=randomeffects) + geom_histogram(aes(x=re, y=..density..), binwidth=0
 
 In Figure~\ref{random}, the level two residuals, $\hat{\gamma}$, generated appear to be normally distributed validating the assumptions of the modelling process.
 
-The scores of each subject given by equation 5 of the main paper can be summed to give a total score per subject $j$:
+The scores of each subject given by equation~\ref{score} be summed to give a total score per subject $j$:
 
 $${score}_{j} = \sum_{i}\{{score}_{ij} | i \in L_{j}\}$$
 

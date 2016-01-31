@@ -183,7 +183,7 @@ ggplot(data=users, aes(x=age, fill=academic_study)) + geom_bar() + facet_wrap(~g
 \label{ageed}
 \end{figure}
 
-Despite there being a wide range of subject demographics in the experiment recruited through Amazon's Mechanical Turk, age, gender, education and location all did not have a statistically significant effect on power of either plot design. 
+Despite there being a wide range of subject demographics in the experiment recruited through Amazon's Mechanical Turk, age, gender, education and location all did not have a statistically significant effect on power of either plot design.  
 
 Subjects are allowed to make multiple selections on each lineup evaluation, with a score for each evaluation defined by: 
 

@@ -67,10 +67,10 @@ library(maps)
 library(ggplot2)
 library(dplyr)
 library(tidyr)
-full <- read.csv("full.csv", row.names=1, stringsAsFactors = FALSE) ##MTurk evaluations
-prediction <- read.csv("sas/predfit.csv") ##Large file, very slow, fitted data from SAS
-time.fit <- read.csv("sas/time.csv") ##coefficients for time model from SAS
-powercoef <- read.csv("sas/PowerEstimates.csv") ##coefficients for power model from SAS
+full <- read.csv("data/full.csv", row.names=1, stringsAsFactors = FALSE) ##MTurk evaluations
+prediction <- read.csv("data/predfit.csv") ##Large file, very slow, fitted data from SAS
+time.fit <- read.csv("data/time.csv") ##coefficients for time model from SAS
+powercoef <- read.csv("data/PowerEstimates.csv") ##coefficients for power model from SAS
 
 full <- full %>% mutate(design = ifelse(test_param ==1, "Overlaid Lines", "Scatterplot"),
                          r = round(correlation, 1),
@@ -159,7 +159,7 @@ kable(line.sm, format="latex")
 \begin{figure}[htbp]
 \centering
 <<map, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE, fig.height=3>>=
-location <- read.csv("location.csv")
+location <- read.csv("data/location.csv")
 map.dat <- map_data("world")
 ggplot() + geom_polygon(aes(long,lat, group=group), fill="grey65", data=map.dat) + theme_bw() +
   geom_point(data=location, aes(x=lon, y=lat, colour= "blue")) +scale_colour_manual(values=c("#FF5500", "#00FFFF")) + theme(aspect.ratio = 0.67, axis.text=element_blank(), axis.title=element_blank(), legend.position="none")
@@ -171,7 +171,7 @@ ggplot() + geom_polygon(aes(long,lat, group=group), fill="grey65", data=map.dat)
 \begin{figure}[htbp]
 \centering
 <<users, dependson='setup', echo=FALSE, results='asis', fig.height=3, message=FALSE, error=FALSE, warning=FALSE>>=
-users <- read.csv("turk18_users.csv")
+users <- read.csv("data/turk18_users.csv")
 users$academic_study <- factor(users$academic_study)
 levels(users$academic_study) <- c("At Most High School", "Some Undergraduate", "Undergraduate Degree", "Some Postgraduate", "Postgraduate Degree")
 users$age <- factor(users$age)

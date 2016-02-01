@@ -92,11 +92,11 @@ library(stringr)
 #library(readr)
 #library(lubridate)
 # Convert these to read_csv at some point
-correl <- read.csv("correlations.csv", stringsAsFactors = FALSE) ##Correlations of every plot in every lineup
-full <- read.csv("full.csv", row.names=1, stringsAsFactors = FALSE) ##MTurk evaluations
-prediction <- read.csv("sas/predfit.csv") ##fitted data from SAS
-time.fit <- read.csv("sas/time.csv") ##coefficients for time model from SAS
-powercoef <- read.csv("sas/PowerEstimates.csv") ##coefficients for power model from SAS
+correl <- read.csv("data/correlations.csv", stringsAsFactors = FALSE) ##Correlations of every plot in every lineup
+full <- read.csv("data/full.csv", row.names=1, stringsAsFactors = FALSE) ##MTurk evaluations
+prediction <- read.csv("data/predfit.csv") ##fitted data from SAS
+time.fit <- read.csv("data/time.csv") ##coefficients for time model from SAS
+powercoef <- read.csv("data/PowerEstimates.csv") ##coefficients for power model from SAS
 
 
 full <- full %>% mutate(design = ifelse(test_param ==1, "Overlaid Lines", "Scatterplot"),
@@ -215,7 +215,7 @@ Temporal dependence is present in many macroeconomic variables \citep{Nelson, Pe
     library(dplyr)
     library(tidyr)
     library(ggplot2)
-    rates <- select(read.csv("rates.csv"), date, AUD, CNY, NZD)[36:69,]
+    rates <- select(read.csv("data/rates.csv"), date, AUD, CNY, NZD)[36:69,]
     rates <- mutate(rates, AUD2=(AUD-mean(AUD))/sd(AUD), CNY2=(CNY-mean(CNY))/sd(CNY)) #scaling
     ggplot(data=rates, aes(x=AUD, y=NZD)) + geom_point()
     @

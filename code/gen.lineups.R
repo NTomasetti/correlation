@@ -1,6 +1,6 @@
 library(ggplot2)
 library(mnormt)
-library(reshape2)
+library(tidyr)
 library(gridExtra)
 library(mFilter)
 library(nullabor)
@@ -86,7 +86,7 @@ lineupscatter <- function(name, td, nd, pos, save=TRUE, w=8, h=8) {
 }
 
 lineupline <- function(name, td, nd, pos, save=TRUE, w=8, h=8) {
-  nd_l <- as.data.frame(melt(nd, id=c(".n", "t")))
+  nd_l <- as.data.frame(gather(nd, variable, value, -.n, -t))
   td <- data.frame(.n=rep(pos, nrow(td)), td)
   # Make data structure ourself
   if (pos == 1) {
@@ -130,7 +130,7 @@ Lineups <- function(n, m=20, c = 3, smoothed = FALSE, a=n/100, cor.matrix=FALSE)
   id <- 1
   for(z in 1:1000){
     real <- gen_true_data(n, r = (-0.9 + 1.8*z/1000), smoothed, a)
-    real_long <- melt(real, id="t")
+    real_long <- gather(real, value, variable, -t)
     cor <- cor(real$X1, real$X2)
     pos <- sample(1:20, 1)
     if (cor > 0.885 & cor < 0.915 & count[1] < c) { 
@@ -328,7 +328,7 @@ Lineups.trial <- function(n, dep=TRUE, m=20, c = 10, smoothed = FALSE) {
   id <- 1
   for(z in 1:1000){
     real <- gen_true_data(n, r = (-0.9 + 1.8*z/1000), dep, smoothed)
-    real_long <- melt(real, id="t")
+    real_long <- gather(real, variable, value, -t)
     cor <- cor(real$X1, real$X2)
     pos1 <- sample(1:20, 1)
     pos2 <- sample(1:20, 1)

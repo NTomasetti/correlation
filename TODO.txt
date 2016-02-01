@@ -1,7 +1,7 @@
 1/2/2016
 - Decide on journals
 - Clean language/typos/references in first 4 pages
-- Create a turk code folder, clean code, upload to git
+*- Create a turk code folder, clean code, upload to git
 - Acknowledge NSF, reproducibility details
 - Cite software used
 

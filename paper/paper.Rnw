@@ -855,7 +855,8 @@ The authors gratefully acknowledge funding from the National Science Foundation 
 
 The models used for this paper were generated using SAS software, Version 9 of the SAS System for Unix with the MIXED and GLIMMIX procedures. Copyright \copyright\ 2015 SAS Institute Inc. SAS and all other SAS Institute Inc. product or service names are registered trademarks or trademarks of SAS Institute Inc., Cary, NC, USA. 
 
-Further analysis was carried out using \citet{R} version 3.1.2 and \citet{Rstudio} version 0.99.484 using the packages: \citet{dplyr}, \citet{ggplot2}, \citet{grid}, \citet{gridExtra}, \citet{gridSVG}, \citet{knitr}, \citet{maps}, \citet{mFilter}, \citet{mnormt}, \citet{nullabor}, \citet{stringr} and \citet{tidyr}.
+Further analysis was carried out using \citet{R} version 3.1.2 and \citet{Rstudio} version 0.99.484 using the packages: dplyr, ggplot2, grid, gridExtra, gridSVG, knitr, maps, mFilter, mnormt, nullabor, string and tidyr.
+%\citet{dplyr}, \citet{ggplot2}, \citet{grid}, \citet{gridExtra}, \citet{gridSVG}, \citet{knitr}, \citet{maps}, \citet{mFilter}, \citet{mnormt}, \citet{nullabor}, \citet{stringr} and \citet{tidyr}.
 
 All code required to reproduce this paper can be found at https://github.com/NTomasetti/correlation.
 

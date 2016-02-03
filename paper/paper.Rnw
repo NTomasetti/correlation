@@ -223,7 +223,7 @@ Temporal dependence is present in many macroeconomic variables \citep{Nelson, Pe
     \begin{subfigure}[htbp]{0.45\textwidth}
     <<nzd2, dependson='nzd', error=FALSE, message=FALSE, warning=FALSE, echo=FALSE>>=
     rates_l <- gather(rates, currency, value, -date)
-    ggplot(data=subset(rates_l, currency != "CNY" & currency != "CNY2" & currency != "AUD2"), aes(x=as.Date(date), y=value, colour=currency)) + geom_line()
+    ggplot(data=subset(rates_l, currency != "CNY" & currency != "CNY2" & currency != "AUD2"), aes(x=as.Date(date), y=value, colour=currency)) + geom_line() + theme(legend.position="bottom")
     @
     \end{subfigure}
   \caption{Cross-rates for Australian and NZ dollars against US dollar, from Mar 30-May 2, 2015, shown using a scatterplot (left) and overlaid line graph (right). From which plot is correlation more accurately read? Point-wise correlation between the two series, ignoring autodependence, is 0.64.}
@@ -233,7 +233,7 @@ Temporal dependence is present in many macroeconomic variables \citep{Nelson, Pe
 \begin{figure}[htbp]
   \centering
   <<cny, dependson='nzd2', out.width='0.5\\textwidth', error=FALSE, message=FALSE, warning=FALSE, echo=FALSE>>=
-   ggplot(data=subset(rates_l, currency != "NZD" & currency != "CNY" & currency != "AUD"), aes(x=as.Date(date), y=value, colour=currency)) + geom_line() 
+   ggplot(data=subset(rates_l, currency != "NZD" & currency != "CNY" & currency != "AUD"), aes(x=as.Date(date), y=value, colour=currency)) + geom_line() + theme(legend.position="bottom")
   @
   \caption{Cross-rates for Australian dollar and Chinese yuan against the United States dollar from Mar 30-May 2, 2015, shown as overlaid line graph. (Both sets of values were standardized to bring them to the same scale for plotting.) What would you report the correlation between the two series to be?}
   \label{cny}

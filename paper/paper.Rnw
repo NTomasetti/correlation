@@ -797,12 +797,12 @@ The time taken to evaluate a lineup is recorded and log transformed to reduce th
 
 \begin{eqnarray} 
 \label{timemodel}
-ln(time_{ijklmt}) &=& \beta_{0} + \beta_{1} x_{1,i}  + \beta_{2} x_{2,j}  + \beta_{3} x_{3,k} + \beta_{4} x_{4,t} + \\
- & & \beta_{5} x_{1,i} \* x_{2,j} + \beta_{6} x_{5,l}\*(\beta_{7} + \beta_{8} x_{1,i}  + \beta_{9} x_{2,j}  + \beta_{10} x_{3,k} + \nonumber\\
- & & \beta_{11} x_{4,t} + \beta_{12} x_{1,i} \* x_{2,j}) + \gamma z_{s} + \epsilon_{ijklt} \nonumber 
+ln(time_{ijklt}) &=& \{ \beta_{0} + \beta_{1} x_{1,i}  + \beta_{2} x_{2,j}  + \beta_{3} x_{1,i} \* x_{2,j} + \beta_{4} x_{3,k} + \nonumber \\
+ & & \beta_{5} x_{4,t} + x_{5,l}(\beta_{6} + \beta_{7} x_{1,i}  + \beta_{8} x_{2,j}  + \nonumber \\
+ & & \beta_{9} x_{1,i} \* x_{2,j} + \beta_{10} x_{3,k} + \beta_{11} x_{4,t})  + \gamma z_{s} + \epsilon_{ijklt} \} \nonumber 
 \end{eqnarray}
 
-Other than the removal of the link functon, the structure of the model identical to that in Equation~\ref{modelpower}.
+Other than the removal of the link function, the structure of the model identical to that in Equation~\ref{modelpower}.
 
 \begin{table}[htp]
 \caption{Linear mixed model fit for time taken to make a selection, default plot style is overlaid lines. Fitted with the MIXED procedure in SAS.}

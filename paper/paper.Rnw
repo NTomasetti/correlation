@@ -710,9 +710,9 @@ A mixed effects logit model is used separately for scatter plot and overlaid lin
 
 \begin{eqnarray} 
 \label{modelpower}
-Power_{ijklt} &=& \psi \{ \beta_{0} + \beta_{1} x_{1,i}  + \beta_{2} x_{2,j}  + \beta_{3} x_{3,k} + \beta_{4} x_{4,t} + \\
- & & \beta_{5} x_{1,i} \* x_{2,j} + \beta_{6} x_{5,l}(\beta_{7} + \beta_{8} x_{1,i}  + \beta_{9} x_{2,j}  + \beta_{10} x_{3,k} + \nonumber \\
- & & \beta_{11} x_{4,t} + \beta_{12} x_{1,i} \* x_{2,j}) + \gamma z_{s} + \epsilon_{ijklt} \} \nonumber
+Power_{ijklt} &=& \psi \{ \beta_{0} + \beta_{1} x_{1,i}  + \beta_{2} x_{2,j}  + \beta_{3} x_{1,i} \* x_{2,j} + \beta_{4} x_{3,k} + \nonumber \\
+ & & \beta_{5} x_{4,t} + x_{5,l}(\beta_{6} + \beta_{7} x_{1,i}  + \beta_{8} x_{2,j}  + \nonumber \\
+ & & \beta_{9} x_{1,i} \* x_{2,j} + \beta_{10} x_{3,k} + \beta_{11} x_{4,t})  + \gamma z_{s} + \epsilon_{ijklt} \} \nonumber
 \end{eqnarray}
 
 Where $\psi$ is the logit link function, $\psi(x) = \frac{e^{x}}{1+e^{x}}$. Additionally:

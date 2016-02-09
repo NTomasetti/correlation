@@ -611,7 +611,7 @@ qplot(r, 6-conf_level, data=conf2, alpha=I(0.1)) +
 
 \subsection{Selection analysis}
 
-There are two major reasons why a subject may fail to detect the true plot out of a lineup. Either the plot design was unable to display correlation for that particular combination of factors (and the analyst would commit a Type II error by not rejecting the null hypothesis), or a null plot that had a greater correlation than the true plot was selected instead (and the analyst would commit a Type I error by rejecting the null hypothesis). We next can analyse these kinds of errors with the pin plots found in Figure~\ref{pins}. The frequency of selection of each plot in each lineup, either true or null, is represented by a pin, placed at the value of the correlation between the two variables shown in that plot. The correlation of the selected plot is on the x-axis and the frequency of selection is plotted on the y axis. The correlation of the simulated (true) data ($\rho \in \pm \{0.3, 0.5, 0.7, 0.9\}$ in the plot, the sample size ($t \in \{12, 24, 48, 96\}$), and the plot design (unsmoothed/smoothed, scatterplot/lineplot) is used to facet the plots. The blue pins indicate the true plots and the red pins indicate the null plots. If the plot design has the power to display correlation, we would expect the highest correlation plot to be selected, leading to a Type I error where a plot from the null distribution spuriously had high correlation. We find that this is generally not the case. The selections appear to have a wide range of correlations, indicating that if a subject selected a null plot it was typically not due to excess spurious correlation. Instead the failure to select the highest correlated plot indicates that a Type II error was committed rather than Type I as the plot designs did not have the power to differentiate between medium and low correlation plots. However, for the scatter plot, whenever there was a plot with a very strong correlation, usually in the form of the true plot, it was overwhelmingly selected. For the overlaid lines this mostly occurred only for plots with strong positive correlation, which is consistent with its general lack of power to reveal negative relationships in data. 
+There are two major reasons why a subject may fail to detect the true plot out of a lineup. Either the plot design was unable to display correlation for that particular combination of factors (and the analyst would commit a Type II error by not rejecting the null hypothesis), or a null plot that had a greater correlation than the true plot was selected instead (and the analyst would commit a Type I error by rejecting the null hypothesis). We next can analyse these kinds of errors with the pin plots found in Figure~\ref{pins}. The frequency of selection of each plot in each lineup, either true or null, is represented by a pin, placed at the value of the correlation between the two variables shown in that plot. The correlation of the selected plot is on the x-axis and the frequency of selection is plotted on the y axis. The correlation of the simulated (true) data ($\rho \in \pm \{0.3, 0.5, 0.7, 0.9\}$ in the plot, the sample size ($t \in \{12, 24, 48, 96\}$), and the plot design (unsmoothed/smoothed, scatterplot/lineplot) is used to facet the plots. The blue pins indicate the true plots and the red pins indicate the null plots. If the plot design has the power to display correlation, we would expect the highest correlation plot to be selected, leading to a Type I error where a plot from the null distribution spuriously had high correlation. We find that this is generally the case at higher sample sizes, but at $t = 12$, the selected plos have a wider range of correlations, indicating a general inability of the plot designs to differentiate betwen high and low correlaiton, a type II error. With the catter plot, for the scatter plot, whenever there was a plot with a very strong correlation, usually in the form of the true plot, it was overwhelmingly selected. For the overlaid lines this mostly occurred only for plots with strong positive correlation, which is consistent with its general lack of power to reveal negative relationships in data. 
 
 \begin{figure}[htbp]
   \centering
@@ -681,7 +681,7 @@ ggplot(data=subset(pin)) +
 #         labs(y="Proportion",x="Correlation") + theme(legend.position="none")
 @
 %\end{subfigure}
-  \caption{Pin plots showing subject selections for each plot in all lineups for all factor levels in the experiment. Proportion of times plot selected plotted by correlation between series in each plot. Blue indicates data plot. Longer pins indicate more people selected that plot in the lineup. Results for the three replicate lineups for each treatment are  plotted together. Generally, subjects selected the plot from the lineup with the strongest association. With small sample size this is less obvious. For overlaid lines, subjects tended to more often pick the plot showing the strongest positive association, particularly if the correlation between series in the data plot was low. }   
+  \caption{Pin plots showing subject selections for each plot in all lineups for all factor levels in the experiment, with duplicates of the same factor combination together. Proportion of times a plot was selected is on the y-axis and correlation between the pair of time series on the x-axis. Blue indicates a true data plot and red indicates a null plot. Generally, subjects selected the plot from the lineup with the strongest association in larger sample sizes. For overlaid lines, subjects tended to more often pick the plot showing the strongest positive association, even if the relationship in the true plot was negative.}   
     %: (\subref{pin1}) unsmoothed scatterplots, (\subref{pin2}) smoothed scatterplots, (\subref{pin3}) unsmoothed overlaid lines, (\subref{pin4}) smoothed overlaid lines. On the x-axis is the correlation of the plot (there typically is spurious correlation in the null plots), and on the y-axis is the proportion of times a plot was chosen. Each plot contains data from the three lineups with the requisite factor combination. Red pins indicate null plots and blue indicates the true plot, occasionally the true plot does not seem to appear as it has a proportion of zero and is visually blocked by the red pins. Strongly correlated plot seem to be selected regardless of if the relationship is real or spurious.}
   \label{pins}
 \end{figure}
@@ -698,11 +698,11 @@ Occasionally there was an anomaly where a single null plot was selected with a h
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.9\textwidth]{anom2}
-  \caption{A lineup of unsmoothed overlaid lines with a sample size of 12 and true correlation of -0.707. The true plot in position 8 was not detected in five evaluations. However, the null plot in position 13 was selected four times, (p –value < 0.001) despite having a correlation of only 0.225. When asked for a reason of their selections, subjects typically answered that the lines were close together, another misleading visual artefact of the random data.} 
+  \caption{A lineup of unsmoothed overlaid lines with a sample size of 12 and true plot correlation of -0.707 in position 8, which was not detected in five evaluations. Instead, the null plot in position 13 was selected four times, (p –value < 0.001) despite having a correlation of only 0.225. When asked for a reason of their selections, subjects typically answered that the lines were close together, another misleading visual artefact of the random data as the subjects ignore the eventual separation in the lines, similar to in figure ~\ref{cny}.} 
   \label{anom2}
 \end{figure}
 
-Figures~\ref{anom1} and \ref{anom2} show lineups where a null plot with a strong pattern led to its selection over the data plot.  Mostly, when a null plot was chosen over the data plot it was because the correlation was stronger, but in a few lineups a null plot with small correlation was selected by many subjects. In Figure~\ref{anom1}, the true data plot is in position 4, but 9 out of 11 subjects chose plot 6. Plot 6 is unusual, most of the points are scattered around the vertical median, but there are two outlying points, one with a high y-value and one with a low y-value.  Other concurrent work has suggested that outliers are pre-attentive patterns and this plot selection by the observers is consistent with that. Figure~\ref{anom2} above is another example of where subjects chose a null plot that had smaller correlation than the data plot. Four out of five evaluations selected the null plot in position 13,  instead of the data plot in position 8. Plot 13 has a correlation of 0.225, smaller (in absolute value) than the -0.707 of plot 8.  This selection is in-line with Wertheimer’s gestalt law of common fate. It appears to be strongly correlated in the beginning of the series but breaks apart towards the end. The selection implies that subjects selecting this plot focused on the joint path of the two series early in the plot and ignored the contradictory evidence of no relationship as they diverged later in the plot.  It also confounded by the seeming preference to find positive correlation over negative correlation, and we suspect that if one of the series in plot 8 had the values flipped, then the strong positive correlation would have been noticed.
+Figures~\ref{anom1} and \ref{anom2} show lineups where a null plot with a strong pattern led to its selection over the data plot.  Mostly, when a null plot was chosen over the data plot it was because the correlation was stronger, but in a few lineups a null plot with small correlation was selected by many subjects. In Figure~\ref{anom1}, the true data plot is in position 4, but 9 out of 11 subjects chose plot 6. Plot 6 is unusual, most of the points are scattered around the vertical median, but there are two outlying points, one with a high y-value and one with a low y-value.  Other concurrent work has suggested that outliers are pre-attentive patterns and this plot selection by the observers is consistent with that. Figure~\ref{anom2} above is another example of where subjects chose a null plot that had smaller correlation than the data plot. Four out of five evaluations selected the null plot in position 13, instead of the data plot in position 8. Plot 13 has a correlation of 0.225, smaller (in absolute value) than the -0.707 of plot 8. This selection gives evidence towards Wertheimer’s gestalt law of common fate, as subjects may be selecting this plot focused on the joint path of the two series early in Plot 13 and ignored the contradictory evidence of no relationship as they diverged later in the plot similar to the series in figure ~\ref{cny}.  It also confounded by the seeming preference to find positive correlation over negative correlation, and we suspect that if one of the series in plot 8 had the values flipped, then the strong positive correlation may have been noticed.
 
 \subsection{Modelling graphical power}
 
@@ -722,7 +722,7 @@ Where $\psi$ is the logit link function, $\psi(x) = \frac{e^{x}}{1+e^{x}}$. Addi
 \item $x_{2,j}$ is a dummy variable for the sign of the true plot correlation, with $j = 0$ for negative correlation, 
 \item $x_{3,k}$ is a dummy variable for the smoothing procedure, with $k = 0$ for unsmoothed data, 
 \item $x_{4,t}$ is the sample size, with $t \in \{12, 24, 48, 96\}$ ,
-\item $x_{5,l}$ denotes the plot design, with $l =0$ for the overlaid lines type,
+\item $x_{5,l}$ si a dummy variable for the plot design, with $l = 0$ for the overlaid lines type,
 \item $z_{s}$ is an observer specific random effect, with $s = 1, 2, \dots , 160$.
 \end{itemize}
 
@@ -818,30 +818,31 @@ kable(time.fit[1:14,], format="latex", digits=2)
 @
 \end{table}
 
-Table~\ref{tab2} shows a similar story for time as Table~\ref{tab1} did for power, that the overlaid lines have better performance close to zero correlation, but the scatter plot is much faster at high correlations. Postivie correlation reduces time for both plot designs, but only the scatter plot sees improvements in negative correlation. Detecing the true plot was also faster than a null. Neither smoothness nor sample size has an impact on the time for either plot design, despite having statistically significant impacts on power. 
+Table~\ref{tab2} shows a similar story for time as Table~\ref{tab1} did for power, that the overlaid lines have better performance close to zero correlation, but the scatter plot is much faster at high correlations. Postivie correlation reduces time for both plot designs, but only the scatter plot sees improvements in negative correlation, time to detect is flat accross negative correlations for the overlaid line graph. Neither smoothness nor sample size has an impact on the time for either plot design, despite having statistically significant impacts on power. 
 %An overlaid line graph having positive correlation increases the time required, eliminating the benefits from the almost significant plot design term. This result seems counter-intuitive as the weak performance of the overlaid lines in negative correlation implies that negative would require more time than positive, but the interactions between plot design, correlation and sign result in there being almost no decrease in time for strongly negatively correlated line plots.
 
 \section{Conclusion}
 
 Power
 -In low sample sizes, both designs have similarly weak performance - 
--Relationships between t=12 is dubious at best, requires $\rho$ > 0.7 to have more than 50\% power
--In higher sample sizes, the scatterplot improves dramatically while the line plot remains unchanged
--The line plot has much weaker performance in negative correlation than positive
--If possible, smooth the lines to improve performance
+-Relationships between t=12 time series is dubious at best, requires $\rho$ > 0.7 to have more than 50\% power to see.
+-In higher sample sizes, the scatterplot improves dramatically while the line plot remains mostly unchanged
+-Positive correlation is very similar between the two designs
+-The line plot has much weaker performance in negative correlation
+-If possible, smooth the lines to improve performance - noisy data hurts visual performance
 -If negative association is expected, flip one line to make it positive
 
 Time
--The scatterplot is faster than the lines at high correlation
+-The scatterplot is faster than the lines, particularly at high correlation
 -Smoothing and sample size have no real effect
 
 Confidence
 -People could be distracted by spurious patterns in the null plots
--These were very confident selections
+-These were typically very confident selections
 -The data analyst needs to understand what kinds of patterns can be generated randomly
 
 Overall
--Despite hiding trends etc., the simplistic scatter plot seems to be best suited to these tasks.
+-Despite hiding trends etc., the seemingly simplistic scatter plot seems to be better suited to these tasks.
 
 \iffalse
 This paper showed that the scatterplot is better than the overlaid lines for displaying two time series when the purpose is to examine the association between the two series. This is especially true if correlation between the series is negative. This comparison was made possible by the use of the lineup protocol for comparing plot designs. The power of two plot designs for reading correlation between variables was modelled using a logistic regression incorporating subject’s individual visual ability as a random effect. We found that the scatterplot, in most situations is both more powerful and quicker to process than the overlaid line graph. The overlaid line graph appeared to have stronger performance at extremely low correlations, but this work did not test absolute values of correlation below 0.3. Other non-linear associations may exist in data that are not measured by correlation, and it may be of interest to compare plot power with a broader range of true plot features.
@@ -855,7 +856,7 @@ The authors gratefully acknowledge funding from the National Science Foundation 
 
 The models used for this paper were generated using SAS software, Version 9 of the SAS System for Unix with the MIXED and GLIMMIX procedures. Copyright \copyright\ 2015 SAS Institute Inc. SAS and all other SAS Institute Inc. product or service names are registered trademarks or trademarks of SAS Institute Inc., Cary, NC, USA. 
 
-Further analysis was carried out using \citet{R} version 3.1.2 and \citet{Rstudio} version 0.99.484 using the packages: dplyr, ggplot2, grid, gridExtra, gridSVG, knitr, maps, mFilter, mnormt, nullabor, string and tidyr.
+Further analysis was carried out using \citet{R} version 3.1.2 and \citet{Rstudio} version 0.99.484 using the packages: dplyr, ggplot2, grid, gridExtra, gridSVG, knitr, maps, mFilter, mnormt, nullabor, stringr and tidyr.
 %\citet{dplyr}, \citet{ggplot2}, \citet{grid}, \citet{gridExtra}, \citet{gridSVG}, \citet{knitr}, \citet{maps}, \citet{mFilter}, \citet{mnormt}, \citet{nullabor}, \citet{stringr} and \citet{tidyr}.
 
 All code required to reproduce this paper can be found at https://github.com/NTomasetti/correlation.

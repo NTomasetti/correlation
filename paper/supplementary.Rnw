@@ -318,7 +318,7 @@ ability$diff <- ability$actual - ability$estimated
 ability.re <- merge(ability, randomeffects, by="subj_id")
 ggplot(data=ability.re, aes(x=diff, y=re)) + geom_point() + labs(x="Visual Ability", y="Random Effects")
 @
-\caption{Visual ability plotted against random effects. The diagonal pattern suggests a strong positive relationship, indicating that the random effects in the model are a suitable measure of visual ability.}
+\caption{Visual ability plotted against random effects. The diagonal pattern suggests a strong positive relationship, indicating that the random effects in the model suitably measure visual ability.}
 \label{random2}
 \end{figure}
 

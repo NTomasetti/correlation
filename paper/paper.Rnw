@@ -212,9 +212,6 @@ Temporal dependence is present in many macroeconomic variables \citep{Nelson, Pe
   \centering
     \begin{subfigure}[htbp]{0.45\textwidth}
     <<nzd, error=FALSE, message=FALSE, warning=FALSE, echo=FALSE>>=
-    library(dplyr)
-    library(tidyr)
-    library(ggplot2)
     rates <- select(read.csv("data/rates.csv"), date, AUD, CNY, NZD)[36:69,]
     rates <- mutate(rates, AUD2=(AUD-mean(AUD))/sd(AUD), CNY2=(CNY-mean(CNY))/sd(CNY)) #scaling
     ggplot(data=rates, aes(x=AUD, y=NZD)) + geom_point()
@@ -418,7 +415,7 @@ ggplot(data=sm, aes(x=X1, y=X2)) + geom_point() + theme(aspect.ratio=1, axis.tit
           axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank(), legend.position="none")
 @
 \end{subfigure}
-  \caption{Plots illustrating the experimental design. The same AR(1) data both unsmoothed (\subref{smootha} and \subref{smoothb}) and smoothed (\subref{smoothc} and \subref{smoothd}) for both plot designs, with t = 96 and correlation = 0.86}
+  \caption{Plots illustrating the experimental design. The same AR(1) data both unsmoothed (\subref{smootha} and \subref{smoothb}) and smoothed (\subref{smoothc} and \subref{smoothd}) for both plot designs, with t = 96 and correlation $\rho$ = 0.86}
   \label{smoothing}
 \end{figure}
 
@@ -485,7 +482,7 @@ ggplot(data=b, aes(x=X1, y=X2)) + geom_point() + theme(aspect.ratio=1, axis.titl
           axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank(), legend.position="none")
 @
 \end{subfigure}
-\caption{Plots illustrating the experimental design: the two different plot types of the same data with $t=24$, $r= 0.946$ (\subref{designa} and \subref{designc}), $r= -0.943$ (\subref{designb} and \subref{designd}).}
+\caption{Plots illustrating the experimental design: the two different plot types of the same data with $t=24$, $\rho= 0.946$ (\subref{designa} and \subref{designc}), $\rho= -0.943$ (\subref{designb} and \subref{designd}).}
 \label{designs}
 \end{figure}
 

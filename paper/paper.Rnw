@@ -648,7 +648,7 @@ ggplot(data=subset(pin)) +
          geom_point(aes(x=correlation, y=percent, colour=true)) + facet_grid(design+n+smoothed~r) + 
          scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels=c("1","-","0","+","1")) + 
          scale_y_continuous(breaks=c(0,0.5,1)) +
-         labs(y="Proportion",x="Correlation between series") + theme(legend.position="none")
+         labs(y="Proportion Selected",x="Correlation between series") + theme(legend.position="none")
 #ggplot(data=subset(pin, design == "Scatterplot")) + 
 #         geom_errorbar(aes(x=correlation, ymin=base, ymax=percent, colour=true)) +
 #         geom_point(aes(x=correlation, y=percent, colour=true)) + facet_grid(n+smoothed~r) + 
@@ -686,7 +686,7 @@ ggplot(data=subset(pin)) +
   \label{pins}
 \end{figure}
 
-Occasionally there was an anomaly where a single null plot was selected with a high frequency despite having a weak correlation. Occasionally the null distribution cangenerate visually interesting patterns that draw the analyst’s attention.  We asked subjects for reasons behind their selections and found that choosing on the basis that “the points in the plot were close together”, or had “a unique pattern” more often led to an unsuccessful detection. Conversely, decisions based on “matching the peaks and troughs” of the overlaid lines or “seeing a line formed in the dots” of the scatter plot were more likely to be successful in identification of the true plot. However, these true detections are, on average, made less confidently than unsuccessful evaluations, which indicates that decisions made on the basis of closeness or patterns are more convincing of an association than the more successful reasons. 
+Occasionally there was an anomaly where a single null plot was selected with a high frequency despite having a weak correlation, as the null distribution can generate visually interesting patterns that draw the analyst’s attention. We asked subjects for reasons behind their selections and found that choosing on the basis that “the points in the plot were close together”, or had “a unique pattern” more often led to an unsuccessful detection. Conversely, decisions based on “matching the peaks and troughs” of the overlaid lines or “seeing a line formed in the dots” of the scatter plot were more likely to be successful in identification of the true plot. However, these true detections are, on average, made less confidently than unsuccessful evaluations, which indicates that decisions made on the basis of closeness or patterns are more convincing of an association than the more successful reasons. 
 
 \begin{figure}[htbp]
   \centering
@@ -743,12 +743,12 @@ kable(powercoef, format="latex", digits=2)
 \end{table}
 
 Table \ref{tab1} summarises the model estimates. It can be confusing the interpret the model estimates, and at first glance it appears the negative plot coefficient implies that overlaid lines are substantially more powerful than the scatter plot, but this is misleading and interpreting the full model involves combining the estimates for the different interactions with $\rho$. $\beta_{2}$ and $\beta_{8}$ model the power difference between low and high correlations, while $\beta_{3}, \beta_{4}, \beta_{9}$ and $\beta_{10}$ model any increase in power appearing only in positive correlation. 
-Taking these into account, the scatter plot shows superior performance relative to the overlaid lines at higher values of abs($\rho$). It needs to be restated that we only tested correlations at  $0.3, 0.5, 0.7$ and $0.9$, so the results below an absolute value of $0.3$ are unreliable and may be artifacts of regression smoothing methods.
+Taking these into account, the scatter plot shows superior performance relative to the overlaid lines at higher values of abs($\rho$). It needs to be restated that we only tested correlations at an absolute value $\in \{0.3, 0.5, 0.7, 0.9\}$, so the results below an absolute value of $0.3$ are unreliable and may be artifacts of regression smoothing methods.
 
 %The correlation:sign interaction shows that the scatter plot has close to symmetric performance for positive (correlation:sign + correlation) and negative (-correlation) correlation while the overlaid line graph is substantially weaker for negative values of correlation.
-Smoothing out the excess 'noise' from a time series had a minimal effect on scatter plots, it did have a significant positive impact on the power of overlaid line graphs as smoothing induces a large visual difference (Figure~\ref{smoothing}. Increasing the sample size, $t$, improved the power of the scatter plot but it was not statistically significant for the overlaid line graph.
+Smoothing out the excess 'noise' from a time series had a minimal effect on scatter plots, demonstrated by $\beta_{4} + \beta_{10}$, but it did have a significant positive impact on the power of overlaid line graphs as smoothing induces a large visual difference (See Figure~\ref{smoothing}. Increasing the sample size, $t$, improved the power of the scatter plot but it was not statistically significant for the overlaid line graph.
 
-Figure~\ref{powermodel} shows the fitted unrestricted model, with power predictions (y axis) plotted against correlation (x axis) for each of the four sample sizes tested. The thicker lines represent the fixed effect fit, or the average performance across all tested individuals whilst the thinner lines represent the random effects fit, the variation in power that can be attributed to an individual's visual skill. \citet{Majumder:2014} show that this random visual skill is not impacted by demographics such as age and gender; whilst education increases the power of a graphic display by only approximately one percent, not a practically significant amount. We did not include these characteristics of the individual in the modelling due to this lack of significance. Figure~\ref{powermodel} especially highlights the weak performance of the overlaid lines and the benefits of smoothing.
+Figure~\ref{powermodel} shows the fitted unrestricted model, with power predictions (y-axis) plotted against correlation (x-axis) for each of the four sample sizes tested. The thicker lines represent the fixed effect fit, or the average performance across all tested individuals whilst the thinner lines represent the random effects fit, the variation in power that can be attributed to an individual's visual skill. \citet{Majumder:2014} show that this random visual skill is not impacted by demographics such as age and gender; whilst education increases the power of a graphic display by only approximately one percent, not a practically significant amount. We did not include these characteristics of the individual in the modelling due to this lack of significance. Figure~\ref{powermodel} especially highlights the weak performance of the overlaid lines and the benefits of smoothing and increased sample sizes.
 
 \begin{figure}[htbp]
  \centering
@@ -765,7 +765,7 @@ qplot(r, RandomEf, data=predplot, color=design,
   xlab("Correlation") + ylab("Estimated Power") +
   geom_line(aes(y=FixedEf), size=2, alpha=1) + theme_bw() + facet_wrap(~t, ncol = 2) + theme(aspect.ratio=1.2)
 @
-  \caption{Predicted power fit from the mixed effects logit power model. The thicker lines shows the fixed effects prediction while the thinner lines show the range of random effects, the observer's visual ability. The weakness of the overlaid line graph in negative correlation and the scatter plot's gain from sample size are highlighted.}
+  \caption{Predicted power fit from the mixed effects logit power model. The thicker lines shows the fixed effects prediction while the thinner lines show the range of random effects, the observer's visual ability. The weakness of the overlaid line graph in negative correlation and gain from increasing scatter plot sample size or smoothing overlaid lines are highlighted.}
   \label{powermodel}
 \end{figure}
 

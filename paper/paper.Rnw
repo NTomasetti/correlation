@@ -307,7 +307,7 @@ If a subject selects multiple plots from the lineup, the p-value has a Bernoulli
 P(X \geq x) = 1 - P(X < (x - 1)) = 1 - \sum^{x-1}_{i=0} \left\{\sum_{A \in T_{x}} \prod_{j \in A} p_{j} \prod_{j \in A^{c}} (1-p_{j})\right\}
 \end{equation}
 
-Where $T_{x}$ is all possible sets of $x$ trials out of $K$ resulting in a success, $A \in T_{x}$ is a specific set of $x$ trials resulting in a success and $A^{c}$ is the complement to $A$, the set of $K-x$ trials resulting in a failure.
+Where $T_{x}$ is all possible sets of $x$ trials out of $K$ resulting in a success, $A \in T_{x}$ is a specific set of $x$ trials resulting in a success and $A^{c}$ is the complement to $A$, the set of $K-x$ trials resulting in a failure. This can easily be calculated using the poibin package for R.
 
 % Then power calculation for comparing designs
 
@@ -856,8 +856,8 @@ The authors gratefully acknowledge funding from the National Science Foundation 
 
 The models used for this paper were generated using SAS software, Version 9 of the SAS System for Unix with the MIXED and GLIMMIX procedures. Copyright \copyright\ 2015 SAS Institute Inc. SAS and all other SAS Institute Inc. product or service names are registered trademarks or trademarks of SAS Institute Inc., Cary, NC, USA. 
 
-Further analysis was carried out using \citet{R} version 3.1.2 and \citet{Rstudio} version 0.99.484 using the packages: dplyr, ggplot2, grid, gridExtra, gridSVG, knitr, maps, mFilter, mnormt, nullabor, stringr and tidyr.
-%\citet{dplyr}, \citet{ggplot2}, \citet{grid}, \citet{gridExtra}, \citet{gridSVG}, \citet{knitr}, \citet{maps}, \citet{mFilter}, \citet{mnormt}, \citet{nullabor}, \citet{stringr} and \citet{tidyr}.
+Further analysis was carried out using \citet{R} version 3.1.2 and \citet{Rstudio} version 0.99.484 using the packages: dplyr, ggplot2, grid, gridExtra, gridSVG, knitr, maps, mFilter, mnormt, nullabor, poibin, stringr and tidyr.
+%\citet{dplyr}, \citet{ggplot2}, \citet{grid}, \citet{gridExtra}, \citet{gridSVG}, \citet{knitr}, \citet{maps}, \citet{mFilter}, \citet{mnormt}, \citet{nullabor}, \citet{poibin}, \citet{stringr} and \citet{tidyr}.
 
 All code required to reproduce this paper can be found at https://github.com/NTomasetti/correlation.
 

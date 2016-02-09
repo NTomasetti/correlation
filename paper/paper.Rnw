@@ -299,12 +299,12 @@ If all $K$ observers select the same plot out of a lineup of twenty, we result i
 
 % Multiple picks
 
-If a subject selects multiple plots from the lineup, the p-value has a Bernoulli distribution with a probability $p_{j} = s/m$, where that observer made $s$ selections out of a lineup with $m$ plots \citep{Follett}. In the event that a lineup has observers making different numbers of selections, we have a binomial distribution with different success probabilities, and a Poisson Binomial distribution must be used to calculate the p-value. The probability mass function of a Poisson Binomial distribution can be written as:
+If a subject selects multiple plots from the lineup, the p-value has a Bernoulli distribution with a probability $p_{j} = s/m$, where that observer made $s$ selections out of a lineup with $m$ plots. In the event that a lineup has observers making different numbers of selections, we have a binomial distribution with different success probabilities, and a Poisson Binomial distribution must be used to calculate the p-value demonstrated by \citet{Follett}. The probability mass function of a Poisson Binomial distribution can be written as:
 
 \begin{equation} 
 \label{pvalue2}
 \centering
-P(X=x) = \sum_{A \in T_{x}} \prod_{j \in A} p_{j} \prod_{j \in A^{c}} (1-p_{j})
+P(X \geq x) = 1 - P(X < (x - 1)) = 1 - \sum^{x-1}_{i=0} \left\{\sum_{A \in T_{x}} \prod_{j \in A} p_{j} \prod_{j \in A^{c}} (1-p_{j})\right\}
 \end{equation}
 
 Where $T_{x}$ is all possible sets of $x$ trials out of $K$ resulting in a success, $A \in T_{x}$ is a specific set of $x$ trials resulting in a success and $A^{c}$ is the complement to $A$, the set of $K-x$ trials resulting in a failure.

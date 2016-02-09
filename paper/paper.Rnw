@@ -100,10 +100,10 @@ powercoef <- read.csv("data/PowerEstimates.csv") ##coefficients for power model 
 
 
 full <- full %>% mutate(design = ifelse(test_param ==1, "Overlaid Lines", "Scatterplot"),
-                         r = round(correlation, 1),
+                         r = round(correlation, 1), #remove slight variations in correlation caused by simulation
                          rsgn = ifelse(r >= 0, 1, 0),
                          rabs = abs(r),
-                         alpha = log(0.05/0.95),
+                         alpha = log(0.05/0.95), #an offset used to fit the model
                          attempts = sapply(strsplit(as.character(full$response_0), ","), length), 
                          ##count number of selections in response_0 column
                          weights = 1/attempts)
@@ -117,8 +117,8 @@ full.sub <- Reduce(rbind, by(full.sub, full.sub$subj_id, head, n=10))
 
 full <- full %>%  transform(response_0= strsplit(as.character(response_0), ",")) %>% unnest(response_0) %>%
   ##split multiple selections in response_0 into different rows
-  mutate(correct = ifelse(response_0 == actual_location, 1, 0), 
-         score = ifelse(correct==1, (20-attempts)/19, 0)) %>%
+  mutate(correct = ifelse(response_0 == actual_location, 1, 0), #ensure only the true detection in mult. selections has a 1
+         score = ifelse(correct==1, (20-attempts)/19, 0)) %>% 
   select(subj_id, correct, score, r, rsgn, rabs, smoothed, n, design, log_time, response_0,
          actual_location, pic_id, choice_reason, attempts, weights, alpha, conf_level)
 
@@ -425,19 +425,19 @@ ggplot(data=sm, aes(x=X1, y=X2)) + geom_point() + theme(aspect.ratio=1, axis.tit
 The lineups were generated with three basic factors:
 
 \begin{itemize}
-  \item Factor 1: Plot design, levels = scatter plot, overlaid time series
-  \item Factor 2: Sample size (t), levels = \{12, 24, 48, 96\}
-  \item Factor 3: True plot correlation, $\rho$, levels = $\pm \{0.3, 0.5, 0.7, 0.9\}$
+  \item Factor 1: Plot design, levels = scatter plot, overlaid time series.
+  \item Factor 2: Sample size (t), levels = $\{12, 24, 48, 96\}$.
+  \item Factor 3: True plot correlation, $\rho$, levels = $\pm \{0.3, 0.5, 0.7, 0.9\}$.
 \end{itemize}
 
 Additionally, there was a fourth factor for $t = \{48, 96\}$:
 
 \begin{itemize}
-  \item Factor 4: Smoothed, levels = yes, no
+  \item Factor 4: Smoothed, levels = yes, no.
 \end{itemize}
 
 Each combination of factors was replicated in three different lineups, giving a total of 288 lineups (3 replications x 2 plots x 8 correlations x 6 sample size and smoothness combinations). 
-The position of the actual data plot in the lineup was randomized. The order that the factors are presented to a subject were also randomized, and each subject saw 5 scatter plots and 5 overlaid lines at a range of all absolute correlation levels. Each subject did not see the same data more than once. Subjects were asked to select the plot in the lineup that has the strongest association, with basic examples of negatively and positively correlated plots. They also answered with reasons for choosing the plot, and the confidence that they have that this really is the plot showing the strongest correlation. Each subject evaluated 10 lineups, plus a further two simple trials to eliminate people attempted to game the system. If the true plot was not detected in the trial, the subject could not evaluate the remaining lineups. If it was detected, the trial data was discarded and the subject moved onto the rest of the lineups. Earlier work by \citet{Majumder:2014} has found that repeated evaluations from a subject does not increase their ability to detect the true plot from a lineup, justifying our treatment of the results as independent evaluations. We recruited subjects from Amazon's Mechanical Turk service and ensured that each lineup was viewed by multiple subjects. In total there were 2091 lineup evaluations, however to better control each subject’s individual visual ability we removed data from subjects with less than ten individual evaluations. Some subjects chose to participate in the experiment more than once, so we removed all data from repeated trials by these subjects. We were left with 1600 evaluations by 160 subjects.
+The position of the actual data plot in the lineup was randomized. The order that the factors are presented to a subject were also randomized, and each subject saw 5 scatter plots and 5 overlaid lines at a range of all absolute correlation levels. Each subject did not see the same data more than once. Subjects were asked to select the plot in the lineup that has the strongest association, with basic examples of negatively and positively correlated plots. They also answered with reasons for choosing the plot, and the confidence that they have that this really is the plot showing the strongest correlation. Each subject evaluated 10 lineups, plus a further two simple trials to eliminate people attempted to game the system. If the true plot was not detected in the trial, the subject could not evaluate the remaining lineups. If it was detected, the trial data was discarded and the subject moved onto the rest of the lineups. Earlier work by \citet{Majumder:2014} has found that repeated evaluations from a subject does not increase their ability to detect the true plot from a lineup, however random effects were used to model the dependence between different evaluations from the same subject. We recruited subjects from Amazon's Mechanical Turk service and ensured that each lineup was viewed by multiple subjects. In total there were 2091 lineup evaluations, however to better control correlation between subject’s individual visual ability we removed data from subjects with less than ten individual evaluations. Some subjects chose to participate in the experiment more than once, so we removed all data from any repeated trials leaving only the original ten evaluations. We were left with 1600 evaluations by 160 subjects.
 
 Subjects were allowed to make multiple plot selections from each lineup evaluated, additional selections on lineup $i$ by subject $j$ are penalised according to a score defined by:
 
@@ -728,10 +728,12 @@ Where $\psi$ is the logit link function, $\psi(x) = \frac{e^{x}}{1+e^{x}}$. Addi
 
 It is assumed that $\epsilon_{ijkt} \sim \mathcal{N} (0, \Sigma_{ijkt})$ and $\gamma \sim \mathcal{N} (0, \delta)$.
 
-If a subject made multiple selections from the same lineup, each selection is treated as a separate data point with a probability weighting equal to the inverse of the number of selections.
+If the true plot correlation were equal to $0$, it should be indistinguishable from the null plots and the detection rate would fall to $1/20$, the Type I error rate. An offset is included in the model to incorporate this effect.
+
+If a subject made multiple selections from the same lineup, each selection is treated as a separate data point with a probability weighting equal to the inverse of the number of selections. 
 
 \begin{table}[htp]
-\caption{Weighted Mixed Effects Logit Model for the predicted power of plot design. Sample size for scatter plot evaluations: 859, overlaid lines: 903, total: 1762. Default plot design is overlaid lines. The model is fitted using the GLIMMIX procedure in SAS.}
+\caption{Weighted Mixed Effects Logit Model for the predicted power of both plot designs. Sample size for scatter plot evaluations: 859, overlaid lines: 903, total: 1762. Default plot design is overlaid lines. The model is fitted using the GLIMMIX procedure in SAS.}
 \label{tab1}
 \centering
 <<powerfit, dependson='setup', results='asis', echo=FALSE, message=FALSE, error=FALSE, warning=FALSE>>=
@@ -805,7 +807,7 @@ ln(time_{ijklt}) &=& \{ \beta_{0} + \beta_{1} x_{1,i}  + \beta_{2} x_{2,j}  + \b
 Other than the removal of the link function, the structure of the model identical to that in Equation~\ref{modelpower}.
 
 \begin{table}[htp]
-\caption{Linear mixed model fit for time taken to make a selection, default plot style is overlaid lines. Fitted with the MIXED procedure in SAS.}
+\caption{Weighted Mixed Effects Linear Model for time taken to make a selection, default plot style is overlaid lines. Fitted with the MIXED procedure in SAS.}
 \label{tab2}
 \centering
 <<timefit, dependson='setup', results='asis', echo=FALSE, message=FALSE, error=FALSE, warning=FALSE>>=
@@ -854,7 +856,7 @@ If a data analyst is required to use overlaid line graphs in their work, substan
 
 The authors gratefully acknowledge funding from the National Science Foundation Grant DMS \#1007697.
 
-The models used for this paper were generated using SAS software, Version 9 of the SAS System for Unix with the MIXED and GLIMMIX procedures. Copyright \copyright\ 2015 SAS Institute Inc. SAS and all other SAS Institute Inc. product or service names are registered trademarks or trademarks of SAS Institute Inc., Cary, NC, USA. 
+The models used for this paper were generated using SAS software, Version 9 of the SAS System for Unix, with the MIXED and GLIMMIX procedures. Copyright \copyright\ 2015 SAS Institute Inc. SAS and all other SAS Institute Inc. product or service names are registered trademarks or trademarks of SAS Institute Inc., Cary, NC, USA. 
 
 Further analysis was carried out using \citet{R} version 3.1.2 and \citet{Rstudio} version 0.99.484 using the packages: dplyr, ggplot2, grid, gridExtra, gridSVG, knitr, maps, mFilter, mnormt, nullabor, poibin, stringr and tidyr.
 %\citet{dplyr}, \citet{ggplot2}, \citet{grid}, \citet{gridExtra}, \citet{gridSVG}, \citet{knitr}, \citet{maps}, \citet{mFilter}, \citet{mnormt}, \citet{nullabor}, \citet{poibin}, \citet{stringr} and \citet{tidyr}.

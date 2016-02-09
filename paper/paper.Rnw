@@ -502,7 +502,7 @@ ggplot(data=bylineup, aes(x=r, y=percent, colour=design)) + geom_smooth(se=F) + 
   scale_colour_discrete(name = "Plot Design") + labs(y="Detection rate", x="Correlation") +
   theme(legend.position="bottom")
 @
-  \caption{Response accuracy for unsmoothed data, broken by unsmoothed (left), smoothed (right) and sample size. The dots are data points, the lines represent a naive model average fit. Both plot designs have similar performance for positively correlated data, however the overlaid line graphs are much weaker at revealing negative correlation.}
+  \caption{Response accuracy for unsmoothed data, broken by unsmoothed (left), smoothed (right) and sample size. The dots are data points, the lines represent a naive model average fit. Both plot designs have similar performance for positively correlated data, however the overlaid line graphs are much weaker at displaying negative correlation.}
     \label{results}
 \end{figure}
 
@@ -530,7 +530,7 @@ prop <- mutate(prop, l.power = l.detect/l.attempt,
 ggplot(data=prop) + geom_errorbar(aes(x=r, ymax=upper, ymin=lower)) + geom_point(aes(x=r, y=difference)) +
         geom_hline(aes(yintercept=0, colour="red")) + labs(x="Correlation", y="Power difference") + facet_grid(n~smoothed)
 @
- \caption{The difference in estimated power (scatter plot power minus overlaid line power) to reveal the true plot by smoothness and sample size with a joint 95\% confidence interval. The red line indicates the point where both plot designs are equally powerful The largest differences appear in negative correlation, where the overlaid lines power drops substantially.}
+ \caption{The difference in estimated power (scatter plot power minus overlaid line power) to reveal the true plot by smoothness and sample size with a joint 95\% confidence interval. The red line indicates the point where both plot designs are equally powerful The largest differences appear in negative correlation, where the overlaid line graph's power drops substantially.}
  \label{powerdiff}
 \end{figure}
 
@@ -539,7 +539,7 @@ ggplot(data=prop) + geom_errorbar(aes(x=r, ymax=upper, ymin=lower)) + geom_point
 <<samplesize, dependson='setup', fig.width=6, fig.height=8, out.width='0.7\\textwidth', echo=FALSE, error=FALSE, message=FALSE, warning=FALSE>>=
 ggplot(data=subset(bylineup, smoothed==0), aes(x=r, y=percent, colour=factor(n))) + geom_smooth(se=F) + geom_point() + facet_grid(design~.) + scale_colour_discrete(name = "Sample size") +  labs(y="Detection rate", x="Correlation") + theme(legend.position="bottom")
 @
- \caption{Replotting figure~\ref{results} to highlight the effects of changes in sample size of unsmoothed data. The scatter plot appears to universally benefit from increased sample sizes but the overlaid lines only see a benefit in positive correlation.}
+ \caption{Replotting figure~\ref{results} to highlight the effects of changes in sample size with unsmoothed data. The scatter plot appears to universally benefit from increased sample sizes but the overlaid lines have a mixed benefit, with improvements only in positive correlation.}
  \label{samplesize}
 \end{figure}
 
@@ -746,7 +746,7 @@ Table \ref{tab1} summarises the model estimates. It can be confusing the interpr
 Taking these into account, the scatter plot shows superior performance relative to the overlaid lines at higher values of abs($\rho$). It needs to be restated that we only tested correlations at an absolute value $\in \{0.3, 0.5, 0.7, 0.9\}$, so the results below an absolute value of $0.3$ are unreliable and may be artifacts of regression smoothing methods.
 
 %The correlation:sign interaction shows that the scatter plot has close to symmetric performance for positive (correlation:sign + correlation) and negative (-correlation) correlation while the overlaid line graph is substantially weaker for negative values of correlation.
-Smoothing out the excess 'noise' from a time series had a minimal effect on scatter plots, demonstrated by $\beta_{4} + \beta_{10}$, but it did have a significant positive impact on the power of overlaid line graphs as smoothing induces a large visual difference (See Figure~\ref{smoothing}. Increasing the sample size, $t$, improved the power of the scatter plot but it was not statistically significant for the overlaid line graph.
+Smoothing out the excess 'noise' from a time series had a minimal effect on scatter plots, demonstrated by $\beta_{4} + \beta_{10}$, but it did have a significant positive impact on the power of overlaid line graphs as smoothing induces a large visual difference (See Figure~\ref{smoothing}. Increasing the sample size, $t$, improved the power of the scatter plot but it was not statistically significant for the overlaid line graph possibly due to the negative correlation results interfering with the modeling (See Figure~\ref{samplesize}).
 
 Figure~\ref{powermodel} shows the fitted unrestricted model, with power predictions (y-axis) plotted against correlation (x-axis) for each of the four sample sizes tested. The thicker lines represent the fixed effect fit, or the average performance across all tested individuals whilst the thinner lines represent the random effects fit, the variation in power that can be attributed to an individual's visual skill. \citet{Majumder:2014} show that this random visual skill is not impacted by demographics such as age and gender; whilst education increases the power of a graphic display by only approximately one percent, not a practically significant amount. We did not include these characteristics of the individual in the modelling due to this lack of significance. Figure~\ref{powermodel} especially highlights the weak performance of the overlaid lines and the benefits of smoothing and increased sample sizes.
 

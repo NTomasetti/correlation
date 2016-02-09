@@ -140,7 +140,7 @@ bylineup.sub <- mutate(bylineup.sub, percent = total/evals)
 #                   subj_id = as.numeric(subj_id),
 #                   design = ifelse(design=="Scatterplot", 1, 0))
 #write.csv(sasdata, "sas/sasdata.csv", row.names = FALSE)
-#The code that is exported to fit the model into SAS, see sas/model fit.sas
+#The code that is exported to fit the model into SAS, see code/fitting model.sas
 
 #pred <- data.frame(expand.grid(rabs=seq(0, 0.9, 0.01), t=c(12, 24, 48, 96), alpha=log(.05/0.95), rsgn=c(0,1),
 #                                    smoothed=c(0,1), design=c(0,1),

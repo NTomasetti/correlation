@@ -192,7 +192,7 @@ Subjects are allowed to make multiple selections on each lineup evaluation, with
 {score}_{ij} =\frac{m-s_{ij}}{m-1} \mathbbm{I}_{ij}
 \end{equation}
 
-Where $m = 20$, the number of plots in a linup, $s_{ij}$ is the number of selections made by subject $i$ on lineup $j$ and $\mathbbm{I}_{ij} = 1$ if the true plot is detected, $0$ otherwise. The most selections made on any lineup evaluation is 8.
+Where $m = 20$, the number of plots in a linup, $s_{ij}$ is the number of selections made by subject $i$ on lineup $j$ and $\mathbbm{I}_{ij} = 1$ if the true plot is detected, $0$ otherwise. The most selections made on any lineup evaluation is 8. No subject demographic had an increased rate of making multiple selections.
 
 \begin{figure}[htbp]
 \centering 
@@ -225,7 +225,9 @@ ggplot(data=choice, aes(x=choice_reason, fill=correct)) + geom_bar() + facet_gri
 \label{reasons}
 \end{figure}
 
-\begin{figure}[htbp]
+We originally hypothesised that factor combinations with a low power are most likely to have multiple selections due to a decreased ability to differentiate between true and null plots. This would cause most lineups with multiple selection lineups to be concentrated around $\rho = \pm 0.3$ for both designs as well as any negative value for overlaid line graphs. Figure ~\ref{lineupmulti} plots lineups with at least one case of a subject selecting multiple plots in an evaluation. The hypothesised effect only appears at sample sizes of 48 and 96. The overlaid line graph lineups were more likely to have multiple selections, but this is also occuring in high positive correlations, where the power was similar to that of a scatter plot.
+
+\begin{figure}[h]
 \centering
 <<multiselect, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE, fig.height=4>>=
 m.select <- summarise(group_by(subset(full.sub, attempts>1), subj_id, pic_id), attempts=max(attempts))
@@ -233,13 +235,13 @@ m.freq <- data.frame(table(m.select$pic_id))
 m.lineup <- merge(m.freq, bylineup, by.x="Var1", by.y="pic_id")
 ggplot(data=m.lineup) + geom_bar(aes(x=factor(r), fill=design)) + facet_grid(n~smoothed) + labs(y="Count", x="True plot correlation")
 @
-\caption{Characteristics of lineups with at least one subject making multiple selections. Overlaid line lineups have multiple selections more often, and true plot correlation does not appear to have an impact except at large sample sizes.}
+\caption{Characteristics of lineups with at least one subject making multiple selections. Overlaid line graph lineups have subjects make multiple selections more often, but true plot correlation does not appear to have an impact except at large sample sizes.}
 \label{lineupmulti}
 \end{figure}
 
 \begin{table}[h]
 \centering
-\caption{Number of times $n$ selections from a lineup evaluation were made. The subject who made the most selections is additionally reported. There is no relationship between a subject's demographics and a likelihood to make multiple selections.}
+\caption{Number of times $n$ selections from a lineup evaluation were made. The subject who made the most plot selections within their ten evaluations is additionally reported. There is no relationship between a subject's demographics and a likelihood to make multiple selections.}
 \label{table}
 <<tabattempts, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
 attempts <- summarise(group_by(full.sub, subj_id, pic_id), attempts = max(attempts))
@@ -273,7 +275,7 @@ ggplot(data=glmm.resid) + geom_histogram(aes(y=..density.., x=residual), binwidt
     \label{residuals}
 \end{figure}
 
-Analysing the level one residuals, $\hat{\epsilon_{i}}$, and level two residuals, $\hat{\gamma_{i}}$, allows us to test the model fit as described \citet{Loy}. There are some negative extreme outliers but the distributional assumptions appear to hold.
+Analysing the level one residuals, $\hat{\epsilon_{i}}$, and level two residuals, $\hat{\gamma_{i}}$, allows us to test the model fit as described by \citet{Loy}. There are some extreme negative outliers but the distributional assumptions appear to hold.
 
 \begin{figure}[htbp]
   \centering
@@ -295,15 +297,15 @@ where $L_{j}$ is the set of lineups evaluated by subject $j$.
 
 The lineup $i$ with $K$ evaluations has an expected score:
 
-$${E[score]}_{i} = \frac{1}{K}\sum_{j}{score}_{ij}$$
+$$E[{score}_{i}] = \frac{1}{K}\sum_{j}{score}_{ij}$$
 
 summing these per subject gives an expected total score per subject:
 
-$${E[score]}_{j} = \sum_{i}\{{E[score]}_{i} | i \in L_{j}\}$$
+$$E[{score}_{j}]  = \sum_{i}\{E[{score}_{i}] | i \in L_{j}\}$$
 
-Finally, we measure visual ability by:
+Finally, we proxy visual ability by:
 
-$${Visual Ability}_{j} = {score}_{j}-{E[score]}_{j}$$.
+$${Visual Ability}_{j} = {score}_{j}-E[{score}_{j}] $$.
 
 Comparing these to the estimated random effects $\hat\gamma$ in Figure~\ref{random2} shows that there is a strong correlation between visual ability and the random effects, further validating the model.
 

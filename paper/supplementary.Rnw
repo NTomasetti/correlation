@@ -241,7 +241,7 @@ ggplot(data=m.lineup) + geom_bar(aes(x=factor(r), fill=design)) + facet_grid(n~s
 
 \begin{table}[h]
 \centering
-\caption{Number of times $n$ selections from a lineup evaluation were made. The subject who made the most plot selections within their ten evaluations is additionally reported. There is no relationship between a subject's demographics and a likelihood to make multiple selections.}
+\caption{Number of times $n$ selections were made in a lineup evaluation. The subject who made the most plot selections within their ten evaluations is additionally reported. There is no relationship between a subject's demographics and a likelihood to make multiple selections.}
 \label{table}
 <<tabattempts, dependson='setup', echo=FALSE, results='asis', message=FALSE, error=FALSE, warning=FALSE>>=
 attempts <- summarise(group_by(full.sub, subj_id, pic_id), attempts = max(attempts))
